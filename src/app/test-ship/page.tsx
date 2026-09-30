@@ -85,13 +85,14 @@ export default function TestShipPage() {
       </div>
 
       <Canvas shadows>
-        {/* Photorealistic HDR Environment */}
-        <Environment files="/environments/kloppenheim_02.hdr" background />
-        <fog attach="fog" args={['#a9b5c2', 150, 600]} />
+        {/* Clean Industrial Sky */}
+        <color attach="background" args={['#8ea1b5']} />
+        <fog attach="fog" args={['#8ea1b5', 100, 500]} />
         
-        {/* Realistic Industrial Lighting (HDR provides ambient) */}
-        <directionalLight position={[100, -50, 150]} intensity={1.5} color="#fffcf5" castShadow shadow-mapSize={[2048, 2048]} />
-        <directionalLight position={[-100, 100, 50]} intensity={0.5} color="#8899aa" />
+        {/* Realistic Industrial Lighting */}
+        <ambientLight intensity={0.7} color="#dbe6eb" />
+        <directionalLight position={[100, -50, 150]} intensity={1.2} color="#fffcf5" castShadow shadow-mapSize={[2048, 2048]} />
+        <directionalLight position={[-100, 100, 50]} intensity={0.4} color="#8899aa" />
         
         {/* Scale Reference / Grid (10m grid squares over 160m area) */}
         <Grid args={[160, 160]} cellColor="#444444" sectionColor="#3498db" sectionSize={10} cellSize={10} fadeDistance={80} fadeStrength={1} position={[0, 0, -0.1]} rotation={[Math.PI / 2, 0, 0]} />

@@ -24,58 +24,32 @@ function GLTFModel({ path, position, rotation, scale }: { path: string; position
 }
 
 function GroundPlanes() {
-  // Load textures
+  // Load only concrete for a clean, cohesive industrial environment
   const dirtDiff = useTexture('/textures/dirty_concrete/dirty_concrete_diff_2k.jpg');
   const dirtRough = useTexture('/textures/dirty_concrete/dirty_concrete_rough_2k.jpg');
   const dirtNor = useTexture('/textures/dirty_concrete/dirty_concrete_nor_gl_2k.jpg');
-
-  const sandDiff = useTexture('/textures/coast_sand_01/coast_sand_01_diff_2k.jpg');
-  const sandRough = useTexture('/textures/coast_sand_01/coast_sand_01_rough_2k.jpg');
-  const sandNor = useTexture('/textures/coast_sand_01/coast_sand_01_nor_gl_2k.jpg');
 
   const textures = useMemo(() => {
     const dDiff = dirtDiff ? dirtDiff.clone() : null;
     const dRough = dirtRough ? dirtRough.clone() : null;
     const dNor = dirtNor ? dirtNor.clone() : null;
-    const sDiff = sandDiff ? sandDiff.clone() : null;
-    const sRough = sandRough ? sandRough.clone() : null;
-    const sNor = sandNor ? sandNor.clone() : null;
 
     [dDiff, dRough, dNor].forEach(t => {
       if(t) {
         t.wrapS = t.wrapT = THREE.RepeatWrapping;
-        t.repeat.set(30, 30);
+        t.repeat.set(40, 40);
         t.needsUpdate = true;
       }
     });
 
-    [sDiff, sRough, sNor].forEach(t => {
-      if(t) {
-        t.wrapS = t.wrapT = THREE.RepeatWrapping;
-        t.repeat.set(50, 50);
-        t.needsUpdate = true;
-      }
-    });
-
-    return { dDiff, dRough, dNor, sDiff, sRough, sNor };
-  }, [dirtDiff, dirtRough, dirtNor, sandDiff, sandRough, sandNor]);
+    return { dDiff, dRough, dNor };
+  }, [dirtDiff, dirtRough, dirtNor]);
 
   return (
     <group>
-      {/* Huge Outer Sand/Dirt Yard */}
-      <mesh position={[0, 0, -2.1]} receiveShadow>
-        <planeGeometry args={[1000, 1000]} />
-        <meshStandardMaterial 
-          map={textures.sDiff} 
-          roughnessMap={textures.sRough} 
-          normalMap={textures.sNor}
-          roughness={1}
-        />
-      </mesh>
-
-      {/* Concrete Dry Dock / Working Area */}
+      {/* Expansive Concrete Dry Dock / Working Area */}
       <mesh position={[0, 0, -2]} receiveShadow>
-        <planeGeometry args={[100, 300]} />
+        <planeGeometry args={[400, 400]} />
         <meshStandardMaterial 
           map={textures.dDiff} 
           roughnessMap={textures.dRough} 
@@ -93,7 +67,7 @@ function GroundPlanes() {
 
 function KeelBlocks() {
   const L = shipConfig.lengthOverall;
-  const blockCount = Math.floor(L / 2) + 20; // Block every 2 meters, some extra for side blocks
+  const blockCount = Math.floor(L / 4) + 12; // Block every 4 meters
   
   const meshRef = useRef<THREE.InstancedMesh>(null);
   
@@ -107,16 +81,16 @@ function KeelBlocks() {
       const dummy = new THREE.Object3D();
       let idx = 0;
       
-      // Central Keel line
-      for (let y = -L/2 + 5; y <= L/2 - 5; y += 2) {
+      // Central Keel line - spaced out for cleaner look
+      for (let y = -L/2 + 5; y <= L/2 - 5; y += 4) {
         dummy.position.set(0, y, -1); // Centered under keel, Z=-1 (middle of 2m high block)
         dummy.scale.set(1.5, 1, 2);
         dummy.updateMatrix();
         meshRef.current.setMatrixAt(idx++, dummy.matrix);
       }
 
-      // Bilge support blocks
-      for (let y = -L/2 + 20; y <= L/2 - 20; y += 10) {
+      // Bilge support blocks - sparse and functional
+      for (let y = -L/2 + 25; y <= L/2 - 25; y += 30) {
         // Port
         dummy.position.set(-6, y, -0.5);
         dummy.scale.set(1.5, 1.5, 3);
@@ -154,8 +128,8 @@ function IndustrialScaffolding() {
     roughness: 0.9,
   }), []);
 
-  const sections = 12; // 4m sections
-  const levels = 4;
+  const sections = 6; // Reduced from 12 to provide clean access
+  const levels = 3;   // Reduced from 4
   const poleCount = sections * levels * 5;
   const scaffoldRef = useRef<THREE.InstancedMesh>(null);
   
@@ -163,7 +137,7 @@ function IndustrialScaffolding() {
     if (scaffoldRef.current) {
       const dummy = new THREE.Object3D();
       let idx = 0;
-      const startY = 10; // Midship area, starboard side
+      const startY = 5; // Midship area, starboard side
       
       for (let s = 0; s < sections; s++) {
         const y = startY + s * 4;
@@ -204,7 +178,7 @@ function IndustrialScaffolding() {
       }
       scaffoldRef.current.instanceMatrix.needsUpdate = true;
     }
-  }, [sections]);
+  }, [sections, levels]);
 
   return (
     <group>
@@ -213,8 +187,8 @@ function IndustrialScaffolding() {
       </instancedMesh>
       
       {/* Wooden working platforms */}
-      {[0, 1, 2, 3].map(l => (
-        <mesh key={l} position={[11.5, 10 + (sections * 4) / 2 - 2, -2 + l * 2.5 + 2.5]} castShadow receiveShadow material={woodMaterial}>
+      {[0, 1, 2].map(l => (
+        <mesh key={l} position={[11.5, 5 + (sections * 4) / 2 - 2, -2 + l * 2.5 + 2.5]} castShadow receiveShadow material={woodMaterial}>
           <boxGeometry args={[1.8, sections * 4, 0.05]} />
         </mesh>
       ))}
@@ -223,14 +197,9 @@ function IndustrialScaffolding() {
 }
 
 function RealWorldAssets() {
+  // Giant mechanical hoist crane is removed completely.
   return (
     <group>
-      {/* Shipyard Crane - Starboard Aft */}
-      <GLTFModel path="/models/overhead_crane/overhead_crane.gltf" position={[20, -40, -2]} rotation={[Math.PI/2, 0, Math.PI/4]} scale={5} />
-      
-      {/* Shipyard Crane - Port Forward */}
-      <GLTFModel path="/models/overhead_crane/overhead_crane.gltf" position={[-25, 30, -2]} rotation={[Math.PI/2, 0, -Math.PI/4]} scale={5} />
-
       {/* Tool Cabinets */}
       <GLTFModel path="/models/metal_tool_chest/metal_tool_chest.gltf" position={[15, 5, -2]} rotation={[Math.PI/2, 0, 0]} scale={1.5} />
       <GLTFModel path="/models/metal_tool_chest/metal_tool_chest.gltf" position={[16, -10, -2]} rotation={[Math.PI/2, 0, Math.PI/2]} scale={1.5} />
@@ -253,7 +222,7 @@ function RealWorldAssets() {
 export function DryDock() {
   return (
     <group>
-      {/* Expansive photorealistic ground */}
+      {/* Clean photorealistic ground */}
       <React.Suspense fallback={null}>
         <GroundPlanes />
       </React.Suspense>
@@ -272,8 +241,7 @@ export function DryDock() {
   );
 }
 
-// Preload the assets
-useGLTF.preload('/models/overhead_crane/overhead_crane.gltf');
+// Preload the remaining small assets
 useGLTF.preload('/models/metal_tool_chest/metal_tool_chest.gltf');
 useGLTF.preload('/models/worn_metal_rack/worn_metal_rack.gltf');
 useGLTF.preload('/models/industrial_storage_cart/industrial_storage_cart.gltf');
