@@ -1,0 +1,10 @@
+{
+  "beep-on-completion": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "powershell -c \"Start-Job { (New-Object Media.SoundPlayer 'C:\\Windows\\Media\\Alarm01.wav').PlaySync(); (New-Object Media.SoundPlayer 'C:\\Windows\\Media\\Alarm01.wav').PlaySync(); (New-Object Media.SoundPlayer 'C:\\Windows\\Media\\Alarm01.wav').PlaySync() } | Out-Null; Write-Output '{}'\""
+      }
+    ]
+  }
+}
