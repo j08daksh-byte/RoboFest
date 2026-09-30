@@ -85,14 +85,13 @@ export default function TestShipPage() {
       </div>
 
       <Canvas shadows>
-        <color attach="background" args={['#0a192f']} />
-        <fog attach="fog" args={['#0a192f', 50, 300]} />
+        <color attach="background" args={['#a9b5c2']} />
+        <fog attach="fog" args={['#a9b5c2', 60, 400]} />
         
         {/* Realistic Industrial Lighting */}
-        <ambientLight intensity={0.2} color="#b0c4de" />
-        <directionalLight position={[100, -50, 150]} intensity={1.2} color="#ffffff" castShadow />
-        <directionalLight position={[-100, 100, 50]} intensity={0.4} color="#8899aa" />
-        <directionalLight position={[0, -150, 20]} intensity={0.3} color="#ffeebb" />
+        <ambientLight intensity={0.6} color="#dbe6eb" />
+        <directionalLight position={[100, -50, 150]} intensity={1.5} color="#fffcf5" castShadow />
+        <directionalLight position={[-100, 100, 50]} intensity={0.5} color="#8899aa" />
         
         {/* Scale Reference / Grid (10m grid squares over 160m area) */}
         <Grid args={[160, 160]} cellColor="#444444" sectionColor="#3498db" sectionSize={10} cellSize={10} fadeDistance={80} fadeStrength={1} position={[0, 0, -0.1]} rotation={[Math.PI / 2, 0, 0]} />
