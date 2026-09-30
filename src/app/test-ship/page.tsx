@@ -86,10 +86,11 @@ export default function TestShipPage() {
       <Canvas>
         <color attach="background" args={['#0a192f']} />
         
-        {/* Basic Industrial Lighting */}
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[100, 100, 100]} intensity={1.5} />
-        <directionalLight position={[-100, -100, 50]} intensity={0.5} />
+        {/* Realistic Industrial Lighting */}
+        <ambientLight intensity={0.2} color="#b0c4de" />
+        <directionalLight position={[100, -50, 150]} intensity={1.2} color="#ffffff" castShadow />
+        <directionalLight position={[-100, 100, 50]} intensity={0.4} color="#8899aa" />
+        <directionalLight position={[0, -150, 20]} intensity={0.3} color="#ffeebb" />
         
         {/* Scale Reference / Grid (10m grid squares over 160m area) */}
         <Grid args={[160, 160]} cellColor="#444444" sectionColor="#3498db" sectionSize={10} cellSize={10} fadeDistance={80} fadeStrength={1} position={[0, 0, -0.1]} rotation={[Math.PI / 2, 0, 0]} />

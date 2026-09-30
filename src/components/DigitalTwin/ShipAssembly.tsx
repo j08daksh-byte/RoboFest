@@ -4,11 +4,13 @@ import { ProceduralShipSurface } from '@/lib/geometry/ProceduralShipSurface';
 import { computeRobotOrientation } from '@/lib/geometry/HullSurfaceQuery';
 import { shipConfig } from '@/lib/geometry/shipConfig';
 import { useTestShipStore } from '@/lib/state/testShipStore';
+import { useShipMaterials } from '@/lib/materials/useShipMaterials';
+import { HullSurfaceDetails } from '@/components/DigitalTwin/HullSurfaceDetails';
 
 // ----------------------------------------------------------------------
 // ENGINEERING HULL
 // ----------------------------------------------------------------------
-function EngineeringHull({ surface }: { surface: ProceduralShipSurface }) {
+function EngineeringHull({ surface, materials }: { surface: ProceduralShipSurface, materials: ReturnType<typeof useShipMaterials> }) {
   const { showStructuralLines, showSurfaceDebug, showSurfaceNormals, showSurfaceTangents, showRobotProxies } = useTestShipStore();
 
   const { hullGeometry, frameLinesGeometry, sternGeometry, bowGeometry } = useMemo(() => {
@@ -136,18 +138,11 @@ function EngineeringHull({ surface }: { surface: ProceduralShipSurface }) {
 
   return (
     <group>
-      <mesh geometry={hullGeometry} material={showSurfaceDebug ? new THREE.MeshStandardMaterial({ color: '#8B0000', transparent: true, opacity: 0.4, side: THREE.DoubleSide }) : undefined}>
-        {!showSurfaceDebug && <meshStandardMaterial attach="material-0" color="#3a4750" side={THREE.DoubleSide} roughness={0.6} metalness={0.2} />}
-        {!showSurfaceDebug && <meshStandardMaterial attach="material-1" color="#8b2929" side={THREE.DoubleSide} roughness={0.8} />}
-      </mesh>
+      <mesh geometry={hullGeometry} material={showSurfaceDebug ? new THREE.MeshStandardMaterial({ color: '#8B0000', transparent: true, opacity: 0.4, side: THREE.DoubleSide }) : [materials.hullPaint, materials.hullAntiFouling] as THREE.Material[]} />
       
-      <mesh geometry={sternGeometry} material={showSurfaceDebug ? new THREE.MeshStandardMaterial({ color: '#8B0000', transparent: true, opacity: 0.4, side: THREE.DoubleSide }) : undefined}>
-        {!showSurfaceDebug && <meshStandardMaterial color="#3a4750" side={THREE.DoubleSide} roughness={0.6} metalness={0.2} />}
-      </mesh>
+      <mesh geometry={sternGeometry} material={showSurfaceDebug ? new THREE.MeshStandardMaterial({ color: '#8B0000', transparent: true, opacity: 0.4, side: THREE.DoubleSide }) : materials.hullPaint} />
 
-      <mesh geometry={bowGeometry} material={showSurfaceDebug ? new THREE.MeshStandardMaterial({ color: '#8B0000', transparent: true, opacity: 0.4, side: THREE.DoubleSide }) : undefined}>
-        {!showSurfaceDebug && <meshStandardMaterial color="#3a4750" side={THREE.DoubleSide} roughness={0.6} metalness={0.2} />}
-      </mesh>
+      <mesh geometry={bowGeometry} material={showSurfaceDebug ? new THREE.MeshStandardMaterial({ color: '#8B0000', transparent: true, opacity: 0.4, side: THREE.DoubleSide }) : materials.hullPaint} />
       
       {showStructuralLines && (
         <lineSegments geometry={frameLinesGeometry}>
@@ -155,11 +150,8 @@ function EngineeringHull({ surface }: { surface: ProceduralShipSurface }) {
         </lineSegments>
       )}
 
-      {/* Waterline */}
-      <mesh position={[0, 0, shipConfig.draft]}>
-        <planeGeometry args={[shipConfig.beam * 2.5, shipConfig.lengthOverall * 1.3]} />
-        <meshStandardMaterial color="#3498db" transparent opacity={0.15} depthWrite={false} side={THREE.DoubleSide} />
-      </mesh>
+      {/* Surface details (welds, draft marks, waterline) */}
+      {!showSurfaceDebug && <HullSurfaceDetails surface={surface} />}
 
       {/* Robot Proxies */}
       {showRobotProxies && proxies.map((proxy, idx) => (
@@ -183,66 +175,62 @@ function EngineeringHull({ surface }: { surface: ProceduralShipSurface }) {
 // ----------------------------------------------------------------------
 // MAIN DECK
 // ----------------------------------------------------------------------
-function MainDeck({ surface }: { surface: ProceduralShipSurface }) {
+function MainDeck({ surface, materials }: { surface: ProceduralShipSurface, materials: ReturnType<typeof useShipMaterials> }) {
   const deckGeometry = useMemo(() => {
     const uSegments = 120;
     const geo = new THREE.BufferGeometry();
     const verts: number[] = [];
     const idxs: number[] = [];
+    const uvs: number[] = [];
     for (let i = 0; i <= uSegments; i++) {
       const u = i / uSegments;
       const port = surface.evaluatePosition(u, -1);
       const stbd = surface.evaluatePosition(u, 1);
       verts.push(port.x, port.y, port.z, stbd.x, stbd.y, stbd.z);
+      uvs.push(0, u, 1, u);
       if (i < uSegments) {
         const p1 = i * 2, s1 = i * 2 + 1, p2 = (i + 1) * 2, s2 = (i + 1) * 2 + 1;
         idxs.push(p1, s1, s2, p1, s2, p2);
       }
     }
     geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
     geo.setIndex(idxs);
     geo.computeVertexNormals();
     return geo;
   }, [surface]);
 
   return (
-    <mesh geometry={deckGeometry}>
-      <meshStandardMaterial color="#2d3748" side={THREE.DoubleSide} roughness={0.9} />
-    </mesh>
+    <mesh geometry={deckGeometry} material={materials.deckMaterial} />
   );
 }
 
 // ----------------------------------------------------------------------
 // SUPERSTRUCTURE & BRIDGE
 // ----------------------------------------------------------------------
-function Superstructure() {
+function Superstructure({ materials }: { materials: ReturnType<typeof useShipMaterials> }) {
   const deckZ = 15.1; // Base deck height in aft region
   return (
     <group position={[0, -25, deckZ]}>
       {/* Lower accommodation block */}
-      <mesh position={[0, 0, 2]}>
+      <mesh position={[0, 0, 2]} material={materials.superstructurePaint}>
         <boxGeometry args={[18, 16, 4]} />
-        <meshStandardMaterial color="#f0f4f8" roughness={0.8} />
       </mesh>
       {/* Mid accommodation block */}
-      <mesh position={[0, -1, 6]}>
+      <mesh position={[0, -1, 6]} material={materials.superstructurePaint}>
         <boxGeometry args={[16, 12, 4]} />
-        <meshStandardMaterial color="#f0f4f8" roughness={0.8} />
       </mesh>
       {/* Bridge block */}
-      <mesh position={[0, -2, 10]}>
+      <mesh position={[0, -2, 10]} material={materials.superstructurePaint}>
         <boxGeometry args={[14, 8, 4]} />
-        <meshStandardMaterial color="#f0f4f8" roughness={0.8} />
       </mesh>
       {/* Bridge Wings */}
-      <mesh position={[0, 0, 10]}>
+      <mesh position={[0, 0, 10]} material={materials.superstructurePaint}>
         <boxGeometry args={[22, 3, 3]} />
-        <meshStandardMaterial color="#f0f4f8" roughness={0.8} />
       </mesh>
       {/* Bridge Windows */}
-      <mesh position={[0, 1.6, 10]}>
+      <mesh position={[0, 1.6, 10]} material={materials.glass}>
         <boxGeometry args={[22.2, 0.2, 1.8]} />
-        <meshStandardMaterial color="#1a202c" roughness={0.1} metalness={0.8} />
       </mesh>
     </group>
   );
@@ -251,33 +239,29 @@ function Superstructure() {
 // ----------------------------------------------------------------------
 // FUNNEL & MAST
 // ----------------------------------------------------------------------
-function FunnelAndMast() {
+function FunnelAndMast({ materials }: { materials: ReturnType<typeof useShipMaterials> }) {
   const deckZ = 15.1;
   return (
     <group>
       {/* Funnel */}
       <group position={[0, -42, deckZ]}>
-        <mesh position={[0, 0, 4]} rotation={[0.1, 0, 0]}>
+        <mesh position={[0, 0, 4]} rotation={[0.1, 0, 0]} material={materials.funnelMaterial}>
           <cylinderGeometry args={[2, 2.5, 8, 16]} />
-          <meshStandardMaterial color="#e74c3c" roughness={0.6} />
         </mesh>
         {/* Exhaust pipe */}
-        <mesh position={[0, 0.4, 8.2]} rotation={[0.1, 0, 0]}>
+        <mesh position={[0, 0.4, 8.2]} rotation={[0.1, 0, 0]} material={materials.equipmentMetal}>
           <cylinderGeometry args={[0.8, 0.8, 2, 8]} />
-          <meshStandardMaterial color="#2c3e50" roughness={0.8} />
         </mesh>
       </group>
       
       {/* Mast */}
       <group position={[0, -27, deckZ + 12]}>
-        <mesh position={[0, 0, 5]} rotation={[Math.PI / 2, 0, 0]}>
+        <mesh position={[0, 0, 5]} rotation={[Math.PI / 2, 0, 0]} material={materials.superstructurePaint}>
           <cylinderGeometry args={[0.3, 0.5, 10, 8]} />
-          <meshStandardMaterial color="#bdc3c7" roughness={0.7} />
         </mesh>
         {/* Radar crossbar */}
-        <mesh position={[0, 0, 8]}>
+        <mesh position={[0, 0, 8]} material={materials.equipmentMetal}>
           <boxGeometry args={[6, 0.5, 0.5]} />
-          <meshStandardMaterial color="#bdc3c7" roughness={0.7} />
         </mesh>
       </group>
     </group>
@@ -287,7 +271,7 @@ function FunnelAndMast() {
 // ----------------------------------------------------------------------
 // CARGO HATCHES
 // ----------------------------------------------------------------------
-function CargoHatches() {
+function CargoHatches({ materials }: { materials: ReturnType<typeof useShipMaterials> }) {
   const hatches = [
     { y: 35, width: 14, length: 12, height: 1.5, z: 15.3 }, // Bow-most (slight sheer rise)
     { y: 18, width: 16, length: 16, height: 1.5, z: 15.1 },
@@ -297,9 +281,13 @@ function CargoHatches() {
   return (
     <group>
       {hatches.map((h, i) => (
-        <mesh key={i} position={[0, h.y, h.z]}>
+        <mesh key={i} position={[0, h.y, h.z]} material={materials.hatchMetal}>
           <boxGeometry args={[h.width, h.length, h.height]} />
-          <meshStandardMaterial color="#34495e" roughness={0.7} />
+          {/* Subtle panel outline */}
+          <lineSegments>
+            <edgesGeometry args={[new THREE.BoxGeometry(h.width, h.length, h.height)]} />
+            <lineBasicMaterial color="#1e293b" />
+          </lineSegments>
         </mesh>
       ))}
     </group>
@@ -309,50 +297,65 @@ function CargoHatches() {
 // ----------------------------------------------------------------------
 // DECK EQUIPMENT & RAILINGS
 // ----------------------------------------------------------------------
-function DeckEquipment() {
+function DeckEquipment({ materials }: { materials: ReturnType<typeof useShipMaterials> }) {
   return (
     <group>
       {/* Forecastle equipment (Winches/Windlass) */}
-      <mesh position={[0, 52, 16.5]}>
+      <mesh position={[0, 52, 16.5]} material={materials.equipmentMetal}>
         <boxGeometry args={[3, 2, 1.5]} />
-        <meshStandardMaterial color="#7f8c8d" />
       </mesh>
-      <mesh position={[-2, 54, 16.8]} rotation={[0, 0, Math.PI/2]}>
+      <mesh position={[-2, 54, 16.8]} rotation={[0, 0, Math.PI/2]} material={materials.equipmentMetal}>
         <cylinderGeometry args={[0.5, 0.5, 1.5]} />
-        <meshStandardMaterial color="#2c3e50" />
       </mesh>
-      <mesh position={[2, 54, 16.8]} rotation={[0, 0, Math.PI/2]}>
+      <mesh position={[2, 54, 16.8]} rotation={[0, 0, Math.PI/2]} material={materials.equipmentMetal}>
         <cylinderGeometry args={[0.5, 0.5, 1.5]} />
-        <meshStandardMaterial color="#2c3e50" />
       </mesh>
 
       {/* Aft mooring equipment */}
-      <mesh position={[0, -55, 15.5]}>
+      <mesh position={[0, -55, 15.5]} material={materials.equipmentMetal}>
         <boxGeometry args={[4, 2, 1]} />
-        <meshStandardMaterial color="#7f8c8d" />
       </mesh>
     </group>
   );
 }
 
 // ----------------------------------------------------------------------
+// SHIP MARKINGS
+// ----------------------------------------------------------------------
+function ShipMarkings() {
+  return (
+    <group>
+      {/* Warning markings near equipment */}
+      <mesh position={[0, -53, 15.11]}>
+        <planeGeometry args={[5, 1]} />
+        <meshStandardMaterial color="#f59e0b" roughness={0.8} />
+      </mesh>
+    </group>
+  )
+}
+
+
+// ----------------------------------------------------------------------
 // SHIP ASSEMBLY MAIN COMPONENT
 // ----------------------------------------------------------------------
 export function ShipAssembly() {
   const surface = useMemo(() => new ProceduralShipSurface(), []);
+  const materials = useShipMaterials();
 
   return (
     <group>
-      <EngineeringHull surface={surface} />
-      <MainDeck surface={surface} />
-      <CargoHatches />
-      <Superstructure />
-      <FunnelAndMast />
-      <DeckEquipment />
-      {/* Simple Ship Lighting placeholders */}
-      <pointLight position={[10, -25, 25]} color="#2ecc71" intensity={0.5} distance={15} /> {/* Starboard green */}
-      <pointLight position={[-10, -25, 25]} color="#e74c3c" intensity={0.5} distance={15} /> {/* Port red */}
-      <pointLight position={[0, -27, 35]} color="#ffffff" intensity={0.8} distance={20} /> {/* Mast white */}
+      <EngineeringHull surface={surface} materials={materials} />
+      <MainDeck surface={surface} materials={materials} />
+      <CargoHatches materials={materials} />
+      <Superstructure materials={materials} />
+      <FunnelAndMast materials={materials} />
+      <DeckEquipment materials={materials} />
+      <ShipMarkings />
+      
+      {/* Ship Navigation Lighting */}
+      <pointLight position={[11.5, -25, 25]} color="#2ecc71" intensity={0.8} distance={15} /> {/* Starboard green */}
+      <pointLight position={[-11.5, -25, 25]} color="#e74c3c" intensity={0.8} distance={15} /> {/* Port red */}
+      <pointLight position={[0, -27, 35]} color="#ffffff" intensity={1.5} distance={30} /> {/* Mast white */}
     </group>
   );
 }
