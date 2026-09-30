@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
-import { ShipHullPrototype } from '@/components/DigitalTwin/ShipHullPrototype';
+import { ShipAssembly } from '@/components/DigitalTwin/ShipAssembly';
 import { TestShipCameraController, CameraPreset, InspectionTarget } from '@/components/DigitalTwin/TestShipCameraController';
 import { useTestShipStore } from '@/lib/state/testShipStore';
 import Link from 'next/link';
@@ -95,7 +95,7 @@ export default function TestShipPage() {
         <Grid args={[160, 160]} cellColor="#444444" sectionColor="#3498db" sectionSize={10} cellSize={10} fadeDistance={80} fadeStrength={1} position={[0, 0, -0.1]} rotation={[Math.PI / 2, 0, 0]} />
 
         {/* The Ship */}
-        <ShipHullPrototype />
+        <ShipAssembly />
         
         {/* Camera Controller handles OrbitControls under the hood */}
         <TestShipCameraController preset={preset} targetPreset={target} />
