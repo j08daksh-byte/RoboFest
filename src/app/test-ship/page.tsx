@@ -5,6 +5,8 @@ import { Canvas } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Grid, Environment } from '@react-three/drei';
 import { ShipAssembly } from '@/components/DigitalTwin/ShipAssembly';
 import { DryDock } from '@/components/DigitalTwin/DryDock';
+import { RobotModel } from '@/components/DigitalTwin/RobotModel';
+import { SimulationController } from '@/components/DigitalTwin/SimulationController';
 import { TestShipCameraController, CameraPreset, InspectionTarget } from '@/components/DigitalTwin/TestShipCameraController';
 import { useTestShipStore } from '@/lib/state/testShipStore';
 import Link from 'next/link';
@@ -102,6 +104,12 @@ export default function TestShipPage() {
         
         {/* Shipyard Environment */}
         <DryDock />
+        
+        {/* The Original Robot - mapped to the Starboard side of the new ship */}
+        <group position={[9.95, 0, 7.5]} rotation={[0, -Math.PI / 2, 0]}>
+          <SimulationController />
+          <RobotModel showAxes={showSurfaceDebug} />
+        </group>
         
         {/* Camera Controller handles OrbitControls under the hood */}
         <TestShipCameraController preset={preset} targetPreset={target} />
