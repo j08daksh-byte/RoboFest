@@ -3,9 +3,11 @@ import * as THREE from 'three';
 import { ProceduralShipSurface } from '@/lib/geometry/ProceduralShipSurface';
 import { computeRobotOrientation } from '@/lib/geometry/HullSurfaceQuery';
 import { shipConfig } from '@/lib/geometry/shipConfig';
+import { useTestShipStore } from '@/lib/state/testShipStore';
 
 export function ShipHullPrototype() {
   const surface = useMemo(() => new ProceduralShipSurface(), []);
+  const { showStructuralLines, showSurfaceDebug, showSurfaceNormals, showSurfaceTangents, showRobotProxies } = useTestShipStore();
 
   // 1. Generate Main Hull Mesh
   const { hullGeometry, frameLinesGeometry, deckGeometry } = useMemo(() => {
@@ -124,9 +126,11 @@ export function ShipHullPrototype() {
       </mesh>
       
       {/* Structural Frames */}
-      <lineSegments geometry={frameLinesGeometry}>
-        <lineBasicMaterial color="#ffffff" transparent opacity={0.15} />
-      </lineSegments>
+      {showStructuralLines && (
+        <lineSegments geometry={frameLinesGeometry}>
+          <lineBasicMaterial color="#ffffff" transparent opacity={0.15} />
+        </lineSegments>
+      )}
 
       {/* Deck */}
       <mesh geometry={deckGeometry}>
@@ -140,7 +144,7 @@ export function ShipHullPrototype() {
       </mesh>
 
       {/* Robot Proxies */}
-      {proxies.map((proxy, idx) => (
+      {showRobotProxies && proxies.map((proxy, idx) => (
         <group key={idx} position={proxy.query.position} quaternion={proxy.quat}>
           {/* Box representing robot body (sitting slightly off the hull by half its thickness) */}
           <mesh position={[0, 0, shipConfig.robotSize / 2]}>
@@ -149,10 +153,14 @@ export function ShipHullPrototype() {
           </mesh>
           
           {/* Normal Vector (Green, Z-axis) */}
-          <arrowHelper args={[new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), 2, 0x00ff00]} />
+          {(showSurfaceNormals || showSurfaceDebug) && (
+            <arrowHelper args={[new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), 2, 0x00ff00]} />
+          )}
           
           {/* Tangent Vector (Blue, Y-axis) */}
-          <arrowHelper args={[new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 2, 0x0000ff]} />
+          {(showSurfaceTangents || showSurfaceDebug) && (
+            <arrowHelper args={[new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 2, 0x0000ff]} />
+          )}
         </group>
       ))}
     </group>
