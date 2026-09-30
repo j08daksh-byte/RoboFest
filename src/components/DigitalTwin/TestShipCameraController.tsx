@@ -15,11 +15,16 @@ interface TestShipCameraControllerProps {
 
 export function TestShipCameraController({ preset, targetPreset }: TestShipCameraControllerProps) {
   const controlsRef = useRef<OrbitControlsImpl>(null);
-  const { camera } = useThree();
+  const { camera, size } = useThree();
   
   const [isAnimating, setIsAnimating] = useState(true);
 
-  // Derive targetPos and targetLookAt without useEffect side effects
+  // Force Z-up convention for the camera and OrbitControls
+  useEffect(() => {
+    camera.up.set(0, 0, 1);
+    camera.updateProjectionMatrix();
+  }, [camera]);
+
   const { targetPos, targetLookAt } = useMemo(() => {
     const L = shipConfig.lengthOverall;
     const B = shipConfig.beam;
@@ -29,59 +34,106 @@ export function TestShipCameraController({ preset, targetPreset }: TestShipCamer
     const pos = new THREE.Vector3();
 
     // 1. Determine base target from InspectionTarget
+    let targetL = L; // Length of the target region
+    const targetB = B; // Beam of the target region
+    let targetH = H; // Height of the target region
+
     switch (targetPreset) {
       case 'Whole Ship':
         lookAt.set(0, 0, H / 2);
+        targetL = L;
         break;
       case 'Bow':
-        lookAt.set(0, L / 2 - 10, H / 2);
+        lookAt.set(0, L / 2 - 15, H / 2);
+        targetL = 30; // approx bow region length
         break;
       case 'Midship':
         lookAt.set(0, 0, H / 2);
+        targetL = 40;
         break;
       case 'Stern':
-        lookAt.set(0, -L / 2 + 10, H / 2);
+        lookAt.set(0, -L / 2 + 15, H / 2);
+        targetL = 30;
         break;
       case 'Keel':
         lookAt.set(0, 0, 0);
+        targetH = 5;
+        targetL = 40;
         break;
     }
 
-    // 2. Determine base distance needed based on target
-    const distL = targetPreset === 'Whole Ship' ? L * 1.2 : L * 0.3;
-    const distB = targetPreset === 'Whole Ship' ? B * 3 : B * 2;
+    // 2. Mathematically calculate framing distances based on camera FOV
+    const isPerspective = (camera as THREE.PerspectiveCamera).isPerspectiveCamera;
+    let distForLength = L;
+    let distForBeam = B;
+    let distForHeight = H;
+
+    if (isPerspective) {
+      const pCam = camera as THREE.PerspectiveCamera;
+      const vFov = (pCam.fov * Math.PI) / 180;
+      const aspect = size.width / size.height || pCam.aspect;
+      
+      // Helper to calculate distance needed to fit width & height
+      const calcDist = (w: number, h: number, pad = 1.2) => {
+        const dH = h / (2 * Math.tan(vFov / 2));
+        const dW = w / (2 * Math.tan(vFov / 2) * aspect);
+        return Math.max(dH, dW) * pad;
+      };
+
+      // Distance if we are looking from the side (we see length horizontally, height vertically)
+      distForLength = calcDist(targetL, targetH);
+      
+      // Distance if we are looking from front/back (we see beam horizontally, height vertically)
+      distForBeam = calcDist(targetB, targetH);
+      
+      // Distance if looking from top/bottom (we see beam horizontally, length vertically... or vice versa depending on roll, but we force Z-up so Y is vertical on screen when looking from top? No, if we look from +Z down to -Z with UP=[0,0,1], UP is actually ambiguous. We usually want +Y to be UP on screen for a top view.)
+      distForHeight = calcDist(targetB, targetL, 1.1);
+    } else {
+      distForLength = targetL * 1.5;
+      distForBeam = targetB * 1.5;
+      distForHeight = Math.max(targetL, targetB) * 1.5;
+    }
 
     // 3. Determine camera position from CameraPreset
     switch (preset) {
       case 'RESET':
-        pos.set(B * 2.5, L * 0.8, H * 3);
+        // A comfortable 3/4 view
+        pos.set(distForLength * 0.7, distForLength * 0.7, targetH + distForLength * 0.5);
         lookAt.set(0, 0, H / 2);
         break;
       case 'FRONT':
-        pos.set(0, lookAt.y + distL, lookAt.z);
+        // Looking aft (-Y) from forward (+Y)
+        pos.set(lookAt.x, lookAt.y + distForBeam, lookAt.z);
         break;
       case 'REAR':
-        pos.set(0, lookAt.y - distL, lookAt.z);
+        // Looking forward (+Y) from aft (-Y)
+        pos.set(lookAt.x, lookAt.y - distForBeam, lookAt.z);
         break;
       case 'STARBOARD':
-        pos.set(lookAt.x + distB, lookAt.y, lookAt.z);
+        // Looking port (-X) from starboard (+X)
+        pos.set(lookAt.x + distForLength, lookAt.y, lookAt.z);
         break;
       case 'PORT':
-        pos.set(lookAt.x - distB, lookAt.y, lookAt.z);
+        // Looking starboard (+X) from port (-X)
+        pos.set(lookAt.x - distForLength, lookAt.y, lookAt.z);
         break;
       case 'TOP':
-        pos.set(lookAt.x, lookAt.y, lookAt.z + distL);
+        // Looking down (-Z) from above (+Z)
+        // Note: For top view, OrbitControls with Z-up might get gimbal lock if camera looks exactly down -Z.
+        // We offset Y by a tiny amount to preserve the up vector cleanly.
+        pos.set(lookAt.x, lookAt.y - 0.1, lookAt.z + distForHeight);
         break;
       case 'BOTTOM':
-        pos.set(lookAt.x, lookAt.y, lookAt.z - (targetPreset === 'Whole Ship' ? distL * 0.5 : distL * 0.3));
+        // Looking up (+Z) from below (-Z)
+        pos.set(lookAt.x, lookAt.y - 0.1, lookAt.z - distForHeight);
         break;
       case 'ISOMETRIC':
-        pos.set(lookAt.x + distB, lookAt.y + distL * 0.7, lookAt.z + H * 2);
+        pos.set(lookAt.x + distForLength * 0.7, lookAt.y + distForLength * 0.7, lookAt.z + distForHeight * 0.7);
         break;
     }
 
     return { targetPos: pos, targetLookAt: lookAt };
-  }, [preset, targetPreset]);
+  }, [preset, targetPreset, camera, size]);
 
   // Restart animation when targets change
   useEffect(() => {
@@ -123,7 +175,7 @@ export function TestShipCameraController({ preset, targetPreset }: TestShipCamer
       enableDamping
       dampingFactor={0.05}
       minDistance={2}
-      maxDistance={shipConfig.lengthOverall * 3}
+      maxDistance={shipConfig.lengthOverall * 4}
       maxPolarAngle={Math.PI} // Allow going underneath
       onStart={() => setIsAnimating(false)} // User interaction stops auto-animation
     />

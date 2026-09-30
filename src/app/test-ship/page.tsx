@@ -91,8 +91,8 @@ export default function TestShipPage() {
         <directionalLight position={[100, 100, 100]} intensity={1.5} />
         <directionalLight position={[-100, -100, 50]} intensity={0.5} />
         
-        {/* Scale Reference / Grid (10m grid squares over 200m area) */}
-        <Grid args={[200, 200]} cellColor="#ffffff" sectionColor="#4facfe" sectionSize={10} cellSize={10} fadeDistance={300} position={[0, 0, -1]} rotation={[Math.PI / 2, 0, 0]} />
+        {/* Scale Reference / Grid (10m grid squares over 160m area) */}
+        <Grid args={[160, 160]} cellColor="#444444" sectionColor="#3498db" sectionSize={10} cellSize={10} fadeDistance={80} fadeStrength={1} position={[0, 0, -0.1]} rotation={[Math.PI / 2, 0, 0]} />
 
         {/* The Ship */}
         <ShipHullPrototype />
