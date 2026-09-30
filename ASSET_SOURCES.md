@@ -1,18 +1,19 @@
 # Asset Sources
 
-This document tracks external texture and 3D assets used in the project.
+The following external assets are used in the `/test-ship` environment. All assets are licensed under CC0.
 
-## Current Assets
+## 3D Models
+- `overhead_crane` (CC0) - Source: Poly Haven (https://polyhaven.com/a/overhead_crane)
+- `metal_tool_chest` (CC0) - Source: Poly Haven (https://polyhaven.com/a/metal_tool_chest)
+- `worn_metal_rack` (CC0) - Source: Poly Haven (https://polyhaven.com/a/worn_metal_rack)
+- `industrial_storage_cart` (CC0) - Source: Poly Haven (https://polyhaven.com/a/industrial_storage_cart)
+- `metal_jerrycan` (CC0) - Source: Poly Haven (https://polyhaven.com/a/metal_jerrycan)
 
-**Procedural Canvas Textures**
-* **Source:** `src/lib/materials/useShipMaterials.ts` (Internal Procedural Generator)
-* **License:** MIT / Internal
-* **Used for:** 
-  * Hull paint (roughness/albedo noise)
-  * Anti-fouling coating (roughness/albedo noise)
-  * Deck steel (anti-slip micro-texture)
-  * Superstructure paint (subtle weathering noise)
-  * Funnel soot (canvas linear gradient)
-* **Rationale:** The current phase (Phase 6B) uses lightweight, deterministic HTML5 Canvas generation to create seamless tileable noise maps. This achieves subtle industrial weathering (roughness variation, grime) without requiring heavy external image downloads, maintaining perfect browser performance and avoiding any CC0/copyright compliance issues.
+## Textures
+- `dirty_concrete` (CC0) - Source: Poly Haven (https://polyhaven.com/a/dirty_concrete)
+- `coast_sand_01` (CC0) - Source: Poly Haven (https://polyhaven.com/a/coast_sand_01)
+- `gravel_floor` (CC0) - Source: Poly Haven (https://polyhaven.com/a/gravel_floor)
+- `green_metal_rust` (CC0) - Source: Poly Haven (https://polyhaven.com/a/green_metal_rust)
 
-*(Note: When real photographic CC0 textures are introduced in later phases, e.g. from Poly Haven, they will be downloaded to `public/textures/ship/...` and documented here.)*
+## Environments
+- `kloppenheim_02` HDRI (CC0) - Source: Poly Haven (https://polyhaven.com/a/kloppenheim_02)

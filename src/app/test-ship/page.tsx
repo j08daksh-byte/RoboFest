@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
+import { GizmoHelper, GizmoViewport, Grid, Environment } from '@react-three/drei';
 import { ShipAssembly } from '@/components/DigitalTwin/ShipAssembly';
 import { DryDock } from '@/components/DigitalTwin/DryDock';
 import { TestShipCameraController, CameraPreset, InspectionTarget } from '@/components/DigitalTwin/TestShipCameraController';
@@ -85,12 +85,12 @@ export default function TestShipPage() {
       </div>
 
       <Canvas shadows>
-        <color attach="background" args={['#a9b5c2']} />
-        <fog attach="fog" args={['#a9b5c2', 60, 400]} />
+        {/* Photorealistic HDR Environment */}
+        <Environment files="/environments/kloppenheim_02.hdr" background />
+        <fog attach="fog" args={['#a9b5c2', 150, 600]} />
         
-        {/* Realistic Industrial Lighting */}
-        <ambientLight intensity={0.6} color="#dbe6eb" />
-        <directionalLight position={[100, -50, 150]} intensity={1.5} color="#fffcf5" castShadow />
+        {/* Realistic Industrial Lighting (HDR provides ambient) */}
+        <directionalLight position={[100, -50, 150]} intensity={1.5} color="#fffcf5" castShadow shadow-mapSize={[2048, 2048]} />
         <directionalLight position={[-100, 100, 50]} intensity={0.5} color="#8899aa" />
         
         {/* Scale Reference / Grid (10m grid squares over 160m area) */}

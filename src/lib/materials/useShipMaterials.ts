@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
+import { useTexture } from '@react-three/drei';
 
 // Procedural texture generator for subtle variation without heavy external assets
 function createNoiseTexture(size: number, baseColor: string, noiseColor: string, opacity: number, scale: number): THREE.CanvasTexture | null {
@@ -54,25 +55,26 @@ function createGradientTexture(colorStart: string, colorEnd: string): THREE.Canv
 }
 
 export function useShipMaterials() {
+  const rustDiff = useTexture('/textures/green_metal_rust/green_metal_rust_diff_2k.jpg');
+
   const materials = useMemo(() => {
+    let clonedRustDiff = null;
+    if (rustDiff) {
+      clonedRustDiff = rustDiff.clone();
+      clonedRustDiff.wrapS = clonedRustDiff.wrapT = THREE.RepeatWrapping;
+      clonedRustDiff.repeat.set(10, 4);
+      clonedRustDiff.needsUpdate = true;
+    }
+
     // 1. Painted Hull Steel
-    // Dark industrial blue/grey with subtle noise for wear
-    const hullAlbedo = createNoiseTexture(512, '#3a4750', '#2d373f', 0.4, 4);
-    const hullRoughness = createNoiseTexture(256, '#888888', '#aaaaaa', 0.5, 2);
-    
     const hullPaint = new THREE.MeshStandardMaterial({
-      color: '#3a4750', // Fallback
-      map: hullAlbedo,
-      roughnessMap: hullRoughness,
+      color: '#3a4750',
+      map: clonedRustDiff,
       roughness: 0.65,
       metalness: 0.3,
       side: THREE.DoubleSide
     });
-    if (hullAlbedo) {
-      hullAlbedo.repeat.set(10, 4);
-      hullPaint.color.setHex(0xffffff); // Use texture color
-    }
-    if (hullRoughness) hullRoughness.repeat.set(10, 4);
+
 
     // 2. Anti-Fouling Lower Hull
     // Dark red, rougher, more weathered
@@ -172,7 +174,7 @@ export function useShipMaterials() {
       funnelMaterial,
       warningPaint
     };
-  }, []);
+  }, [rustDiff]);
 
   return materials;
 }

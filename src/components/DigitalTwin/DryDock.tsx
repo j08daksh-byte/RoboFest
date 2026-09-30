@@ -1,80 +1,91 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import * as THREE from 'three';
+import { useGLTF, useTexture } from '@react-three/drei';
 import { shipConfig } from '@/lib/geometry/shipConfig';
 
 // -------------------------------------------------------------------------------------------------
-// MATERIALS & TEXTURES
+// ASSETS & MATERIALS
 // -------------------------------------------------------------------------------------------------
 
-function createConcreteTexture() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 1024;
-  const ctx = canvas.getContext('2d')!;
-  
-  // Base concrete
-  ctx.fillStyle = '#7f8c8d';
-  ctx.fillRect(0, 0, 1024, 1024);
-  
-  // Noise and variation
-  for (let i = 0; i < 20000; i++) {
-    const x = Math.random() * 1024;
-    const y = Math.random() * 1024;
-    const v = Math.random() > 0.5 ? 255 : 0;
-    ctx.fillStyle = `rgba(${v}, ${v}, ${v}, 0.03)`;
-    ctx.fillRect(x, y, 2, 2);
-  }
+function GLTFModel({ path, position, rotation, scale }: { path: string; position: number[]; rotation: number[]; scale: number }) {
+  const { scene } = useGLTF(path) as { scene: THREE.Group };
+  const clone = useMemo(() => {
+    const c = scene.clone(true);
+    c.traverse((node: THREE.Object3D) => {
+      if ((node as THREE.Mesh).isMesh) {
+        node.castShadow = true;
+        node.receiveShadow = true;
+      }
+    });
+    return c;
+  }, [scene]);
 
-  // Expansion joints
-  ctx.fillStyle = '#2c3e50';
-  for (let i = 0; i < 1024; i += 128) {
-    ctx.fillRect(i, 0, 4, 1024);
-    ctx.fillRect(0, i, 1024, 4);
-  }
-
-  // Grime / Water stains
-  for (let i = 0; i < 20; i++) {
-    ctx.beginPath();
-    ctx.arc(Math.random() * 1024, Math.random() * 1024, 50 + Math.random() * 150, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-    ctx.fill();
-  }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(10, 20); // Repeat across dock
-  return texture;
+  return <primitive object={clone} position={position} rotation={rotation} scale={scale} />;
 }
 
-const concreteMaterial = new THREE.MeshStandardMaterial({
-  color: '#8b9396',
-  roughness: 0.95,
-  metalness: 0.1,
-});
+function GroundPlanes() {
+  // Load textures
+  const dirtDiff = useTexture('/textures/dirty_concrete/dirty_concrete_diff_2k.jpg');
+  const dirtRough = useTexture('/textures/dirty_concrete/dirty_concrete_rough_2k.jpg');
+  const dirtNor = useTexture('/textures/dirty_concrete/dirty_concrete_nor_gl_2k.jpg');
 
-const darkConcreteMaterial = new THREE.MeshStandardMaterial({
-  color: '#555b5e',
-  roughness: 1.0,
-});
+  const sandDiff = useTexture('/textures/coast_sand_01/coast_sand_01_diff_2k.jpg');
+  const sandRough = useTexture('/textures/coast_sand_01/coast_sand_01_rough_2k.jpg');
+  const sandNor = useTexture('/textures/coast_sand_01/coast_sand_01_nor_gl_2k.jpg');
 
-const steelMaterial = new THREE.MeshStandardMaterial({
-  color: '#4a5568',
-  roughness: 0.8,
-  metalness: 0.6,
-});
+  const textures = useMemo(() => {
+    const dDiff = dirtDiff ? dirtDiff.clone() : null;
+    const dRough = dirtRough ? dirtRough.clone() : null;
+    const dNor = dirtNor ? dirtNor.clone() : null;
+    const sDiff = sandDiff ? sandDiff.clone() : null;
+    const sRough = sandRough ? sandRough.clone() : null;
+    const sNor = sandNor ? sandNor.clone() : null;
 
-const safetyMaterial = new THREE.MeshStandardMaterial({
-  color: '#d35400', // Industrial orange/yellow
-  roughness: 0.7,
-  metalness: 0.2,
-});
+    [dDiff, dRough, dNor].forEach(t => {
+      if(t) {
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        t.repeat.set(30, 30);
+        t.needsUpdate = true;
+      }
+    });
 
-const equipmentBlue = new THREE.MeshStandardMaterial({
-  color: '#2980b9',
-  roughness: 0.6,
-  metalness: 0.4,
-});
+    [sDiff, sRough, sNor].forEach(t => {
+      if(t) {
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        t.repeat.set(50, 50);
+        t.needsUpdate = true;
+      }
+    });
+
+    return { dDiff, dRough, dNor, sDiff, sRough, sNor };
+  }, [dirtDiff, dirtRough, dirtNor, sandDiff, sandRough, sandNor]);
+
+  return (
+    <group>
+      {/* Huge Outer Sand/Dirt Yard */}
+      <mesh position={[0, 0, -2.1]} receiveShadow>
+        <planeGeometry args={[1000, 1000]} />
+        <meshStandardMaterial 
+          map={textures.sDiff} 
+          roughnessMap={textures.sRough} 
+          normalMap={textures.sNor}
+          roughness={1}
+        />
+      </mesh>
+
+      {/* Concrete Dry Dock / Working Area */}
+      <mesh position={[0, 0, -2]} receiveShadow>
+        <planeGeometry args={[100, 300]} />
+        <meshStandardMaterial 
+          map={textures.dDiff} 
+          roughnessMap={textures.dRough} 
+          normalMap={textures.dNor}
+          roughness={0.9}
+        />
+      </mesh>
+    </group>
+  );
+}
 
 // -------------------------------------------------------------------------------------------------
 // COMPONENTS
@@ -82,80 +93,109 @@ const equipmentBlue = new THREE.MeshStandardMaterial({
 
 function KeelBlocks() {
   const L = shipConfig.lengthOverall;
-  const blockCount = Math.floor(L / 2); // Block every 2 meters
+  const blockCount = Math.floor(L / 2) + 20; // Block every 2 meters, some extra for side blocks
   
   const meshRef = useRef<THREE.InstancedMesh>(null);
   
+  const concreteMat = useMemo(() => new THREE.MeshStandardMaterial({
+    color: '#444b4d',
+    roughness: 0.95,
+  }), []);
+
   useEffect(() => {
     if (meshRef.current) {
       const dummy = new THREE.Object3D();
       let idx = 0;
+      
+      // Central Keel line
       for (let y = -L/2 + 5; y <= L/2 - 5; y += 2) {
         dummy.position.set(0, y, -1); // Centered under keel, Z=-1 (middle of 2m high block)
-        dummy.scale.set(1, 1, 1);
+        dummy.scale.set(1.5, 1, 2);
         dummy.updateMatrix();
         meshRef.current.setMatrixAt(idx++, dummy.matrix);
       }
+
+      // Bilge support blocks
+      for (let y = -L/2 + 20; y <= L/2 - 20; y += 10) {
+        // Port
+        dummy.position.set(-6, y, -0.5);
+        dummy.scale.set(1.5, 1.5, 3);
+        dummy.updateMatrix();
+        meshRef.current.setMatrixAt(idx++, dummy.matrix);
+        // Stbd
+        dummy.position.set(6, y, -0.5);
+        dummy.scale.set(1.5, 1.5, 3);
+        dummy.updateMatrix();
+        meshRef.current.setMatrixAt(idx++, dummy.matrix);
+      }
+
       meshRef.current.instanceMatrix.needsUpdate = true;
     }
   }, [L]);
 
   return (
     <group>
-      {/* Central Keel Blocks: 2m wide, 1m deep, 2m high */}
-      <instancedMesh ref={meshRef} args={[undefined, undefined, blockCount]} castShadow receiveShadow material={darkConcreteMaterial}>
-        <boxGeometry args={[2, 1, 2]} />
+      <instancedMesh ref={meshRef} args={[undefined, undefined, blockCount]} castShadow receiveShadow material={concreteMat}>
+        <boxGeometry args={[1, 1, 1]} />
       </instancedMesh>
     </group>
   );
 }
 
-function Scaffolding() {
-  // Modular scaffolding running along the starboard side of the hull
-  const L = shipConfig.lengthOverall;
-  const sections = Math.floor(L / 4) - 4; // 4m sections
+function IndustrialScaffolding() {
+  const steelMaterial = useMemo(() => new THREE.MeshStandardMaterial({
+    color: '#34495e',
+    roughness: 0.8,
+    metalness: 0.6,
+  }), []);
+
+  const woodMaterial = useMemo(() => new THREE.MeshStandardMaterial({
+    color: '#8e6a45',
+    roughness: 0.9,
+  }), []);
+
+  const sections = 12; // 4m sections
   const levels = 4;
+  const poleCount = sections * levels * 5;
   const scaffoldRef = useRef<THREE.InstancedMesh>(null);
   
   useEffect(() => {
     if (scaffoldRef.current) {
       const dummy = new THREE.Object3D();
       let idx = 0;
+      const startY = 10; // Midship area, starboard side
       
-      const startY = -L/2 + 10;
-      
-      // Vertical Poles
       for (let s = 0; s < sections; s++) {
         const y = startY + s * 4;
         for (let l = 0; l < levels; l++) {
-          const z = -2 + l * 3 + 1.5; // Starts at dock floor (Z=-2), each level is 3m
+          const z = -2 + l * 2.5 + 1.25;
           
           // Inner pole
-          dummy.position.set(11, y, z);
-          dummy.scale.set(0.1, 0.1, 3);
+          dummy.position.set(10.5, y, z);
+          dummy.scale.set(0.1, 0.1, 2.5);
           dummy.updateMatrix();
           scaffoldRef.current.setMatrixAt(idx++, dummy.matrix);
           
           // Outer pole
-          dummy.position.set(13, y, z);
-          dummy.scale.set(0.1, 0.1, 3);
+          dummy.position.set(12.5, y, z);
+          dummy.scale.set(0.1, 0.1, 2.5);
           dummy.updateMatrix();
           scaffoldRef.current.setMatrixAt(idx++, dummy.matrix);
           
           // Horizontal brace
-          dummy.position.set(12, y, z);
+          dummy.position.set(11.5, y, z);
           dummy.scale.set(2, 0.1, 0.1);
           dummy.updateMatrix();
           scaffoldRef.current.setMatrixAt(idx++, dummy.matrix);
           
-          // Longitudinal brace
+          // Longitudinal braces
           if (s < sections - 1) {
-            dummy.position.set(13, y + 2, z);
+            dummy.position.set(12.5, y + 2, z);
             dummy.scale.set(0.1, 4, 0.1);
             dummy.updateMatrix();
             scaffoldRef.current.setMatrixAt(idx++, dummy.matrix);
             
-            dummy.position.set(11, y + 2, z);
+            dummy.position.set(10.5, y + 2, z);
             dummy.scale.set(0.1, 4, 0.1);
             dummy.updateMatrix();
             scaffoldRef.current.setMatrixAt(idx++, dummy.matrix);
@@ -164,242 +204,77 @@ function Scaffolding() {
       }
       scaffoldRef.current.instanceMatrix.needsUpdate = true;
     }
-  }, [L, sections]);
+  }, [sections]);
 
   return (
     <group>
-      {/* Scaffolding structure */}
-      <instancedMesh ref={scaffoldRef} args={[undefined, undefined, sections * levels * 5]} castShadow receiveShadow material={steelMaterial}>
+      <instancedMesh ref={scaffoldRef} args={[undefined, undefined, poleCount]} castShadow receiveShadow material={steelMaterial}>
         <boxGeometry args={[1, 1, 1]} />
       </instancedMesh>
       
-      {/* Working platforms (wooden planks) */}
-      <mesh position={[12, 0, -2 + 3]} castShadow receiveShadow>
-        <boxGeometry args={[2, sections * 4, 0.1]} />
-        <meshStandardMaterial color="#8e6a45" roughness={0.9} />
-      </mesh>
-      <mesh position={[12, 0, -2 + 6]} castShadow receiveShadow>
-        <boxGeometry args={[2, sections * 4, 0.1]} />
-        <meshStandardMaterial color="#8e6a45" roughness={0.9} />
-      </mesh>
-      <mesh position={[12, 0, -2 + 9]} castShadow receiveShadow>
-        <boxGeometry args={[2, sections * 4, 0.1]} />
-        <meshStandardMaterial color="#8e6a45" roughness={0.9} />
-      </mesh>
+      {/* Wooden working platforms */}
+      {[0, 1, 2, 3].map(l => (
+        <mesh key={l} position={[11.5, 10 + (sections * 4) / 2 - 2, -2 + l * 2.5 + 2.5]} castShadow receiveShadow material={woodMaterial}>
+          <boxGeometry args={[1.8, sections * 4, 0.05]} />
+        </mesh>
+      ))}
     </group>
   );
 }
 
-function IndustrialEquipment() {
-  // Gas cylinders (Instanced)
-  const cylinderRef = useRef<THREE.InstancedMesh>(null);
-  
-  useEffect(() => {
-    if (cylinderRef.current) {
-      const dummy = new THREE.Object3D();
-      let idx = 0;
-      // Rack 1
-      for (let x=0; x<4; x++) {
-        for (let y=0; y<2; y++) {
-          dummy.position.set(20 + x*0.4, 10 + y*0.4, -1.5);
-          dummy.updateMatrix();
-          cylinderRef.current.setMatrixAt(idx++, dummy.matrix);
-        }
-      }
-      // Rack 2
-      for (let x=0; x<4; x++) {
-        for (let y=0; y<2; y++) {
-          dummy.position.set(20 + x*0.4, -20 + y*0.4, -1.5);
-          dummy.updateMatrix();
-          cylinderRef.current.setMatrixAt(idx++, dummy.matrix);
-        }
-      }
-      cylinderRef.current.instanceMatrix.needsUpdate = true;
-    }
-  }, []);
-
+function RealWorldAssets() {
   return (
     <group>
-      <instancedMesh ref={cylinderRef} args={[undefined, undefined, 16]} castShadow receiveShadow material={safetyMaterial}>
-        <cylinderGeometry args={[0.15, 0.15, 1.2, 8]} />
-      </instancedMesh>
+      {/* Shipyard Crane - Starboard Aft */}
+      <GLTFModel path="/models/overhead_crane/overhead_crane.gltf" position={[20, -40, -2]} rotation={[Math.PI/2, 0, Math.PI/4]} scale={5} />
       
-      {/* Welding Generator 1 */}
-      <mesh position={[18, 12, -1.5]} castShadow receiveShadow material={equipmentBlue}>
-        <boxGeometry args={[1.5, 2, 1.2]} />
-      </mesh>
-      
-      {/* Welding Generator 2 */}
-      <mesh position={[18, -18, -1.5]} castShadow receiveShadow material={equipmentBlue}>
-        <boxGeometry args={[1.5, 2, 1.2]} />
-      </mesh>
-      
-      {/* Mobile Work Lift (Cherry Picker) */}
-      <group position={[-15, 30, -2]}>
-        {/* Base */}
-        <mesh position={[0, 0, 0.5]} castShadow receiveShadow material={safetyMaterial}>
-          <boxGeometry args={[3, 4, 1]} />
-        </mesh>
-        {/* Wheels */}
-        <mesh position={[-1.6, 1.5, 0.4]} rotation={[0, Math.PI/2, 0]} castShadow material={darkConcreteMaterial}>
-          <cylinderGeometry args={[0.4, 0.4, 0.4]} />
-        </mesh>
-        <mesh position={[1.6, 1.5, 0.4]} rotation={[0, Math.PI/2, 0]} castShadow material={darkConcreteMaterial}>
-          <cylinderGeometry args={[0.4, 0.4, 0.4]} />
-        </mesh>
-        <mesh position={[-1.6, -1.5, 0.4]} rotation={[0, Math.PI/2, 0]} castShadow material={darkConcreteMaterial}>
-          <cylinderGeometry args={[0.4, 0.4, 0.4]} />
-        </mesh>
-        <mesh position={[1.6, -1.5, 0.4]} rotation={[0, Math.PI/2, 0]} castShadow material={darkConcreteMaterial}>
-          <cylinderGeometry args={[0.4, 0.4, 0.4]} />
-        </mesh>
-        {/* Arm segment 1 */}
-        <mesh position={[0, 0, 1.5]} rotation={[-Math.PI/4, 0, 0]} castShadow receiveShadow material={steelMaterial}>
-          <boxGeometry args={[0.8, 8, 0.8]} />
-        </mesh>
-        {/* Platform */}
-        <mesh position={[0, -5.5, 7]} castShadow receiveShadow material={safetyMaterial}>
-          <boxGeometry args={[2, 1.5, 1]} />
-        </mesh>
-      </group>
-    </group>
-  );
-}
+      {/* Shipyard Crane - Port Forward */}
+      <GLTFModel path="/models/overhead_crane/overhead_crane.gltf" position={[-25, 30, -2]} rotation={[Math.PI/2, 0, -Math.PI/4]} scale={5} />
 
-function DockyardCrane() {
-  const craneGroupRef = useRef<THREE.Group>(null);
-  
-  return (
-    <group position={[-25, -20, -2]} ref={craneGroupRef}>
-      {/* Rail base */}
-      <mesh position={[0, 0, 1]} castShadow receiveShadow material={steelMaterial}>
-        <boxGeometry args={[8, 8, 2]} />
-      </mesh>
+      {/* Tool Cabinets */}
+      <GLTFModel path="/models/metal_tool_chest/metal_tool_chest.gltf" position={[15, 5, -2]} rotation={[Math.PI/2, 0, 0]} scale={1.5} />
+      <GLTFModel path="/models/metal_tool_chest/metal_tool_chest.gltf" position={[16, -10, -2]} rotation={[Math.PI/2, 0, Math.PI/2]} scale={1.5} />
       
-      {/* Main Tower */}
-      <mesh position={[0, 0, 16]} castShadow receiveShadow material={safetyMaterial}>
-        <boxGeometry args={[4, 4, 30]} />
-      </mesh>
-      
-      {/* Operator Cabin */}
-      <mesh position={[3, 0, 25]} castShadow receiveShadow material={equipmentBlue}>
-        <boxGeometry args={[3, 3, 3]} />
-      </mesh>
-      
-      {/* Horizontal Boom */}
-      <mesh position={[25, 0, 31]} castShadow receiveShadow material={safetyMaterial}>
-        <boxGeometry args={[60, 2.5, 2.5]} />
-      </mesh>
-      
-      {/* Counterweight boom */}
-      <mesh position={[-10, 0, 31]} castShadow receiveShadow material={safetyMaterial}>
-        <boxGeometry args={[20, 2.5, 2.5]} />
-      </mesh>
-      
-      {/* Cables / Ties (Simplified with thin cylinders) */}
-      <mesh position={[10, 0, 35]} rotation={[0, Math.PI/2 - 0.2, 0]} castShadow material={steelMaterial}>
-        <cylinderGeometry args={[0.05, 0.05, 25]} />
-      </mesh>
-      <mesh position={[-5, 0, 34]} rotation={[0, -Math.PI/2 + 0.3, 0]} castShadow material={steelMaterial}>
-        <cylinderGeometry args={[0.05, 0.05, 12]} />
-      </mesh>
-      
-      {/* Tower top point */}
-      <mesh position={[0, 0, 35]} castShadow receiveShadow material={safetyMaterial}>
-        <boxGeometry args={[2, 2, 6]} />
-      </mesh>
-      
-      {/* Hoist cable dropping down */}
-      <mesh position={[35, 0, 15]} castShadow material={steelMaterial}>
-        <cylinderGeometry args={[0.05, 0.05, 30]} />
-      </mesh>
-      
-      {/* Hook block */}
-      <mesh position={[35, 0, 0]} castShadow material={equipmentBlue}>
-        <boxGeometry args={[1, 1.5, 1.5]} />
-      </mesh>
+      {/* Storage Racks */}
+      <GLTFModel path="/models/worn_metal_rack/worn_metal_rack.gltf" position={[18, 20, -2]} rotation={[Math.PI/2, 0, 0]} scale={1.2} />
+      <GLTFModel path="/models/worn_metal_rack/worn_metal_rack.gltf" position={[-18, 0, -2]} rotation={[Math.PI/2, 0, Math.PI]} scale={1.2} />
+
+      {/* Storage Carts */}
+      <GLTFModel path="/models/industrial_storage_cart/industrial_storage_cart.gltf" position={[12, -25, -2]} rotation={[Math.PI/2, 0, 0.4]} scale={1.5} />
+      <GLTFModel path="/models/industrial_storage_cart/industrial_storage_cart.gltf" position={[-14, 15, -2]} rotation={[Math.PI/2, 0, -0.2]} scale={1.5} />
+
+      {/* Jerrycans */}
+      <GLTFModel path="/models/metal_jerrycan/metal_jerrycan.gltf" position={[14, 6, -2]} rotation={[Math.PI/2, 0, 0.1]} scale={1.5} />
+      <GLTFModel path="/models/metal_jerrycan/metal_jerrycan.gltf" position={[14.5, 6.2, -2]} rotation={[Math.PI/2, 0, -0.3]} scale={1.5} />
     </group>
   );
 }
 
 export function DryDock() {
-  const dockLength = 260;
-  const dockWidth = 70;
-  const dockDepth = 18; // Z=-2 to Z=16
-  
-  const concreteTex = useMemo(() => createConcreteTexture(), []);
-
   return (
     <group>
-      {/* Dock Floor (Z = -2) */}
-      <mesh position={[0, 0, -2]} receiveShadow>
-        <planeGeometry args={[dockWidth, dockLength]} />
-        <meshStandardMaterial map={concreteTex} roughness={0.9} />
-      </mesh>
+      {/* Expansive photorealistic ground */}
+      <React.Suspense fallback={null}>
+        <GroundPlanes />
+      </React.Suspense>
 
-      {/* Keel Blocks to support ship (Z=-2 to Z=0) */}
+      {/* Engineered keel blocks supporting the vessel */}
       <KeelBlocks />
 
-      {/* Port Wall */}
-      <mesh position={[-dockWidth/2, 0, dockDepth/2 - 2]} receiveShadow>
-        <boxGeometry args={[2, dockLength, dockDepth]} />
-        <primitive object={concreteMaterial} />
-      </mesh>
-      
-      {/* Starboard Wall */}
-      <mesh position={[dockWidth/2, 0, dockDepth/2 - 2]} receiveShadow>
-        <boxGeometry args={[2, dockLength, dockDepth]} />
-        <primitive object={concreteMaterial} />
-      </mesh>
-      
-      {/* Bow Gate (Front) */}
-      <mesh position={[0, dockLength/2, dockDepth/2 - 2]} receiveShadow>
-        <boxGeometry args={[dockWidth + 2, 2, dockDepth]} />
-        <primitive object={concreteMaterial} />
-      </mesh>
+      {/* Modular scaffolding along the hull for safe access */}
+      <IndustrialScaffolding />
 
-      {/* Stern Gate (Back) */}
-      <mesh position={[0, -dockLength/2, dockDepth/2 - 2]} receiveShadow>
-        <boxGeometry args={[dockWidth + 2, 2, dockDepth]} />
-        <meshStandardMaterial color="#2c3e50" roughness={0.7} metalness={0.6} />
-      </mesh>
-
-      {/* Top safety railing on dock walls */}
-      <mesh position={[-dockWidth/2 + 0.8, 0, dockDepth - 2 + 0.5]} receiveShadow>
-        <boxGeometry args={[0.1, dockLength, 1]} />
-        <primitive object={safetyMaterial} />
-      </mesh>
-      <mesh position={[dockWidth/2 - 0.8, 0, dockDepth - 2 + 0.5]} receiveShadow>
-        <boxGeometry args={[0.1, dockLength, 1]} />
-        <primitive object={safetyMaterial} />
-      </mesh>
-      
-      {/* Wall Pilasters (Vertical ribs for detail) */}
-      {Array.from({length: 20}).map((_, i) => {
-        const y = -dockLength/2 + 10 + i * 12;
-        return (
-          <React.Fragment key={i}>
-            <mesh position={[-dockWidth/2 + 1.2, y, dockDepth/2 - 2]} receiveShadow castShadow>
-              <boxGeometry args={[0.5, 1, dockDepth]} />
-              <primitive object={concreteMaterial} />
-            </mesh>
-            <mesh position={[dockWidth/2 - 1.2, y, dockDepth/2 - 2]} receiveShadow castShadow>
-              <boxGeometry args={[0.5, 1, dockDepth]} />
-              <primitive object={concreteMaterial} />
-            </mesh>
-          </React.Fragment>
-        );
-      })}
-
-      {/* Scaffolding on Starboard side */}
-      <Scaffolding />
-
-      {/* Industrial Equipment & Platforms on floor */}
-      <IndustrialEquipment />
-      
-      {/* Heavy Shipyard Crane */}
-      <DockyardCrane />
-
+      {/* High quality GLTF external assets */}
+      <React.Suspense fallback={null}>
+        <RealWorldAssets />
+      </React.Suspense>
     </group>
   );
 }
+
+// Preload the assets
+useGLTF.preload('/models/overhead_crane/overhead_crane.gltf');
+useGLTF.preload('/models/metal_tool_chest/metal_tool_chest.gltf');
+useGLTF.preload('/models/worn_metal_rack/worn_metal_rack.gltf');
+useGLTF.preload('/models/industrial_storage_cart/industrial_storage_cart.gltf');
+useGLTF.preload('/models/metal_jerrycan/metal_jerrycan.gltf');
