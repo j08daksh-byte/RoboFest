@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Grid } from '@react-three/drei';
 import { ShipAssembly } from '@/components/DigitalTwin/ShipAssembly';
+import { DryDock } from '@/components/DigitalTwin/DryDock';
 import { TestShipCameraController, CameraPreset, InspectionTarget } from '@/components/DigitalTwin/TestShipCameraController';
 import { useTestShipStore } from '@/lib/state/testShipStore';
 import Link from 'next/link';
@@ -83,8 +84,9 @@ export default function TestShipPage() {
 
       </div>
 
-      <Canvas>
+      <Canvas shadows>
         <color attach="background" args={['#0a192f']} />
+        <fog attach="fog" args={['#0a192f', 50, 300]} />
         
         {/* Realistic Industrial Lighting */}
         <ambientLight intensity={0.2} color="#b0c4de" />
@@ -97,6 +99,9 @@ export default function TestShipPage() {
 
         {/* The Ship */}
         <ShipAssembly />
+        
+        {/* Shipyard Environment */}
+        <DryDock />
         
         {/* Camera Controller handles OrbitControls under the hood */}
         <TestShipCameraController preset={preset} targetPreset={target} />

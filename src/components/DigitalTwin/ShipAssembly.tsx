@@ -6,6 +6,7 @@ import { shipConfig } from '@/lib/geometry/shipConfig';
 import { useTestShipStore } from '@/lib/state/testShipStore';
 import { useShipMaterials } from '@/lib/materials/useShipMaterials';
 import { HullSurfaceDetails } from '@/components/DigitalTwin/HullSurfaceDetails';
+import { DeckDetails, BridgeDetails } from '@/components/DigitalTwin/DeckDetails';
 
 // ----------------------------------------------------------------------
 // ENGINEERING HULL
@@ -138,11 +139,11 @@ function EngineeringHull({ surface, materials }: { surface: ProceduralShipSurfac
 
   return (
     <group>
-      <mesh geometry={hullGeometry} material={showSurfaceDebug ? new THREE.MeshStandardMaterial({ color: '#8B0000', transparent: true, opacity: 0.4, side: THREE.DoubleSide }) : [materials.hullPaint, materials.hullAntiFouling] as THREE.Material[]} />
+      <mesh castShadow receiveShadow geometry={hullGeometry} material={showSurfaceDebug ? new THREE.MeshStandardMaterial({ color: '#8B0000', transparent: true, opacity: 0.4, side: THREE.DoubleSide }) : [materials.hullPaint, materials.hullAntiFouling] as THREE.Material[]} />
       
-      <mesh geometry={sternGeometry} material={showSurfaceDebug ? new THREE.MeshStandardMaterial({ color: '#8B0000', transparent: true, opacity: 0.4, side: THREE.DoubleSide }) : materials.hullPaint} />
+      <mesh castShadow receiveShadow geometry={sternGeometry} material={showSurfaceDebug ? new THREE.MeshStandardMaterial({ color: '#8B0000', transparent: true, opacity: 0.4, side: THREE.DoubleSide }) : materials.hullPaint} />
 
-      <mesh geometry={bowGeometry} material={showSurfaceDebug ? new THREE.MeshStandardMaterial({ color: '#8B0000', transparent: true, opacity: 0.4, side: THREE.DoubleSide }) : materials.hullPaint} />
+      <mesh castShadow receiveShadow geometry={bowGeometry} material={showSurfaceDebug ? new THREE.MeshStandardMaterial({ color: '#8B0000', transparent: true, opacity: 0.4, side: THREE.DoubleSide }) : materials.hullPaint} />
       
       {showStructuralLines && (
         <lineSegments geometry={frameLinesGeometry}>
@@ -201,7 +202,7 @@ function MainDeck({ surface, materials }: { surface: ProceduralShipSurface, mate
   }, [surface]);
 
   return (
-    <mesh geometry={deckGeometry} material={materials.deckMaterial} />
+    <mesh castShadow receiveShadow geometry={deckGeometry} material={materials.deckMaterial} />
   );
 }
 
@@ -213,19 +214,19 @@ function Superstructure({ materials }: { materials: ReturnType<typeof useShipMat
   return (
     <group position={[0, -25, deckZ]}>
       {/* Lower accommodation block */}
-      <mesh position={[0, 0, 2]} material={materials.superstructurePaint}>
+      <mesh position={[0, 0, 2]} material={materials.superstructurePaint} castShadow receiveShadow>
         <boxGeometry args={[18, 16, 4]} />
       </mesh>
       {/* Mid accommodation block */}
-      <mesh position={[0, -1, 6]} material={materials.superstructurePaint}>
+      <mesh position={[0, -1, 6]} material={materials.superstructurePaint} castShadow receiveShadow>
         <boxGeometry args={[16, 12, 4]} />
       </mesh>
       {/* Bridge block */}
-      <mesh position={[0, -2, 10]} material={materials.superstructurePaint}>
+      <mesh position={[0, -2, 10]} material={materials.superstructurePaint} castShadow receiveShadow>
         <boxGeometry args={[14, 8, 4]} />
       </mesh>
       {/* Bridge Wings */}
-      <mesh position={[0, 0, 10]} material={materials.superstructurePaint}>
+      <mesh position={[0, 0, 10]} material={materials.superstructurePaint} castShadow receiveShadow>
         <boxGeometry args={[22, 3, 3]} />
       </mesh>
       {/* Bridge Windows */}
@@ -245,11 +246,11 @@ function FunnelAndMast({ materials }: { materials: ReturnType<typeof useShipMate
     <group>
       {/* Funnel */}
       <group position={[0, -42, deckZ]}>
-        <mesh position={[0, 0, 4]} rotation={[0.1, 0, 0]} material={materials.funnelMaterial}>
+        <mesh position={[0, 0, 4]} rotation={[0.1, 0, 0]} material={materials.funnelMaterial} castShadow>
           <cylinderGeometry args={[2, 2.5, 8, 16]} />
         </mesh>
         {/* Exhaust pipe */}
-        <mesh position={[0, 0.4, 8.2]} rotation={[0.1, 0, 0]} material={materials.equipmentMetal}>
+        <mesh position={[0, 0.4, 8.2]} rotation={[0.1, 0, 0]} material={materials.equipmentMetal} castShadow>
           <cylinderGeometry args={[0.8, 0.8, 2, 8]} />
         </mesh>
       </group>
@@ -281,7 +282,7 @@ function CargoHatches({ materials }: { materials: ReturnType<typeof useShipMater
   return (
     <group>
       {hatches.map((h, i) => (
-        <mesh key={i} position={[0, h.y, h.z]} material={materials.hatchMetal}>
+        <mesh key={i} position={[0, h.y, h.z]} material={materials.hatchMetal} castShadow receiveShadow>
           <boxGeometry args={[h.width, h.length, h.height]} />
           {/* Subtle panel outline */}
           <lineSegments>
@@ -301,18 +302,18 @@ function DeckEquipment({ materials }: { materials: ReturnType<typeof useShipMate
   return (
     <group>
       {/* Forecastle equipment (Winches/Windlass) */}
-      <mesh position={[0, 52, 16.5]} material={materials.equipmentMetal}>
+      <mesh position={[0, 52, 16.5]} material={materials.equipmentMetal} castShadow>
         <boxGeometry args={[3, 2, 1.5]} />
       </mesh>
-      <mesh position={[-2, 54, 16.8]} rotation={[0, 0, Math.PI/2]} material={materials.equipmentMetal}>
+      <mesh position={[-2, 54, 16.8]} rotation={[0, 0, Math.PI/2]} material={materials.equipmentMetal} castShadow>
         <cylinderGeometry args={[0.5, 0.5, 1.5]} />
       </mesh>
-      <mesh position={[2, 54, 16.8]} rotation={[0, 0, Math.PI/2]} material={materials.equipmentMetal}>
+      <mesh position={[2, 54, 16.8]} rotation={[0, 0, Math.PI/2]} material={materials.equipmentMetal} castShadow>
         <cylinderGeometry args={[0.5, 0.5, 1.5]} />
       </mesh>
 
       {/* Aft mooring equipment */}
-      <mesh position={[0, -55, 15.5]} material={materials.equipmentMetal}>
+      <mesh position={[0, -55, 15.5]} material={materials.equipmentMetal} castShadow>
         <boxGeometry args={[4, 2, 1]} />
       </mesh>
     </group>
@@ -351,6 +352,8 @@ export function ShipAssembly() {
       <FunnelAndMast materials={materials} />
       <DeckEquipment materials={materials} />
       <ShipMarkings />
+      <DeckDetails surface={surface} materials={materials} />
+      <BridgeDetails materials={materials} />
       
       {/* Ship Navigation Lighting */}
       <pointLight position={[11.5, -25, 25]} color="#2ecc71" intensity={0.8} distance={15} /> {/* Starboard green */}

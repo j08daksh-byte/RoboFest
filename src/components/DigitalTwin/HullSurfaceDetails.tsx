@@ -63,7 +63,7 @@ export function HullSurfaceDetails({ surface }: { surface: ProceduralShipSurface
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(lines, 3));
     return geo;
-  }, [surface]);
+  }, []);
 
   // 3. Waterline transition band (black)
   const waterlineMesh = useMemo(() => {
