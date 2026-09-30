@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useRobotStore } from '@/lib/robotState';
@@ -211,9 +211,11 @@ function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, prev
     return { fallingGeo, cutLinePoints: linePts, alphaTexture: tex, startPos };
   }, [cutRecord, previousCuts]);
 
+  const [initialAngularVelocity] = useState(() => new THREE.Vector3(Math.random() * 1.5, Math.random() * 1.5, Math.random() * 1.5));
+  
   const physicsRef = useRef({
     velocity: new THREE.Vector3(0, 0, 1.5),
-    angularVelocity: new THREE.Vector3(Math.random() * 1.5, Math.random() * 1.5, Math.random() * 1.5),
+    angularVelocity: initialAngularVelocity,
     landed: false
   });
 
