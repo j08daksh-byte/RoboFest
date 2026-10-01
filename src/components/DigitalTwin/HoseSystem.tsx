@@ -2,74 +2,65 @@ import React from 'react';
 import * as THREE from 'three';
 import { useRobotStore } from '@/lib/robotState';
 import { robotConfig } from '@/lib/robotConfig';
-import { SUPPLY_BASE_Y, SUPPLY_BASE_Z } from './SupplySystem';
+import { getRobotWorldPosition } from './SafetyCables';
 
 export function HoseSystem() {
-  const { position, arm } = useRobotStore();
-  const { structureWidthX, trackHeightZ, structureHeightZ, torchOffsetZ } = robotConfig;
-  
-  // 1. Ground Cylinders
-  const cylinderBaseX = -10;
-  const cylinderBaseY = -29;
-  const cylinderBaseZ = 10;
-  
-  const startPointRed = new THREE.Vector3(cylinderBaseX + 0.4, cylinderBaseY + 1.6, cylinderBaseZ); // Acetylene
-  const startPointBlue = new THREE.Vector3(cylinderBaseX - 0.4, cylinderBaseY + 1.8, cylinderBaseZ); // Oxygen
-  
-  // 2. Safety Pole Top Routing
-  const poleTopX = -12;
-  const poleTopY = 8;
-  const poleTopZ = 12;
-  const poleRed = new THREE.Vector3(poleTopX, poleTopY + 0.1, poleTopZ);
-  const poleBlue = new THREE.Vector3(poleTopX, poleTopY + 0.2, poleTopZ);
-  
-  // 3. Midpoint Routing (Sagging catenary along the 4-wire corridor)
-  const midX = (poleTopX + position.x) / 2;
-  const midY = (poleTopY + position.y) / 2;
-  const midZ = (poleTopZ + position.z) / 2 - 2.0; // natural sag
-  const sagMidRed = new THREE.Vector3(midX, midY, midZ - 0.2);
-  const sagMidBlue = new THREE.Vector3(midX, midY, midZ + 0.2);
+  const { position } = useRobotStore();
+  const worldPos = getRobotWorldPosition(position);
 
-  // 4. End at the torch connectors in World Space
-  const torchWorldX = position.x + structureWidthX / 2 + arm.xExtension;
-  const torchWorldY = position.y + arm.yPosition;
-  const torchWorldZ = position.z + trackHeightZ + structureHeightZ + 0.04 + 0.06 - torchOffsetZ + 0.05; 
+  // Cylinders are at ground near the mast
+  const mastX = 14;
+  const mastZBase = -2;
+  const mastZTop = 20; 
   
-  const endPointRed = new THREE.Vector3(torchWorldX - 0.015, torchWorldY, torchWorldZ);
-  const endPointBlue = new THREE.Vector3(torchWorldX + 0.015, torchWorldY, torchWorldZ);
+  const cylX = mastX + 1.2;
+  const cylY = worldPos.y - 1.5;
+  const cylZ = mastZBase + 1.8; // Top of cylinders
 
-  // Generate Splines
+  // Route 1: From cylinders to strain relief on the lower mast
+  const relief1 = new THREE.Vector3(mastX, worldPos.y - 0.4, mastZBase + 3);
+  
+  // Route 2: Up the mast to the boom
+  const relief2 = new THREE.Vector3(mastX - 0.5, worldPos.y - 0.2, mastZTop - 1.0);
+  
+  // Route 3: To the robot (torch connection)
+  // Torch is near structureWidthX / 2, yPosition = 0, trackHeightZ + structureHeightZ
+  const torchLocalX = robotConfig.structureWidthX / 2 + 0.3;
+  const torchLocalY = position.y;
+  const torchLocalZ = position.z + robotConfig.trackHeightZ + robotConfig.structureHeightZ + 0.2;
+  const torchWorld = getRobotWorldPosition({ x: torchLocalX, y: torchLocalY, z: torchLocalZ });
+
+  const startRed = new THREE.Vector3(cylX + 0.3, cylY, cylZ - 0.2);
+  const startBlue = new THREE.Vector3(cylX - 0.3, cylY, cylZ);
+
+  // Red Hose
   const curveRed = new THREE.CatmullRomCurve3([
-    startPointRed,
-    new THREE.Vector3(startPointRed.x, startPointRed.y + 1.0, startPointRed.z), // Up from cylinder
-    poleRed, // Over the pole
-    sagMidRed, // Sag along corridor
-    new THREE.Vector3(position.x + 0.1, position.y + 0.5, position.z + 0.5), // near robot top
-    new THREE.Vector3(endPointRed.x, endPointRed.y + 0.3, endPointRed.z + 0.2), // strain relief loop above arm
-    endPointRed
+    startRed,
+    relief1,
+    relief2,
+    new THREE.Vector3((relief2.x + torchWorld.x)/2, (relief2.y + torchWorld.y)/2, (relief2.z + torchWorld.z)/2 - 1.5), 
+    torchWorld
   ]);
 
+  // Blue Hose
+  const torchWorldBlue = new THREE.Vector3(torchWorld.x, torchWorld.y + 0.05, torchWorld.z);
   const curveBlue = new THREE.CatmullRomCurve3([
-    startPointBlue,
-    new THREE.Vector3(startPointBlue.x, startPointBlue.y + 1.0, startPointBlue.z),
-    poleBlue,
-    sagMidBlue,
-    new THREE.Vector3(position.x - 0.1, position.y + 0.5, position.z + 0.5),
-    new THREE.Vector3(endPointBlue.x, endPointBlue.y + 0.35, endPointBlue.z + 0.25),
-    endPointBlue
+    startBlue,
+    new THREE.Vector3(relief1.x, relief1.y + 0.05, relief1.z),
+    new THREE.Vector3(relief2.x, relief2.y + 0.05, relief2.z),
+    new THREE.Vector3((relief2.x + torchWorld.x)/2, (relief2.y + torchWorld.y)/2 + 0.05, (relief2.z + torchWorld.z)/2 - 1.4),
+    torchWorldBlue
   ]);
 
   return (
     <group>
-      {/* Red Hose */}
       <mesh castShadow>
-        <tubeGeometry args={[curveRed, 128, 0.008, 12, false]} />
-        <meshStandardMaterial color="#b30000" roughness={0.7} metalness={0.1} />
+        <tubeGeometry args={[curveRed, 64, 0.02, 8, false]} />
+        <meshStandardMaterial color="#b30000" roughness={0.7} />
       </mesh>
-      {/* Blue Hose */}
       <mesh castShadow>
-        <tubeGeometry args={[curveBlue, 128, 0.008, 12, false]} />
-        <meshStandardMaterial color="#0033cc" roughness={0.7} metalness={0.1} />
+        <tubeGeometry args={[curveBlue, 64, 0.02, 8, false]} />
+        <meshStandardMaterial color="#0033cc" roughness={0.7} />
       </mesh>
     </group>
   );

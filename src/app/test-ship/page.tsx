@@ -7,6 +7,9 @@ import { ShipAssembly } from '@/components/DigitalTwin/ShipAssembly';
 import { DryDock } from '@/components/DigitalTwin/DryDock';
 import { RobotModel } from '@/components/DigitalTwin/RobotModel';
 import { SimulationController } from '@/components/DigitalTwin/SimulationController';
+import { SafetyCables } from '@/components/DigitalTwin/SafetyCables';
+import { HoseSystem } from '@/components/DigitalTwin/HoseSystem';
+import { SupplySystem } from '@/components/DigitalTwin/SupplySystem';
 import { TestShipCameraController, CameraPreset, InspectionTarget } from '@/components/DigitalTwin/TestShipCameraController';
 import { useTestShipStore } from '@/lib/state/testShipStore';
 import Link from 'next/link';
@@ -110,6 +113,12 @@ export default function TestShipPage() {
           <SimulationController />
           <RobotModel showAxes={showSurfaceDebug} />
         </group>
+        
+        {/* Support Infrastructure (Rendered in World Space) */}
+        <SafetyCables />
+        <HoseSystem />
+        <SupplySystem />
+        
         
         {/* Camera Controller handles OrbitControls under the hood */}
         <TestShipCameraController preset={preset} targetPreset={target} />
