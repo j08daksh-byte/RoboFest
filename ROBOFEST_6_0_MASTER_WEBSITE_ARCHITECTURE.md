@@ -1,7 +1,7 @@
 # ROBOFEST 6.0 MASTER WEBSITE ARCHITECTURE
 
 ## 1. PRODUCT HIERARCHY
-The application is structured into functional domains. Each domain groups related modules, allowing operations personnel to focus on specific operational contexts without losing access to the central 3D Twin.
+The application is structured into functional domains. Each domain groups related modules, allowing operations personnel to focus on specific operational contexts without losing access to the central 3D Twin when required.
 
 - **OPERATIONS**: Command Center, Missions, Cutting Planner, AI Cut Strategy
 - **ROBOT**: Digital Twin (Standalone View), Sensors, Robot Health, Robot Passport, Vision
@@ -12,206 +12,112 @@ The application is structured into functional domains. Each domain groups relate
 - **SYSTEM**: Users / Roles, Guided Demo Mode
 
 ## 2. ROUTE / NAVIGATION ARCHITECTURE
-The frontend will utilize Next.js App Router for strict domain separation while preserving the 3D Engine state across navigation via persistent layouts.
+The frontend will utilize Next.js App Router for strict domain separation.
 
-- `/` (Command Center - Primary Judge/Operator screen)
-- `/operations/missions`
-- `/operations/planner`
-- `/operations/ai-strategy`
-- `/robot/twin`
-- `/robot/sensors`
-- `/robot/health`
-- `/robot/passport`
-- `/robot/vision`
-- `/safety/hazards`
-- `/safety/weather`
-- `/safety/emergency`
-- `/safety/notifications`
-- `/ship/hull`
-- ... (following the domain hierarchy)
-
-*Note: The Digital Twin `<Canvas>` must be lifted to a high-level layout so it does not unmount during route transitions.*
+**Twin Mounting Decision:**
+The Digital Twin will be a **reusable Twin viewport mounted only where needed** (e.g., inside the Command Center or Cutting Planner pages), rather than being permanently mounted in a global `layout.tsx`.
+**Reason**: Because the authoritative robot state (position, cuts, IK) is fully lifted into global Zustand stores, the Twin can safely unmount and remount during route transitions without losing physical context. Forcing a global Three.js Canvas across the entire Next.js application creates severe, unnecessary GPU rendering overhead on pages that do not require 3D (like Analytics or Settings), and heavily complicates DOM z-index management.
 
 ## 3. MODULE ARCHITECTURE
+25 distinct modules compose the platform.
 
-**1. Command Center**
+**Key Module: Command Center**
 - **Purpose**: Primary operational dashboard.
-- **Primary User**: Operator / Judge.
-- **Main UI**: Giant central 3D Twin, side panels for telemetry, health, mission progress. Bottom bar for quick actions.
-- **Data I/O**: Consumes all states; produces high-level intents.
-- **Dependencies**: MissionState, RobotState, SafetyState.
-- **Ownership**: Shared Integration.
+- **Main UI**: Giant central 3D Twin viewport. Side panels for telemetry, health, mission progress. Bottom bar for quick actions.
+- **Data I/O**: Consumes all authoritative states; produces high-level operational intents.
+- **Ownership**: Daksh (Shell & Logic), Anshika (3D Viewport Content).
 
-**2. Robot Digital Twin**
-- **Purpose**: Full-screen immersive view of the twin without UI clutter.
-- **Primary User**: Operator (for detailed inspection).
-- **Data I/O**: Consumes TelemetryState, outputs viewport events.
-- **Ownership**: Anshika (Visuals), Daksh (Data Wrapper).
+## 4. SHARED STATE ARCHITECTURE (MIGRATION STRATEGY)
+The current `src/lib/robotState.ts` contains a massive amount of shared state and is a protected integration boundary. A "big-bang" rewrite is prohibited.
 
-**3. Live Sensor Center**
-- **Purpose**: Raw data visualization from ESP32.
-- **Data I/O**: Consumes SensorState.
-- **Ownership**: Daksh.
+**Safe Migration Strategy:**
+- **PHASE A**: Keep existing `robotState.ts` absolutely stable.
+- **PHASE B**: Define typed contracts/interfaces (e.g., `RobotState`, `MissionState`, `SafetyState`) around the existing state architecture.
+- **PHASE C**: Introduce new domain stores/adapters only where necessary for new platform features.
+- **PHASE D**: Migrate consumers incrementally from the legacy store to the new domain stores.
+- **PHASE E**: Remove old state from `robotState.ts` only after all dependencies are verified and passing tests.
 
-**4. Safety & Hazard Center**
-- **Purpose**: Monitor interlocks, gas limits, tilt limits.
-- **Dependencies**: SafetyState.
-- **Ownership**: Daksh.
+## 5. VISUAL VS PLATFORM STATE
+There is a strict distinction between visual representation and authoritative logic:
+- **Robot Mesh Position**: Visual State (3D/Twin responsibility).
+- **Authoritative Robot Position**: Platform State (Platform/Simulation responsibility).
+- **Cut Visual (sparks, panels)**: Visual State (3D/Twin responsibility).
+- **Cut Definition & Validation**: Platform State (Platform responsibility).
+- **Safety Visual (red flashing)**: Visual State (3D/Twin responsibility).
+- **Safety Decision / Interlock**: Platform State (Platform responsibility).
 
-**5. Weather / Site Workability**
-- **Purpose**: External factors affecting dry dock operations.
-- **Ownership**: Shared.
+## 6. DIGITAL TWIN BOUNDARY
+The Twin Interface defines a clean conceptual boundary. 
 
-**6. Cutting Planner**
-- **Purpose**: Draw, validate, and sequence cuts before execution.
-- **Data I/O**: Produces MissionState/CutState.
-- **Ownership**: Daksh (Logic), Anshika (3D Tools).
+**PLATFORM → TWIN (Commands)**
+- `focusRobot()`
+- `focusShip()`
+- `focusCut()`
+- `selectComponent()`
+- `selectHullSection()`
+- `setXRay()`
+- `setCameraMode()`
+- `resetVisualScene()`
+- `displayApprovedCut()`
 
-**7. AI Cut Strategy**
-- **Purpose**: Generates optimal pathing based on hull geometry.
-- **Ownership**: Daksh.
+**TWIN → PLATFORM (Events)**
+- `onRobotComponentSelected()`
+- `onHullSectionSelected()`
+- `onCutVisualCompleted()`
+- `onPanelDetached()`
+- `onCameraTargetChanged()`
+- `onVisualInteractionEvent()`
 
-**8. Vision / Camera**
-- **Purpose**: Real-time camera feeds from the robot.
-- **Ownership**: Daksh.
-
-**9. ROBO-ASSIST**
-- **Purpose**: Conversational AI assistant for operators.
-- **Ownership**: Daksh.
-
-**10. Robot Health**
-- **Purpose**: Diagnostics, motor temps, battery voltage.
-- **Ownership**: Daksh.
-
-**11. Lifetime Robot Passport**
-- **Purpose**: Persistent operational history and certification.
-- **Ownership**: Daksh.
-
-**12. Mission Management**
-- **Purpose**: Load, save, and track execution of cuts.
-- **Ownership**: Daksh.
-
-**13. Ship / Hull Map**
-- **Purpose**: 2D/3D flattened view of all cuts across the vessel.
-- **Ownership**: Anshika.
-
-**14. Internal Ship Structure**
-- **Purpose**: X-Ray analysis to avoid cutting ribs.
-- **Ownership**: Anshika.
-
-**15. Material / Cut Analytics**
-- **Purpose**: Gas usage, steel removed, time efficiency.
-- **Ownership**: Daksh.
-
-**16. Telemetry**
-- **Purpose**: Deep dive into IK, forces, and kinematics data.
-- **Ownership**: Daksh.
-
-**17. Emergency Control**
-- **Purpose**: E-STOP, gas shutoff, manual override.
-- **Ownership**: Daksh.
-
-**18. Digital Shipyard**
-- **Purpose**: Fleet and environmental context.
-- **Ownership**: Anshika.
-
-**19. Event / Alert History**
-- **Purpose**: Audit log of all warnings and operator actions.
-- **Ownership**: Daksh.
-
-**20. Maintenance Log**
-- **Purpose**: Component replacement schedules.
-- **Ownership**: Daksh.
-
-**21. Performance Analytics**
-- **Purpose**: KPIs for the cutting system.
-- **Ownership**: Daksh.
-
-**22. Users / Roles**
-- **Purpose**: RBAC for operations.
-- **Ownership**: Daksh.
-
-**23. Smart Notifications**
-- **Purpose**: Toast system and alert queues.
-- **Ownership**: Daksh.
-
-**24. Robot Knowledge Base**
-- **Purpose**: Embedded manuals and schematics.
-- **Ownership**: Daksh.
-
-**25. Guided Demo Mode**
-- **Purpose**: Pre-scripted narrative for judges.
-- **Ownership**: Shared.
-
-## 4. SHARED STATE ARCHITECTURE
-Currently, `robotState.ts` is monolithic. It will be refactored into distinct slice boundaries:
-
-- **RobotState**: Owned by physics/kinematics. (position, IK, tracks). Read by 3D Engine, written by Provider.
-- **MissionState**: Owned by planner. (active cuts, sequences).
-- **SafetyState**: Owned by Safety Engine. (E-STOP status, gas warnings).
-- **SensorState**: Owned by Hardware. (Raw temperatures, IMU).
-- **CutState**: Owned by Cutting Network. (Geometries of removed panels).
-- **UIState / ViewportState**: Owned by Website. (camera focus, x-ray toggle).
-- **EnvironmentState**: Owned by Shipyard. (wind, lighting).
-
-## 5. DIGITAL TWIN BOUNDARY
-The 3D Engine must be isolated from the React DOM UI.
-
-**Website controls (Inbound API):**
-- `focusRobot()`, `focusShip()`, `focusCut(id)`
-- `setXRayMode(bool)`
-- `setSimulationMode(bool)`
-- `triggerComponentHighlight(id)`
-
-**Twin emits (Outbound API):**
-- `onCutCompleted(geometry)`
-- `onRobotCollision()`
-
-The UI wraps the Twin. The Twin NEVER renders HTML UI overlays directly.
-
-## 6. SIMULATION / LIVE ARCHITECTURE
+## 7. SIMULATION / LIVE ARCHITECTURE
 Data flows through standard Adapter interfaces. UI components must NEVER know if the robot is real or simulated.
+- **Live Flow:** `ESP32 -> Socket -> LiveAdapter -> Application State -> UI / Twin`
+- **Sim Flow:** `Simulation Physics Engine -> SimAdapter -> Application State -> UI / Twin`
 
-**Live Flow:** `ESP32 -> Socket -> LiveAdapter -> Zustand Store -> UI/Twin`
-**Sim Flow:** `SimulationController (Math) -> SimAdapter -> Zustand Store -> UI/Twin`
+**SimulationController Review:**
+Currently, `SimulationController.tsx` owns A) R3F `useFrame` hook, B) keyboard event listeners, C) kinematics math, and D) `globalCuttingNetwork` cycle detection.
+*Future Boundary*: It will be isolated. The keyboard events and authoritative physics/cutting math will move to a pure TypeScript `SimAdapter` (Platform responsibility) outside the React loop. The `SimulationController` inside the Twin will then solely consume the updated state for visual interpolation. *For now, it remains untouched.*
 
-## 7. SAFETY ARCHITECTURE
-Safety is Deterministic. AI can advise, but NEVER bypass interlocks.
+## 8. SAFETY ARCHITECTURE
+**Safety is Deterministic. AI can advise, but NEVER bypass deterministic safety interlocks.**
+- **Authoritative Engine**: A dedicated client-side validation loop evaluates hazards before commands are sent.
+- **Interlocks**: If conditions are unsafe (e.g., IMU tilt > 45deg), the platform enforces hard logic (Torch OFF, Tracks STOP).
 
-- **Authoritative Engine**: A dedicated client-side validation loop runs before any command is sent to the ESP32 or Twin.
-- **States**: NORMAL -> WARNING -> CRITICAL -> E-STOP.
-- **Interlocks**: If IMU tilt > 45deg, Torch = OFF, Tracks = STOP.
+## 9. CUTTING ARCHITECTURE
+The existing cutting implementation is protected. The conceptual split is:
+- **Platform (Daksh)**: Cut definition, geometry/business validation, reach validation, structural/cable validation, panel weight calculation, sequence, risk, history, analytics.
+- **Digital Twin (Anshika)**: Torch visualization, cut-line rendering, hull visual removal, panel visualization, panel detachment/fall, internal structure visualization, visual reset.
 
-## 8. CUTTING ARCHITECTURE
-- **Anshika**: Visual rendering (panels, glow, sparks, gravity fall, hull alpha masks).
-- **Daksh**: Logic (path closure validation, area calculation, intersection math).
+## 10. OWNERSHIP (ZERO-OVERLAP)
 
-## 9. OWNERSHIP
-- **Anshika**: Everything inside the `<Canvas>` (Visuals, Shaders, Procedural Generation, Physics Animations).
-- **Daksh**: Everything outside the `<Canvas>` (State, Hardware Integration, UI Shell, Dashboards, AI).
-- **Shared**: The Zustand State Contracts and the `<DigitalTwin>` wrapper props.
+**ANSHIKA OWNS: ROBOT + DIGITAL TWIN + ENTIRE 3D WORLD**
+- Three.js / React Three Fiber implementation, Canvas internals, RobotModel, robot meshes, tracks, magnets, arm, torch visuals, hoses, support cables.
+- Ship geometry, procedural hull, internal 3D structure, shipyard environment, 3D materials, 3D lighting, 3D camera implementation.
+- 3D animation, visual cutting, visual panel behavior, 3D environment assets, visual Twin interactions, Twin-side implementation of the viewport API.
 
-## 10. SHARED / HIGH-RISK FILES
-- `src/lib/robotState.ts` (Risk of merge conflicts; must be split).
-- `src/components/DigitalTwin/index.tsx` (The boundary wall).
-- `src/app/layout.tsx` (Where the Twin gets mounted).
+**DAKSH OWNS: PLATFORM BRAIN**
+- Next.js application shell, navigation, dashboard UI, platform state architecture, domain contracts, safety engine, sensor architecture, telemetry, missions, cutting planner/business logic.
+- Cut strategy, health, passport, analytics, notifications, history, backend/API, simulation/live adapters, AI, ROBO-ASSIST, ESP32 integration, demo orchestration, platform-side integration.
 
-## 11. IMPLEMENTATION ORDER
-1. **Foundation Locked** (Current State).
-2. **Website Shell & Layouts** (Daksh builds UI wrappers without touching Twin).
-3. **State Splitting & Contracts** (Daksh splits `robotState.ts`).
-4. **Twin Integration Boundary** (Anshika exposes `focus()` APIs).
-5. **Parallel Tracks**: Anshika works on Visual Polish, Daksh works on Dashboards.
-6. **Safety & Hardware Integration**.
+**SHARED BOUNDARY (Interface Contract):**
+Daksh consumes the interface. Anshika implements the Twin side. There are no competing APIs.
 
-## 12. RISK REGISTER
-1. **Twin Rerendering / Performance Issue**: Putting the 3D view in Next.js page routes will cause it to reload on navigation. *Prevention: Mount Twin in `layout.tsx` and use CSS to hide/shrink it.*
-2. **State Mutation Clashes**: React vs Three.js frame updates. *Prevention: Use Zustand `useStore.getState()` in `useFrame` instead of reactive hooks.*
-3. **Simulated Data Leaking to Live**: *Prevention: Strict abstract Provider classes.*
+## 11. SHARED / HIGH-RISK FILES
+- `src/lib/robotState.ts` (Requires safe Phase A-E migration).
+- `src/components/DigitalTwin/index.tsx` (The API boundary).
+- `src/components/DigitalTwin/SimulationController.tsx` (Will be split into visual consumer and platform physics adapter).
 
-## 13. FOUNDATION LOCKED CRITERIA
-- [x] Twin protected in Git.
-- [x] Website architecture documented.
-- [x] Module ownership boundaries documented.
-- [x] Linting rules resolved cleanly.
-- [x] Ready for separate feature branches.
+## 12. FOUNDATION LOCKED CRITERIA
+1. Digital Twin baseline protected.
+2. Git baseline protected.
+3. Master architecture documented.
+4. Navigation hierarchy documented.
+5. Module boundaries documented.
+6. State migration strategy documented.
+7. Simulation/live architecture documented.
+8. Twin/platform boundary documented.
+9. Cutting boundary documented.
+10. Safety boundary documented.
+11. Ownership has zero ambiguity.
+12. Shared files identified.
+13. No application code changed during architecture review.
+14. Architecture is safe enough to begin website shell implementation.
