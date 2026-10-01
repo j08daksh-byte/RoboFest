@@ -51,6 +51,19 @@ function EngineeringHull({ surface, materials }: { surface: ProceduralShipSurfac
         const zc = vertices[c * 3 + 2];
         const zd = vertices[d * 3 + 2];
         const avgZ = (za + zb + zc + zd) / 4;
+        const ya = vertices[a * 3 + 1];
+        const yb = vertices[b * 3 + 1];
+        const yc = vertices[c * 3 + 1];
+        const yd = vertices[d * 3 + 1];
+        const avgY = (ya + yb + yc + yd) / 4;
+
+        // Skip triangles that fall under the CutPanel (Starboard side, Y from -30 to 30)
+        // v > 0 means Starboard side.
+        const vCenter = ((j + 0.5) / vSegments) * 2 - 1;
+        if (vCenter > 0.02 && avgY >= -30 && avgY <= 30) {
+          continue;
+        }
+
         const matIdx = avgZ < draft ? 1 : 0;
 
         if (matIdx !== currentMaterial) {
@@ -336,12 +349,15 @@ function ShipMarkings() {
 }
 
 
+import { useRobotStore } from '@/lib/robotState';
+
 // ----------------------------------------------------------------------
 // SHIP ASSEMBLY MAIN COMPONENT
 // ----------------------------------------------------------------------
 export function ShipAssembly() {
   const surface = useMemo(() => new ProceduralShipSurface(), []);
-  const materials = useShipMaterials();
+  const xRayMode = useRobotStore((state) => state.xRayMode);
+  const materials = useShipMaterials(xRayMode);
 
   return (
     <group>

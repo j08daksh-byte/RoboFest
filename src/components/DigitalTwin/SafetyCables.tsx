@@ -5,9 +5,9 @@ import { robotConfig } from '@/lib/robotConfig';
 
 export function getRobotWorldPosition(localPos: {x: number, y: number, z: number}) {
   return new THREE.Vector3(
-    10.05 + localPos.z,
+    50.25 + localPos.z,
     localPos.y,
-    7.5 - localPos.x
+    37.5 - localPos.x
   );
 }
 
@@ -52,13 +52,13 @@ export function SafetyCables() {
   const { position } = useRobotStore();
   const worldPos = getRobotWorldPosition(position);
 
-  const mastX = 14;
+  const mastX = 95; // Moved far out to clear 5x scaled hull (beam=75)
   const mastZBase = -2;
-  const mastZTop = 20; 
+  const mastZTop = 45; // Taller mast for larger ship
   const mastHeight = mastZTop - mastZBase;
-  const mastY = worldPos.y; // Mast moves along rail to track robot
+  const mastY = 0; // Mast is completely stationary
 
-  const boomEndX = mastX - 5.5; // X = 8.5
+  const boomEndX = mastX - 45.0; // Reach out over the ship towards 50.25
   const boomEndZ = mastZTop - 0.8;
   
   const boomPoint1 = new THREE.Vector3(boomEndX, mastY - 0.2, boomEndZ);
@@ -72,10 +72,10 @@ export function SafetyCables() {
   const rLen = robotConfig.bodyLengthY;  
   const rHeight = robotConfig.trackHeightZ + robotConfig.bodyHeightZ;
   
-  const corner1 = getRobotWorldPosition({ x: position.x - rWidth/2, y: position.y - rLen/2, z: position.z + rHeight });
-  const corner2 = getRobotWorldPosition({ x: position.x + rWidth/2, y: position.y - rLen/2, z: position.z + rHeight });
-  const corner3 = getRobotWorldPosition({ x: position.x - rWidth/2, y: position.y + rLen/2, z: position.z + rHeight });
-  const corner4 = getRobotWorldPosition({ x: position.x + rWidth/2, y: position.y + rLen/2, z: position.z + rHeight });
+  const corner1 = getRobotWorldPosition({ x: position.x - rLen/2, y: position.y - rWidth/2, z: position.z + rHeight });
+  const corner2 = getRobotWorldPosition({ x: position.x + rLen/2, y: position.y - rWidth/2, z: position.z + rHeight });
+  const corner3 = getRobotWorldPosition({ x: position.x - rLen/2, y: position.y + rWidth/2, z: position.z + rHeight });
+  const corner4 = getRobotWorldPosition({ x: position.x + rLen/2, y: position.y + rWidth/2, z: position.z + rHeight });
 
   return (
     <group>
@@ -119,13 +119,9 @@ export function SafetyCables() {
         </group>
       </group>
 
-      {/* 4 Support Cables */}
+      {/* 2 Support Cables (The other 2 are gas hoses) */}
       <CatenaryCable start={boomPoint1} end={corner1} sag={0.2} color="#333" thickness={0.015} />
       <CatenaryCable start={boomPoint2} end={corner2} sag={0.2} color="#333" thickness={0.015} />
-      <CatenaryCable start={boomPoint3} end={corner3} sag={0.15} color="#444" thickness={0.012} />
-      
-      {/* Cable 4: Lateral Positioning Cable */}
-      <CatenaryCable start={lateralBoomPoint} end={corner4} sag={0.05} color="#e67e22" thickness={0.025} />
     </group>
   );
 }

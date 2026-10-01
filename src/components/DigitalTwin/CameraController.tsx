@@ -7,9 +7,9 @@ import { useRobotStore } from '@/lib/robotState';
 
 function getRobotWorldPosition(localPos: {x: number, y: number, z: number}) {
   return new THREE.Vector3(
-    9.95 - localPos.z,
+    50.25 + localPos.z,
     localPos.y,
-    7.5 + localPos.x
+    37.5 - localPos.x
   );
 }
 
@@ -24,11 +24,18 @@ export function CameraController() {
   const currentTarget = useRef(new THREE.Vector3(10, 0, 7.5));
   const desiredTarget = useRef(new THREE.Vector3(10, 0, 7.5));
 
-  const [lastTrigger, setLastTrigger] = React.useState(cameraFocusTrigger);
+  const lastTrigger = useRef(cameraFocusTrigger);
 
   useEffect(() => {
-    if (cameraFocusTrigger !== lastTrigger) {
-      setLastTrigger(cameraFocusTrigger);
+    // Ship is oriented with Z=Up, Y=Longitudinal. 
+    // Set camera up to Z so horizontal side views work properly.
+    camera.up.set(0, 0, 1);
+  }, [camera]);
+
+  useEffect(() => {
+    if (cameraFocusTrigger !== lastTrigger.current || lastTrigger.current === 0) {
+      const isInitial = lastTrigger.current === 0 && cameraFocusTrigger === 0;
+      lastTrigger.current = cameraFocusTrigger;
       
       const worldPos = getRobotWorldPosition(position);
       
@@ -38,7 +45,11 @@ export function CameraController() {
         case 'robot':
           desiredTarget.current.copy(worldPos);
           camPos.set(worldPos.x + 2.5, worldPos.y - 1.5, worldPos.z + 1.5);
-          camera.position.lerp(camPos, 0.5);
+          if (isInitial) {
+            camera.position.copy(camPos);
+          } else {
+            camera.position.lerp(camPos, 0.5);
+          }
           break;
         case 'cut':
           const cuts = useRobotStore.getState().completedCuts;
@@ -59,28 +70,28 @@ export function CameraController() {
           camera.position.lerp(camPos, 0.5);
           break;
         case 'ship':
-          desiredTarget.current.set(0, 30, 0); // Center of new ship
-          camPos.set(80, 50, 80); // View full new ship from an impressive high angle
+          desiredTarget.current.set(0, 30, 37.5); // Center of new ship
+          camPos.set(200, 300, 250); // View full new ship from an impressive high angle
           camera.position.lerp(camPos, 0.5);
           break;
         case 'starboard':
-          desiredTarget.current.set(0, 0, 7.5);
-          camPos.set(120, 0, 7.5); // Look from starboard side horizontally
+          desiredTarget.current.set(0, 0, 37.5);
+          camPos.set(400, 0, 37.5); // Look from starboard side horizontally, further back to see whole ship
           camera.position.lerp(camPos, 0.5);
           break;
         case 'port':
-          desiredTarget.current.set(0, 0, 7.5);
-          camPos.set(-120, 0, 7.5); // Look from port side horizontally
+          desiredTarget.current.set(0, 0, 37.5);
+          camPos.set(-400, 0, 37.5); // Look from port side horizontally, further back
           camera.position.lerp(camPos, 0.5);
           break;
         case 'front':
-          desiredTarget.current.set(0, 0, 7.5);
-          camPos.set(0, 100, 7.5); // Look from Bow
+          desiredTarget.current.set(0, 0, 37.5);
+          camPos.set(0, 400, 37.5); // Look from Bow
           camera.position.lerp(camPos, 0.5);
           break;
         case 'rear':
-          desiredTarget.current.set(0, 0, 7.5);
-          camPos.set(0, -100, 7.5); // Look from Stern
+          desiredTarget.current.set(0, 0, 37.5);
+          camPos.set(0, -400, 37.5); // Look from Stern
           camera.position.lerp(camPos, 0.5);
           break;
         case 'free':

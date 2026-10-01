@@ -9,24 +9,26 @@ export function HoseSystem() {
   const worldPos = getRobotWorldPosition(position);
 
   // Cylinders are at ground near the mast
-  const mastX = 14;
+  const mastX = 95; // Matched with SafetyCables
   const mastZBase = -2;
-  const mastZTop = 20; 
+  const mastZTop = 45; 
   
   const cylX = mastX + 1.2;
-  const cylY = worldPos.y - 1.5;
+  const cylY = 0 - 1.5;
   const cylZ = mastZBase + 1.8; // Top of cylinders
 
   // Route 1: From cylinders to strain relief on the lower mast
-  const relief1 = new THREE.Vector3(mastX, worldPos.y - 0.4, mastZBase + 3);
+  const relief1 = new THREE.Vector3(mastX, 0 - 0.4, mastZBase + 3);
   
   // Route 2: Up the mast to the boom
-  const relief2 = new THREE.Vector3(mastX - 0.5, worldPos.y - 0.2, mastZTop - 1.0);
+  const relief2 = new THREE.Vector3(mastX - 0.5, 0 - 0.2, mastZTop - 1.0);
   
   // Route 3: To the robot (torch connection)
-  // Torch is near structureWidthX / 2, yPosition = 0, trackHeightZ + structureHeightZ
-  const torchLocalX = robotConfig.structureWidthX / 2 + 0.3;
-  const torchLocalY = position.y;
+  // The unrotated robot has X as right, Y as forward.
+  // After rotating +90 around Z, New X = -Y (Forward), New Y = X (Right).
+  // Torch assembly is on the Right side.
+  const torchLocalX = position.x; // Central forward/back on the body
+  const torchLocalY = position.y + (robotConfig.bodyWidthX / 2 + 0.3); // Right side
   const torchLocalZ = position.z + robotConfig.trackHeightZ + robotConfig.structureHeightZ + 0.2;
   const torchWorld = getRobotWorldPosition({ x: torchLocalX, y: torchLocalY, z: torchLocalZ });
 

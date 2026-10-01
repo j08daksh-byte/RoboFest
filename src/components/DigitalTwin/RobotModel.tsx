@@ -18,8 +18,9 @@ export function RobotModel({ showAxes = true }: { showAxes?: boolean }) {
 
   return (
     <group position={[position.x, position.y, position.z]} rotation={[0, -theta, 0]}>
-      {/* Robot Base Chassis */}
-      <group position={[0, 0, trackHeightZ / 2]}>
+      <group rotation={[0, 0, Math.PI / 2]}>
+        {/* Robot Base Chassis */}
+        <group position={[0, 0, trackHeightZ / 2]}>
         {/* Main central block */}
         <mesh castShadow receiveShadow>
           <boxGeometry args={[bodyWidthX, bodyLengthY, bodyHeightZ]} />
@@ -93,6 +94,7 @@ export function RobotModel({ showAxes = true }: { showAxes?: boolean }) {
       </group>
 
       {showAxes && <CoordinateAxes />}
+      </group>
     </group>
   );
 }

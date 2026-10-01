@@ -9,15 +9,15 @@ export function SupplySystem() {
   const worldPos = getRobotWorldPosition(position);
 
   // Gas cylinders beside the mast
-  const mastX = 14;
+  const mastX = 95; // Match SafetyCables mast
   const mastZBase = -2;
   const rackX = mastX + 1.2;
   const rackY = worldPos.y - 1.5;
   const rackZ = mastZBase;
 
-  // The 5th Pulley/Cable Mechanism at the top of the ship (Z = 15, Deck Edge X = 10)
-  const deckX = 9.8;
-  const deckZ = 15.2; // slightly above deck
+  // The 5th Pulley/Cable Mechanism at the top of the ship
+  const deckX = 50.0;
+  const deckZ = 75.0; // deck edge
   const carriageY = worldPos.y;
 
   // Winch anchor point for 5th cable
@@ -25,8 +25,8 @@ export function SupplySystem() {
 
   // Robot attachment point for 5th cable
   const rCenterLocal = { 
-    x: position.x, 
-    y: position.y + robotConfig.bodyLengthY / 2 - 0.1, 
+    x: position.x - robotConfig.bodyLengthY / 2 + 0.1, 
+    y: position.y, 
     z: position.z + robotConfig.trackHeightZ / 2 + robotConfig.bodyHeightZ 
   };
   const rCenterWorld = getRobotWorldPosition(rCenterLocal);
@@ -63,7 +63,6 @@ export function SupplySystem() {
 
       {/* 5th Cable (The heavy winch/umbilical dropping from the top carriage) */}
       <CatenaryCable start={winchAnchor} end={rCenterWorld} sag={0.05} color="#111" thickness={0.015} />
-
 
       {/* ============================================================ */}
       {/* GROUND GAS CYLINDER SYSTEM */}

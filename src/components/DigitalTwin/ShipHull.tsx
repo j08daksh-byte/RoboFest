@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useRobotStore } from '@/lib/robotState';
@@ -70,57 +70,55 @@ function InternalShipStructure() {
   );
 }
 
+import { ProceduralShipSurface } from '@/lib/geometry/ProceduralShipSurface';
+import { shipConfig } from '@/lib/geometry/shipConfig';
+import { useShipMaterials } from '@/lib/materials/useShipMaterials';
+
 const patchSize = 4.0;
+const proceduralSurface = new ProceduralShipSurface();
 
 function curveGeometry(geom: THREE.BufferGeometry) {
   const pos = geom.attributes.position;
   for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i);
-    const theta = x / HULL_RADIUS;
-    const newZ = pos.getZ(i) + HULL_RADIUS * Math.cos(theta) - HULL_RADIUS;
-    const newX = HULL_RADIUS * Math.sin(theta);
-    pos.setXYZ(i, newX, pos.getY(i), newZ);
+    // CutPanel local coords:
+    // x maps to World Z (7.5 - x)
+    // y maps to World Y
+    const localX = pos.getX(i);
+    const localY = pos.getY(i);
+    
+    const worldY = localY;
+    const worldZ = 7.5 - localX;
+    
+    // Reverse map to u, v
+    const L = shipConfig.lengthOverall;
+    const u = worldY / L + 0.5;
+    
+    // Find v iteratively or just use a fixed v for the starboard side given Z
+    let bestV = 0.5;
+    let minErr = Infinity;
+    for(let v = 0; v <= 1; v += 0.05) {
+      const p = proceduralSurface.evaluatePosition(u, v);
+      const err = Math.abs(p.z - worldZ);
+      if (err < minErr) { minErr = err; bestV = v; }
+    }
+    const pt = proceduralSurface.evaluatePosition(u, bestV);
+    
+    // Update UVs to exactly match the surrounding ShipAssembly
+    const uvAttr = geom.attributes.uv;
+    if (uvAttr) {
+      uvAttr.setXY(i, u, (bestV + 1) / 2);
+    }
+    
+    // Convert back to local space:
+    // World X = 10.05 + localZ  => localZ = World X - 10.05
+    // World Y = localY          => localY = World Y
+    // World Z = 7.5 - localX    => localX = 7.5 - World Z
+    pos.setXYZ(i, 7.5 - pt.z, pt.y, pt.x - 10.05);
   }
   geom.computeVertexNormals();
 }
 
-function CurvedPlane({ width, height, xOffset, yOffset }: { width: number, height: number, xOffset: number, yOffset: number }) {
-  const xRayMode = useRobotStore(state => state.xRayMode);
-
-  const geo = useMemo(() => {
-    const wSegs = Math.max(1, Math.floor(width / 2));
-    const hSegs = 1;
-    const geom = new THREE.PlaneGeometry(width, height, wSegs, hSegs);
-    const pos = geom.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i) + xOffset;
-      const y = pos.getY(i) + yOffset;
-      const z = pos.getZ(i);
-      
-      const theta = x / HULL_RADIUS;
-      const newZ = z + HULL_RADIUS * Math.cos(theta) - HULL_RADIUS;
-      const newX = HULL_RADIUS * Math.sin(theta);
-      
-      pos.setXYZ(i, newX - xOffset, y - yOffset, newZ);
-    }
-    geom.computeVertexNormals();
-    return geom;
-  }, [width, height, xOffset, yOffset]);
-
-  return (
-    <mesh geometry={geo} position={[xOffset, yOffset, 0]} receiveShadow castShadow={!xRayMode}>
-       <meshStandardMaterial 
-          color={xRayMode ? "#2a4b5c" : "#1e2226"} 
-          metalness={0.5} 
-          roughness={0.8} 
-          side={THREE.DoubleSide} 
-          transparent={xRayMode}
-          opacity={xRayMode ? 0.25 : 1.0}
-          depthWrite={!xRayMode}
-       />
-    </mesh>
-  );
-}
+// CurvedPlane removed as it belonged to the old ship extensions
 
 import { Line } from '@react-three/drei';
 
@@ -199,13 +197,10 @@ function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, prev
     const tex = new THREE.CanvasTexture(canvas);
     tex.minFilter = THREE.LinearFilter;
     
-    // 3. Cut line points
+    // 3. Cut line points (flattened)
     const linePts = cutRecord.path.map(p => {
-      const theta = p.x / HULL_RADIUS;
-      const newZ = 0.005 + HULL_RADIUS * Math.cos(theta) - HULL_RADIUS;
-      const newX = HULL_RADIUS * Math.sin(theta);
       // Translate to local space of the group
-      return new THREE.Vector3(newX - startPos.x, p.y - startPos.y, newZ - startPos.z);
+      return new THREE.Vector3(p.x - startPos.x, p.y - startPos.y, 0.005 - startPos.z);
     });
     
     return { fallingGeo, cutLinePoints: linePts, alphaTexture: tex, startPos };
@@ -277,8 +272,16 @@ function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, prev
 }
 
 function CutPanel() {
-  const activeCutPath = useRobotStore(state => state.activeCutPath);
-  const completedCuts = useRobotStore(state => state.completedCuts);
+  const rawActiveCutPath = useRobotStore(state => state.activeCutPath);
+  const rawCompletedCuts = useRobotStore(state => state.completedCuts);
+
+  // Scale down the paths by 5 because ShipHull is rendered inside a group with scale=[5, 5, 5]
+  // but the torch coordinates are recorded in the robot's 1:1 world scale.
+  const activeCutPath = useMemo(() => rawActiveCutPath.map(p => ({ x: p.x / 5, y: p.y / 5 })), [rawActiveCutPath]);
+  const completedCuts = useMemo(() => rawCompletedCuts.map(cut => ({
+    ...cut,
+    path: cut.path.map(p => ({ x: p.x / 5, y: p.y / 5 }))
+  })), [rawCompletedCuts]);
   
   const hullWidth = 60;
   const hullHeight = 60;
@@ -286,6 +289,42 @@ function CutPanel() {
   const basePlaneGeo = useMemo(() => {
     const geo = new THREE.PlaneGeometry(hullWidth, hullHeight, 128, 128);
     curveGeometry(geo);
+    
+    // Assign material groups based on Draft
+    // Local coords: World Z = 7.5 - localX
+    // Draft is World Z = 5.0
+    // localX = 2.5
+    // Above draft (Grey): localX < 2.5
+    // Below draft (Red): localX >= 2.5
+    const pos = geo.attributes.position;
+    const groups: { start: number; count: number; materialIndex: number }[] = [];
+    let currentMaterial = -1;
+    let groupStart = 0;
+    
+    for (let i = 0; i < geo.index!.count; i += 3) {
+      const a = geo.index!.getX(i);
+      const b = geo.index!.getX(i + 1);
+      const c = geo.index!.getX(i + 2);
+      
+      const xa = pos.getX(a);
+      const xb = pos.getX(b);
+      const xc = pos.getX(c);
+      const avgX = (xa + xb + xc) / 3;
+      
+      const matIdx = avgX < 2.5 ? 0 : 1;
+      
+      if (matIdx !== currentMaterial) {
+        if (i > 0) groups.push({ start: groupStart, count: i - groupStart, materialIndex: currentMaterial });
+        currentMaterial = matIdx;
+        groupStart = i;
+      }
+    }
+    if (geo.index!.count - groupStart > 0) {
+      groups.push({ start: groupStart, count: geo.index!.count - groupStart, materialIndex: currentMaterial });
+    }
+    
+    for (const g of groups) geo.addGroup(g.start, g.count, g.materialIndex);
+    
     return geo;
   }, []);
 
@@ -320,30 +359,43 @@ function CutPanel() {
   // Calculate curved points for the active tracking line
   const trackingLinePts = useMemo(() => {
     return activeCutPath.map(p => {
-      const theta = p.x / HULL_RADIUS;
-      const newZ = 0.005 + HULL_RADIUS * Math.cos(theta) - HULL_RADIUS;
-      const newX = HULL_RADIUS * Math.sin(theta);
-      return new THREE.Vector3(newX, p.y, newZ);
+      return new THREE.Vector3(p.x, p.y, 0.005);
     });
-  }, [activeCutPath.length]);
+  }, [activeCutPath.length, activeCutPath]);
 
   const xRayMode = useRobotStore(state => state.xRayMode);
+  const materials = useShipMaterials();
+  
+  const paintMat = useMemo(() => materials.hullPaint.clone(), [materials]);
+  const antiFoulingMat = useMemo(() => materials.hullAntiFouling.clone(), [materials]);
+  
+  useEffect(() => {
+    [paintMat, antiFoulingMat].forEach(mat => {
+      mat.transparent = xRayMode;
+      mat.alphaMap = alphaTexture;
+      mat.alphaTest = xRayMode ? 0.01 : 0.5;
+      mat.opacity = xRayMode ? 0.25 : 1.0;
+      mat.depthWrite = !xRayMode;
+      mat.side = THREE.DoubleSide;
+      if (xRayMode) {
+        mat.color.setHex(0x2a4b5c);
+      } else {
+        // Reset to original colors
+        if (mat === paintMat) mat.color.setHex(0x3a4750);
+        else mat.color.setHex(0x8b2929);
+      }
+      mat.needsUpdate = true;
+    });
+  }, [xRayMode, completedCuts.length, alphaTexture, paintMat, antiFoulingMat]);
+
+  const isActive = true;
+
+  if (!isActive) return null;
 
   return (
-    <group position={[0, 0, 0]}>
+    <group position={[0, 0, 0.02]}>
       {/* 1. The solid remaining hull (always rendered, with holes driven by alpha map) */}
-      <mesh geometry={basePlaneGeo} receiveShadow castShadow={!xRayMode}>
-        <meshStandardMaterial 
-          color={xRayMode ? "#2a4b5c" : "#2c3036"} 
-          metalness={0.6} 
-          roughness={0.7} 
-          transparent={xRayMode || completedCuts.length > 0}
-          alphaMap={alphaTexture}
-          alphaTest={xRayMode ? 0.01 : 0.5}
-          opacity={xRayMode ? 0.25 : 1.0}
-          depthWrite={!xRayMode}
-          side={THREE.DoubleSide}
-        />
+      <mesh geometry={basePlaneGeo} receiveShadow castShadow={!xRayMode} material={[paintMat, antiFoulingMat]}>
       </mesh>
 
       {/* 2. The glowing cut path while actively tracing */}
@@ -365,10 +417,7 @@ function CutPanel() {
       {/* 4. Glowing edges on the remaining holes */}
       {completedCuts.map(cut => {
         const linePts = cut.path.map(p => {
-          const theta = p.x / HULL_RADIUS;
-          const newZ = 0.005 + HULL_RADIUS * Math.cos(theta) - HULL_RADIUS;
-          const newX = HULL_RADIUS * Math.sin(theta);
-          return new THREE.Vector3(newX, p.y, newZ);
+          return new THREE.Vector3(p.x, p.y, 0.005);
         });
         return (
           <Line 
@@ -385,80 +434,14 @@ function CutPanel() {
 
 export function ShipHull() {
   const xRayMode = useRobotStore(state => state.xRayMode);
+  const completedCuts = useRobotStore(state => state.completedCuts);
+  
+  const showInternal = xRayMode || completedCuts.length > 0;
   
   return (
     <group>
-      <InternalShipStructure />
+      {showInternal && <InternalShipStructure />}
       <CutPanel />
-
-      {/* Massive Top Hull Extension (Y=30 to Y=110) */}
-      <CurvedPlane width={157.08} height={80} xOffset={0} yOffset={70} />
-      
-      {/* Left Hull Extension (X=-30 to X=-78.5) */}
-      <CurvedPlane width={48.54} height={60} xOffset={-54.27} yOffset={0} />
-      
-      {/* Right Hull Extension (X=30 to X=78.5) */}
-      <CurvedPlane width={48.54} height={60} xOffset={54.27} yOffset={0} />
-
-      {/* Upper Deck Edge / Railing Area */}
-      <mesh position={[0, 110, HULL_CENTER_Z + HULL_RADIUS - 1.5]} receiveShadow>
-         <boxGeometry args={[157, 1, 3]} />
-         <meshStandardMaterial 
-            color={xRayMode ? "#2a4b5c" : "#1a1e22"} 
-            metalness={0.7} roughness={0.6} 
-            transparent={xRayMode}
-            opacity={xRayMode ? 0.25 : 1.0}
-            depthWrite={!xRayMode}
-         />
-      </mesh>
-
-      {/* Industrial External Stringers / Weld Seams (Visual Details) */}
-      {Array.from({ length: 32 }).map((_, i) => {
-        const arcX = (i - 16) * 4.9; // Arc length along the hull
-        const theta = arcX / HULL_RADIUS;
-        
-        const worldX = HULL_RADIUS * Math.sin(theta);
-        const z = HULL_CENTER_Z + HULL_RADIUS * Math.cos(theta);
-        return (
-          <group key={`ext-st-${i}`}>
-            {/* Lower stringers (avoiding CutPanel operational area if possible, or just thin seams) */}
-            <mesh position={[worldX, 70, z]} rotation={[0, -theta, 0]} receiveShadow castShadow={!xRayMode}>
-               <boxGeometry args={[0.05, 80, 0.15]} />
-               <meshStandardMaterial 
-                 color="#1a1e22" 
-                 metalness={0.6} 
-                 roughness={0.8} 
-                 transparent={xRayMode}
-                 opacity={xRayMode ? 0.25 : 1.0}
-                 depthWrite={!xRayMode}
-               />
-            </mesh>
-            {/* Horizontal weld lines / panel seams */}
-            <mesh position={[worldX, 30, z]} rotation={[0, -theta, 0]} receiveShadow castShadow={!xRayMode}>
-               <boxGeometry args={[4.9, 0.05, 0.05]} />
-               <meshStandardMaterial 
-                 color="#111518" 
-                 metalness={0.8} 
-                 roughness={0.9} 
-                 transparent={xRayMode}
-                 opacity={xRayMode ? 0.25 : 1.0}
-                 depthWrite={!xRayMode}
-               />
-            </mesh>
-            <mesh position={[worldX, 70, z]} rotation={[0, -theta, 0]} receiveShadow castShadow={!xRayMode}>
-               <boxGeometry args={[4.9, 0.05, 0.05]} />
-               <meshStandardMaterial 
-                 color="#111518" 
-                 metalness={0.8} 
-                 roughness={0.9} 
-                 transparent={xRayMode}
-                 opacity={xRayMode ? 0.25 : 1.0}
-                 depthWrite={!xRayMode}
-               />
-            </mesh>
-          </group>
-        );
-      })}
     </group>
   );
 }

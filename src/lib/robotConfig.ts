@@ -43,9 +43,9 @@ export const robotConfig = {
   hullRadius: 25,
   hullCenterZ: -25.05,
   hullSurfaceOffsetZ: 0, // Robot operates at local Z=0 where tracks touch
-  maxPositionX: 10.0,
-  minPositionX: -10.0,
-  maxPositionY: 12.0,
-  minPositionY: -20.0,
+  maxPositionX: 18.0,
+  minPositionX: -2.0,
+  maxPositionY: 29.0,
+  minPositionY: -29.0,
   moveSpeed: 0.8, // m/s
 };

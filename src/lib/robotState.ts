@@ -59,7 +59,7 @@ const initialState = {
   uiMode: 'presentation' as const,
   xRayMode: false,
   followMode: false,
-  cameraTarget: 'ship' as const,
+  cameraTarget: 'robot' as const,
   cameraFocusTrigger: 0,
   activeCutPath: [],
   completedCuts: [],
@@ -73,7 +73,20 @@ export const useRobotStore = create<RobotState>((set, get) => ({
   
   setArmPosition: (y, x) => set((state) => ({ arm: { yPosition: y, xExtension: x } })),
   setElectromagnet: (enabled) => set((state) => ({ electromagnet: { enabled } })),
-  setTorch: (enabled) => set((state) => ({ torch: { enabled } })),
+  setTorch: (enabled) => set((state) => {
+    if (!enabled && state.activeCutPath.length > 0) {
+      return {
+        torch: { enabled },
+        completedCuts: [...state.completedCuts, {
+          id: Math.random().toString(36).substring(2, 9),
+          path: [...state.activeCutPath],
+          isClosed: false
+        }],
+        activeCutPath: []
+      };
+    }
+    return { torch: { enabled } };
+  }),
   setSimulationState: (simState) => set({ simulationState: simState }),
   setUiMode: (mode) => set({ uiMode: mode }),
   setXRayMode: (enabled) => set({ xRayMode: enabled }),

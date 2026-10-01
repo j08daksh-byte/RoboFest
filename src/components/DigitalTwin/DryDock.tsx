@@ -37,7 +37,7 @@ function GroundPlanes() {
     [dDiff, dRough, dNor].forEach(t => {
       if(t) {
         t.wrapS = t.wrapT = THREE.RepeatWrapping;
-        t.repeat.set(40, 40);
+        t.repeat.set(100, 100);
         t.needsUpdate = true;
       }
     });
@@ -49,7 +49,7 @@ function GroundPlanes() {
     <group>
       {/* Expansive Concrete Dry Dock / Working Area */}
       <mesh position={[0, 0, -2]} receiveShadow>
-        <planeGeometry args={[400, 400]} />
+        <planeGeometry args={[1000, 1000]} />
         <meshStandardMaterial 
           map={textures.dDiff} 
           roughnessMap={textures.dRough} 
@@ -145,31 +145,31 @@ function IndustrialScaffolding() {
           const z = -2 + l * 2.5 + 1.25;
           
           // Inner pole
-          dummy.position.set(10.5, y, z);
+          dummy.position.set(76.5, y, z);
           dummy.scale.set(0.1, 0.1, 2.5);
           dummy.updateMatrix();
           scaffoldRef.current.setMatrixAt(idx++, dummy.matrix);
           
           // Outer pole
-          dummy.position.set(12.5, y, z);
+          dummy.position.set(80.5, y, z);
           dummy.scale.set(0.1, 0.1, 2.5);
           dummy.updateMatrix();
           scaffoldRef.current.setMatrixAt(idx++, dummy.matrix);
           
           // Horizontal brace
-          dummy.position.set(11.5, y, z);
-          dummy.scale.set(2, 0.1, 0.1);
+          dummy.position.set(78.5, y, z);
+          dummy.scale.set(4, 0.1, 0.1);
           dummy.updateMatrix();
           scaffoldRef.current.setMatrixAt(idx++, dummy.matrix);
           
           // Longitudinal braces
           if (s < sections - 1) {
-            dummy.position.set(12.5, y + 2, z);
+            dummy.position.set(80.5, y + 2, z);
             dummy.scale.set(0.1, 4, 0.1);
             dummy.updateMatrix();
             scaffoldRef.current.setMatrixAt(idx++, dummy.matrix);
             
-            dummy.position.set(10.5, y + 2, z);
+            dummy.position.set(76.5, y + 2, z);
             dummy.scale.set(0.1, 4, 0.1);
             dummy.updateMatrix();
             scaffoldRef.current.setMatrixAt(idx++, dummy.matrix);
@@ -188,8 +188,8 @@ function IndustrialScaffolding() {
       
       {/* Wooden working platforms */}
       {[0, 1, 2].map(l => (
-        <mesh key={l} position={[11.5, 5 + (sections * 4) / 2 - 2, -2 + l * 2.5 + 2.5]} castShadow receiveShadow material={woodMaterial}>
-          <boxGeometry args={[1.8, sections * 4, 0.05]} />
+        <mesh key={l} position={[78.5, 5 + (sections * 4) / 2 - 2, -2 + l * 2.5 + 2.5]} castShadow receiveShadow material={woodMaterial}>
+          <boxGeometry args={[3.8, sections * 4, 0.05]} />
         </mesh>
       ))}
     </group>
@@ -201,20 +201,20 @@ function RealWorldAssets() {
   return (
     <group>
       {/* Tool Cabinets */}
-      <GLTFModel path="/models/metal_tool_chest/metal_tool_chest.gltf" position={[15, 5, -2]} rotation={[Math.PI/2, 0, 0]} scale={1.5} />
-      <GLTFModel path="/models/metal_tool_chest/metal_tool_chest.gltf" position={[16, -10, -2]} rotation={[Math.PI/2, 0, Math.PI/2]} scale={1.5} />
+      <GLTFModel path="/models/metal_tool_chest/metal_tool_chest.gltf" position={[82, 5, -2]} rotation={[Math.PI/2, 0, 0]} scale={1.5} />
+      <GLTFModel path="/models/metal_tool_chest/metal_tool_chest.gltf" position={[83, -10, -2]} rotation={[Math.PI/2, 0, Math.PI/2]} scale={1.5} />
       
       {/* Storage Racks */}
-      <GLTFModel path="/models/worn_metal_rack/worn_metal_rack.gltf" position={[18, 20, -2]} rotation={[Math.PI/2, 0, 0]} scale={1.2} />
+      <GLTFModel path="/models/worn_metal_rack/worn_metal_rack.gltf" position={[85, 20, -2]} rotation={[Math.PI/2, 0, 0]} scale={1.2} />
       <GLTFModel path="/models/worn_metal_rack/worn_metal_rack.gltf" position={[-18, 0, -2]} rotation={[Math.PI/2, 0, Math.PI]} scale={1.2} />
 
       {/* Storage Carts */}
-      <GLTFModel path="/models/industrial_storage_cart/industrial_storage_cart.gltf" position={[12, -25, -2]} rotation={[Math.PI/2, 0, 0.4]} scale={1.5} />
+      <GLTFModel path="/models/industrial_storage_cart/industrial_storage_cart.gltf" position={[80, -25, -2]} rotation={[Math.PI/2, 0, 0.4]} scale={1.5} />
       <GLTFModel path="/models/industrial_storage_cart/industrial_storage_cart.gltf" position={[-14, 15, -2]} rotation={[Math.PI/2, 0, -0.2]} scale={1.5} />
 
       {/* Jerrycans */}
-      <GLTFModel path="/models/metal_jerrycan/metal_jerrycan.gltf" position={[14, 6, -2]} rotation={[Math.PI/2, 0, 0.1]} scale={1.5} />
-      <GLTFModel path="/models/metal_jerrycan/metal_jerrycan.gltf" position={[14.5, 6.2, -2]} rotation={[Math.PI/2, 0, -0.3]} scale={1.5} />
+      <GLTFModel path="/models/metal_jerrycan/metal_jerrycan.gltf" position={[81, 6, -2]} rotation={[Math.PI/2, 0, 0.1]} scale={1.5} />
+      <GLTFModel path="/models/metal_jerrycan/metal_jerrycan.gltf" position={[81.5, 6.2, -2]} rotation={[Math.PI/2, 0, -0.3]} scale={1.5} />
     </group>
   );
 }

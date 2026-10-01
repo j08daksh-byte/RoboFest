@@ -136,10 +136,10 @@ export function SimulationController() {
       let newY = intent.y;
 
       switch(e.key.toLowerCase()) {
-        case 'w': case 'arrowup': newY = 1; break;
-        case 's': case 'arrowdown': newY = -1; break;
-        case 'a': case 'arrowleft': newX = -1; break;
-        case 'd': case 'arrowright': newX = 1; break;
+        case 'w': case 'arrowup': newX = -1; break; // Forward is now up the hull (-X)
+        case 's': case 'arrowdown': newX = 1; break; // Backward is now down the hull (+X)
+        case 'a': case 'arrowleft': newY = -1; break; // Left is now aft (-Y)
+        case 'd': case 'arrowright': newY = 1; break; // Right is now forward (+Y)
         case ' ':
           const em = useRobotStore.getState().electromagnet.enabled;
           useRobotStore.getState().setElectromagnet(!em);
@@ -154,10 +154,10 @@ export function SimulationController() {
       let newY = intent.y;
 
       switch(e.key.toLowerCase()) {
-        case 'w': case 'arrowup': if (newY === 1) newY = 0; break;
-        case 's': case 'arrowdown': if (newY === -1) newY = 0; break;
-        case 'a': case 'arrowleft': if (newX === -1) newX = 0; break;
-        case 'd': case 'arrowright': if (newX === 1) newX = 0; break;
+        case 'w': case 'arrowup': if (newX === -1) newX = 0; break;
+        case 's': case 'arrowdown': if (newX === 1) newX = 0; break;
+        case 'a': case 'arrowleft': if (newY === -1) newY = 0; break;
+        case 'd': case 'arrowright': if (newY === 1) newY = 0; break;
       }
       setLocomotionIntent(newX, newY);
     };
@@ -187,8 +187,8 @@ export function SimulationController() {
       nextX = Math.max(minPositionX, Math.min(maxPositionX, nextX));
       nextY = Math.max(minPositionY, Math.min(maxPositionY, nextY));
 
-      // Calculate track offset delta for animation (vertical movement drives the tracks)
-      const trackOffsetDelta = (nextY - position.y);
+      // Calculate track offset delta for animation (robot's forward is -X)
+      const trackOffsetDelta = -(nextX - position.x);
       
       updateLocomotion(nextX, nextY, trackOffsetDelta);
     }
@@ -202,14 +202,15 @@ export function SimulationController() {
         // Torch is ON
         const { bodyWidthX } = robotConfig;
         
-        // 1. Calculate Torch position in World Space taking into account robot rotation on the curved hull
-        const thetaRobot = Math.asin(position.x / robotConfig.hullRadius);
-        const torchLocalX = bodyWidthX / 2 + arm.xExtension;
-        const torchWorldX = position.x + torchLocalX * Math.cos(thetaRobot);
+        // 1. Calculate Torch position in World Space taking into account the 90 degree visual rotation of the robot
+        // The unrotated robot has X as right, Y as forward. 
+        // Torch local unrotated: X = bodyWidthX / 2 + arm.xExtension (Right), Y = arm.yPosition (Forward).
+        // After rotating +90 around Z, New X = -Y, New Y = X.
+        const rightOffset = bodyWidthX / 2 + arm.xExtension;
+        const forwardOffset = arm.yPosition;
         
-        // 2. Map World X back to the unrolled 2D surface coordinate (arc length) for the boolean logic
-        const currentTorchX = Math.asin(torchWorldX / robotConfig.hullRadius) * robotConfig.hullRadius;
-        const currentTorchY = position.y + arm.yPosition;
+        const currentTorchX = position.x - forwardOffset;
+        const currentTorchY = position.y + rightOffset;
 
         if (isNaN(currentTorchX) || isNaN(currentTorchY)) {
           if (storeState.activeCutPath.length > 0) storeState.discardActiveCut();

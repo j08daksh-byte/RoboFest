@@ -54,7 +54,7 @@ function createGradientTexture(colorStart: string, colorEnd: string): THREE.Canv
   return texture;
 }
 
-export function useShipMaterials() {
+export function useShipMaterials(xRayMode: boolean = false) {
   const rustDiff = useTexture('/textures/green_metal_rust/green_metal_rust_diff_2k.jpg');
 
   const materials = useMemo(() => {
@@ -66,6 +66,14 @@ export function useShipMaterials() {
       clonedRustDiff.needsUpdate = true;
     }
 
+    const setXRay = (mat: THREE.Material) => {
+      if (xRayMode) {
+        mat.transparent = true;
+        mat.opacity = 0.15;
+        mat.depthWrite = false;
+      }
+    };
+
     // 1. Painted Hull Steel
     const hullPaint = new THREE.MeshStandardMaterial({
       color: '#3a4750',
@@ -74,6 +82,7 @@ export function useShipMaterials() {
       metalness: 0.3,
       side: THREE.DoubleSide
     });
+    setXRay(hullPaint);
 
 
     // 2. Anti-Fouling Lower Hull
@@ -94,6 +103,7 @@ export function useShipMaterials() {
       hullAntiFouling.color.setHex(0xffffff);
     }
     if (antiFoulingRoughness) antiFoulingRoughness.repeat.set(10, 2);
+    setXRay(hullAntiFouling);
 
     // 3. Deck Steel
     // Very rough dark grey with anti-slip micro-texture
@@ -109,6 +119,7 @@ export function useShipMaterials() {
       deckAlbedo.repeat.set(20, 4);
       deckMaterial.color.setHex(0xffffff);
     }
+    setXRay(deckMaterial);
 
     // 4. Superstructure Paint
     const superAlbedo = createNoiseTexture(256, '#e2e8f0', '#cbd5e1', 0.3, 4);
@@ -122,6 +133,7 @@ export function useShipMaterials() {
       superAlbedo.repeat.set(4, 4);
       superstructurePaint.color.setHex(0xffffff);
     }
+    setXRay(superstructurePaint);
 
     // 5. Glass
     const glass = new THREE.MeshStandardMaterial({
@@ -130,7 +142,8 @@ export function useShipMaterials() {
       metalness: 0.9,
       envMapIntensity: 1.0,
       transparent: true,
-      opacity: 0.85
+      opacity: xRayMode ? 0.15 : 0.85,
+      depthWrite: !xRayMode
     });
 
     // 6. Metal details (Hatches, Winches)
@@ -139,12 +152,14 @@ export function useShipMaterials() {
       roughness: 0.6,
       metalness: 0.6
     });
+    setXRay(equipmentMetal);
 
     const hatchMetal = new THREE.MeshStandardMaterial({
       color: '#334155',
       roughness: 0.7,
       metalness: 0.4
     });
+    setXRay(hatchMetal);
 
     // 7. Funnel Soot Gradient
     const funnelSootMap = createGradientTexture('#111111', '#e74c3c');
@@ -155,6 +170,7 @@ export function useShipMaterials() {
       metalness: 0.2
     });
     if (funnelSootMap) funnelMaterial.color.setHex(0xffffff);
+    setXRay(funnelMaterial);
 
     // 8. Warning Paint (Yellow)
     const warningPaint = new THREE.MeshStandardMaterial({
@@ -162,6 +178,7 @@ export function useShipMaterials() {
       roughness: 0.6,
       metalness: 0.1
     });
+    setXRay(warningPaint);
 
     return {
       hullPaint,
@@ -174,7 +191,7 @@ export function useShipMaterials() {
       funnelMaterial,
       warningPaint
     };
-  }, [rustDiff]);
+  }, [rustDiff, xRayMode]);
 
   return materials;
 }

@@ -9,6 +9,7 @@ import { DryDock } from './DryDock';
 import { SupplySystem } from './SupplySystem';
 import { SafetyCables } from './SafetyCables';
 import { HoseSystem } from './HoseSystem';
+import { ShipHull } from './ShipHull';
 import { CameraController } from './CameraController';
 import { SimulationController } from './SimulationController';
 import { useRobotStore } from '@/lib/robotState';
@@ -21,7 +22,7 @@ export function DigitalTwin() {
     <div className="digital-twin-container">
       <Canvas shadows dpr={[1, 2]}>
         <color attach="background" args={['#10151a']} />
-        <fog attach="fog" args={['#10151a', 50, 250]} />
+        <fog attach="fog" args={['#10151a', 200, 800]} />
         
         <CameraController />
         
@@ -44,13 +45,18 @@ export function DigitalTwin() {
         
         
         {/* Robot Integration Layer: Scene-level transform for the unmodified robot */}
-        <group position={[10.05, 0, 7.5]} rotation={[0, Math.PI / 2, 0]}>
+        <group position={[50.25, 0, 37.5]} rotation={[0, Math.PI / 2, 0]}>
+          <group scale={[5, 5, 5]}>
+            <ShipHull />
+          </group>
           <SimulationController />
           <RobotModel showAxes={uiMode === 'debug'} />
         </group>
         
         {/* Procedural Ship and Industrial Environment */}
-        <ShipAssembly />
+        <group scale={[5, 5, 5]}>
+          <ShipAssembly />
+        </group>
         <DryDock />
         
         {/* Support Infrastructure (using world coordinates) */}
@@ -58,9 +64,9 @@ export function DigitalTwin() {
         <SafetyCables />
         <HoseSystem />
         
-        <ContactShadows resolution={2048} scale={100} blur={2.5} opacity={0.6} far={2} position={[0, -29.9, 0]} />
+        <ContactShadows resolution={2048} scale={1000} blur={2.5} opacity={0.6} far={2} position={[0, -29.9, 0]} />
 
-        {uiMode === 'debug' && <Grid position={[0, -29.9, 0]} args={[100, 100]} cellColor="#666" sectionColor="#333" fadeDistance={100} />}
+        {uiMode === 'debug' && <Grid position={[0, -29.9, 0]} args={[1000, 1000]} cellColor="#666" sectionColor="#333" fadeDistance={400} />}
         
         <Environment preset="warehouse" background={false} environmentIntensity={0.5} />
       </Canvas>
