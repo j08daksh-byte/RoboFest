@@ -79,10 +79,10 @@ export class CuttingNetwork {
   addSegment(pA: Point2D, pB: Point2D): Polygon[] {
     if (dist(pA, pB) < 1e-4) return []; // Too small
 
-    let intersections: { p: Point2D, edgeToSplit?: Edge, t: number }[] = [];
+    const intersections: { p: Point2D, edgeToSplit?: Edge, t: number }[] = [];
 
     // Check against all existing edges
-    for (const [edgeId, edge] of this.edges) {
+    for (const [, edge] of this.edges) {
       const C = this.nodes.get(edge.p1)!.p;
       const D = this.nodes.get(edge.p2)!.p;
       
