@@ -17,21 +17,10 @@ function InternalShipStructure() {
     return geom;
   }, []);
 
-  const bgGeo = useMemo(() => {
-    const geom = new THREE.BoxGeometry(40, 40, 0.05, 64, 1, 1);
-    geom.translate(0, 0, -0.4);
-    curveGeometry(geom);
-    return geom;
-  }, []);
-  
   const xRayMode = useRobotStore(state => state.xRayMode);
 
   return (
     <group position={[0, 0, 0]}>
-      {/* Deep dark void inside ship so light doesn't shine through */}
-      <mesh geometry={bgGeo} visible={!xRayMode}>
-        <meshStandardMaterial color="#020202" roughness={1.0} />
-      </mesh>
       
       {/* Transverse ribs (horizontal) */}
       {ribs.map((y, idx) => (
@@ -85,6 +74,7 @@ function curveGeometry(geom: THREE.BufferGeometry) {
     // y maps to World Y
     const localX = pos.getX(i);
     const localY = pos.getY(i);
+    const localZ = pos.getZ(i);
     
     const worldY = localY;
     const worldZ = 7.5 - localX;
@@ -109,11 +99,10 @@ function curveGeometry(geom: THREE.BufferGeometry) {
       uvAttr.setXY(i, u, (bestV + 1) / 2);
     }
     
-    // Convert back to local space:
-    // World X = 10.05 + localZ  => localZ = World X - 10.05
-    // World Y = localY          => localY = World Y
-    // World Z = 7.5 - localX    => localX = 7.5 - World Z
-    pos.setXYZ(i, 7.5 - pt.z, pt.y, pt.x - 10.05);
+    // Convert back to local space. Apply localZ as an offset along the normal.
+    // For now, we approximate the normal by offsetting along local Z axis (which maps to world X).
+    // The surface normal points roughly in the +X direction on the starboard side.
+    pos.setXYZ(i, 7.5 - pt.z, pt.y, pt.x - 10.05 + localZ);
   }
   geom.computeVertexNormals();
 }
@@ -127,89 +116,52 @@ import type { CutRecord } from '@/lib/robotState';
 function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, previousCuts: CutRecord[] }) {
   const groupRef = useRef<THREE.Group>(null);
   
-  const { fallingGeo, cutLinePoints, alphaTexture, startPos } = useMemo(() => {
-    if (!cutRecord.isClosed || cutRecord.path.length < 3) return { fallingGeo: null, cutLinePoints: [], alphaTexture: null, startPos: new THREE.Vector3() };
+  const { fallingGeo, cutLinePoints, startPos } = useMemo(() => {
+    if (!cutRecord.isClosed || cutRecord.path.length < 3) return { fallingGeo: null, cutLinePoints: [], startPos: new THREE.Vector3() };
     
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-    cutRecord.path.forEach(p => {
-      minX = Math.min(minX, p.x);
-      maxX = Math.max(maxX, p.x);
-      minY = Math.min(minY, p.y);
-      maxY = Math.max(maxY, p.y);
+    // 1. Create Shape in 2D ship local coords
+    const shape = new THREE.Shape();
+    cutRecord.path.forEach((p, i) => {
+      if (i === 0) shape.moveTo(p.x, p.y);
+      else shape.lineTo(p.x, p.y);
     });
-    // Add small padding
-    minX -= 0.1; maxX += 0.1; minY -= 0.1; maxY += 0.1;
-    const w = maxX - minX;
-    const h = maxY - minY;
     
-    // 1. Create PlaneGeometry in world space
-    const wSegs = Math.max(2, Math.ceil(w * 4));
-    const hSegs = Math.max(2, Math.ceil(h * 4));
-    const fallingGeo = new THREE.PlaneGeometry(w, h, wSegs, hSegs);
+    // Add holes for any previous overlapping cuts
+    previousCuts.forEach(prev => {
+      if (!prev.isClosed || prev.id === cutRecord.id) return;
+      const hole = new THREE.Path();
+      prev.path.forEach((p, i) => {
+        if (i === 0) hole.moveTo(p.x, p.y);
+        else hole.lineTo(p.x, p.y);
+      });
+      shape.holes.push(hole);
+    });
     
-    // Translate to its true position on the 2D hull before curving
-    const cx = (minX + maxX) / 2;
-    const cy = (minY + maxY) / 2;
-    fallingGeo.translate(cx, cy, 0);
+    // Create ShapeGeometry. This triangulates the polygon.
+    const fallingGeo = new THREE.ShapeGeometry(shape);
     
-    // Curve it
+    // Curve it along the hull mathematically
     curveGeometry(fallingGeo);
     
-    // Center it so physics behaves well
+    // Center it so physics behaves cleanly (rotation around its own center)
     fallingGeo.computeBoundingBox();
     const startPos = new THREE.Vector3();
     fallingGeo.boundingBox!.getCenter(startPos);
     fallingGeo.translate(-startPos.x, -startPos.y, -startPos.z);
     
-    // 2. Generate AlphaMap
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      // Background transparent
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      const drawPath = (path: {x:number, y:number}[], fillStyle: string) => {
-        ctx.fillStyle = fillStyle;
-        ctx.beginPath();
-        path.forEach((p, i) => {
-          const px = ((p.x - minX) / w) * canvas.width;
-          const py = (1.0 - (p.y - minY) / h) * canvas.height;
-          if (i === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
-        });
-        ctx.closePath();
-        ctx.fill();
-      };
-      
-      // Draw this cut as opaque (white)
-      drawPath(cutRecord.path, '#ffffff');
-      
-      // Draw previous cuts as transparent (black) to subtract overlaps!
-      previousCuts.forEach(prev => {
-        if (!prev.isClosed || prev.id === cutRecord.id) return;
-        drawPath(prev.path, '#000000');
-      });
-    }
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.minFilter = THREE.LinearFilter;
-    
-    // 3. Cut line points (flattened)
+    // 3. Cut line points (flattened for the glowing edge)
     const linePts = cutRecord.path.map(p => {
       // Translate to local space of the group
       return new THREE.Vector3(p.x - startPos.x, p.y - startPos.y, 0.005 - startPos.z);
     });
     
-    return { fallingGeo, cutLinePoints: linePts, alphaTexture: tex, startPos };
+    return { fallingGeo, cutLinePoints: linePts, startPos };
   }, [cutRecord, previousCuts]);
 
-  const [initialAngularVelocity] = useState(() => new THREE.Vector3(Math.random() * 1.5, Math.random() * 1.5, Math.random() * 1.5));
+  const [initialAngularVelocity] = useState(() => new THREE.Vector3((Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.5));
   
   const physicsRef = useRef({
-    velocity: new THREE.Vector3(0, 0, 1.5),
+    velocity: new THREE.Vector3(0, 0, 0.3), // Outward push (local Z is outward)
     angularVelocity: initialAngularVelocity,
     landed: false
   });
@@ -217,7 +169,8 @@ function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, prev
   useFrame((state, delta) => {
     if (!groupRef.current || !fallingGeo || physicsRef.current.landed) return;
     
-    const gravity = new THREE.Vector3(0, -9.81, 0); 
+    // Gravity is scaled down by 5 because local space is scaled by 5
+    const gravity = new THREE.Vector3(0, -9.81 / 5, 0); 
     physicsRef.current.velocity.addScaledVector(gravity, delta);
     
     groupRef.current.position.addScaledVector(physicsRef.current.velocity, delta);
@@ -226,8 +179,8 @@ function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, prev
     groupRef.current.rotation.y += physicsRef.current.angularVelocity.y * delta;
     groupRef.current.rotation.z += physicsRef.current.angularVelocity.z * delta;
     
-    // Ground collision
-    const GROUND_Y = -30;
+    // Ground collision: World floor is at Y = -30, so local floor is Y = -6
+    const GROUND_Y = -6;
     if (!fallingGeo.boundingSphere) fallingGeo.computeBoundingSphere();
     const radius = fallingGeo.boundingSphere ? fallingGeo.boundingSphere.radius : 1.0;
     const worldBottom = groupRef.current.position.y - radius;
@@ -255,15 +208,15 @@ function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, prev
       {/* Outer face */}
       <mesh geometry={fallingGeo} receiveShadow castShadow>
         <meshStandardMaterial 
-          color="#2c3036" metalness={0.6} roughness={0.7} 
-          alphaMap={alphaTexture} alphaTest={0.5} transparent side={THREE.DoubleSide} 
+          color="#3a4750" metalness={0.3} roughness={0.65} 
+          side={THREE.DoubleSide} 
         />
       </mesh>
       {/* Inner face for thickness */}
       <mesh geometry={fallingGeo} position={[0, 0, -0.04]} receiveShadow castShadow>
         <meshStandardMaterial 
           color="#1a1c1e" metalness={0.6} roughness={0.7} 
-          alphaMap={alphaTexture} alphaTest={0.5} transparent side={THREE.DoubleSide} 
+          side={THREE.DoubleSide} 
         />
       </mesh>
       <Line points={cutLinePoints} color="#ff4400" lineWidth={2} />
@@ -364,7 +317,7 @@ function CutPanel() {
   }, [activeCutPath.length, activeCutPath]);
 
   const xRayMode = useRobotStore(state => state.xRayMode);
-  const materials = useShipMaterials();
+  const materials = useShipMaterials(xRayMode);
   
   const paintMat = useMemo(() => materials.hullPaint.clone(), [materials]);
   const antiFoulingMat = useMemo(() => materials.hullAntiFouling.clone(), [materials]);
@@ -436,7 +389,8 @@ export function ShipHull() {
   const xRayMode = useRobotStore(state => state.xRayMode);
   const completedCuts = useRobotStore(state => state.completedCuts);
   
-  const showInternal = xRayMode || completedCuts.length > 0;
+  const hasClosedCuts = completedCuts.some(cut => cut.isClosed);
+  const showInternal = xRayMode || hasClosedCuts;
   
   return (
     <group>

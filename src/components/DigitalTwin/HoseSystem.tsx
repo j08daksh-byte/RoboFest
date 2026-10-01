@@ -27,8 +27,9 @@ export function HoseSystem() {
   // The unrotated robot has X as right, Y as forward.
   // After rotating +90 around Z, New X = -Y (Forward), New Y = X (Right).
   // Torch assembly is on the Right side.
+  const xExtension = useRobotStore(state => state.arm.xExtension);
   const torchLocalX = position.x; // Central forward/back on the body
-  const torchLocalY = position.y + (robotConfig.bodyWidthX / 2 + 0.3); // Right side
+  const torchLocalY = position.y + (robotConfig.bodyWidthX / 2 + xExtension); // Right side
   const torchLocalZ = position.z + robotConfig.trackHeightZ + robotConfig.structureHeightZ + 0.2;
   const torchWorld = getRobotWorldPosition({ x: torchLocalX, y: torchLocalY, z: torchLocalZ });
 

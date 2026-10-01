@@ -68,9 +68,9 @@ export function SafetyCables() {
   // Cable 4 (Lateral Support Cable) originates from a distinct lateral mounting arm
   const lateralBoomPoint = new THREE.Vector3(boomEndX - 1.0, mastY, boomEndZ + 0.5);
 
-  const rWidth = robotConfig.bodyWidthX; 
-  const rLen = robotConfig.bodyLengthY;  
-  const rHeight = robotConfig.trackHeightZ + robotConfig.bodyHeightZ;
+  const rWidth = robotConfig.structureWidthX; 
+  const rLen = robotConfig.structureLengthY;  
+  const rHeight = robotConfig.trackHeightZ + robotConfig.structureHeightZ;
   
   const corner1 = getRobotWorldPosition({ x: position.x - rLen/2, y: position.y - rWidth/2, z: position.z + rHeight });
   const corner2 = getRobotWorldPosition({ x: position.x + rLen/2, y: position.y - rWidth/2, z: position.z + rHeight });
@@ -118,10 +118,11 @@ export function SafetyCables() {
           </mesh>
         </group>
       </group>
-
-      {/* 2 Support Cables (The other 2 are gas hoses) */}
+      {/* 4 Support Cables */}
       <CatenaryCable start={boomPoint1} end={corner1} sag={0.2} color="#333" thickness={0.015} />
       <CatenaryCable start={boomPoint2} end={corner2} sag={0.2} color="#333" thickness={0.015} />
+      <CatenaryCable start={boomPoint3} end={corner3} sag={0.2} color="#333" thickness={0.015} />
+      <CatenaryCable start={lateralBoomPoint} end={corner4} sag={0.2} color="#333" thickness={0.015} />
     </group>
   );
 }
