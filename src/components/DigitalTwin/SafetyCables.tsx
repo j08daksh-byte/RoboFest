@@ -5,9 +5,9 @@ import { robotConfig } from '@/lib/robotConfig';
 
 export function getRobotWorldPosition(localPos: {x: number, y: number, z: number}) {
   return new THREE.Vector3(
-    9.95 - localPos.z,
+    10.05 + localPos.z,
     localPos.y,
-    7.5 + localPos.x
+    7.5 - localPos.x
   );
 }
 

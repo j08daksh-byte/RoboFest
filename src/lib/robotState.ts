@@ -18,7 +18,7 @@ export interface RobotState {
   uiMode: 'debug' | 'presentation';
   xRayMode: boolean;
   followMode: boolean;
-  cameraTarget: 'robot' | 'cut' | 'ship' | 'free';
+  cameraTarget: 'robot' | 'cut' | 'ship' | 'free' | 'starboard' | 'port' | 'front' | 'rear';
   cameraFocusTrigger: number;
   
   // Cut tracking
@@ -38,7 +38,7 @@ export interface RobotState {
   setUiMode: (mode: 'debug' | 'presentation') => void;
   setXRayMode: (enabled: boolean) => void;
   setFollowMode: (enabled: boolean) => void;
-  triggerCameraFocus: (target: 'robot' | 'cut' | 'ship' | 'free') => void;
+  triggerCameraFocus: (target: 'robot' | 'cut' | 'ship' | 'free' | 'starboard' | 'port' | 'front' | 'rear') => void;
   addCutPoint: (x: number, y: number) => void;
   completeCut: (isClosed?: boolean) => void;
   discardActiveCut: () => void;

@@ -187,14 +187,42 @@ export function ControlPanel() {
           >
             FOCUS SHIP
           </button>
-          <button 
-            className={cameraTarget === 'free' ? 'active' : ''}
-            onClick={() => triggerCameraFocus('free')}
-          >
-            RESET VIEW
-          </button>
-        </div>
-        <div className="button-group" style={{ marginTop: '5px' }}>
+            <button 
+              className={cameraTarget === 'free' ? 'active' : ''}
+              onClick={() => triggerCameraFocus('free')}
+            >
+              RESET VIEW
+            </button>
+          </div>
+          <div className="button-group" style={{ marginTop: '5px' }}>
+            <button 
+              className={cameraTarget === 'starboard' ? 'active' : ''} 
+              onClick={() => triggerCameraFocus('starboard')}
+            >
+              STARBOARD
+            </button>
+            <button 
+              className={cameraTarget === 'port' ? 'active' : ''} 
+              onClick={() => triggerCameraFocus('port')}
+            >
+              PORT
+            </button>
+          </div>
+          <div className="button-group" style={{ marginTop: '5px' }}>
+            <button 
+              className={cameraTarget === 'front' ? 'active' : ''} 
+              onClick={() => triggerCameraFocus('front')}
+            >
+              FRONT
+            </button>
+            <button 
+              className={cameraTarget === 'rear' ? 'active' : ''} 
+              onClick={() => triggerCameraFocus('rear')}
+            >
+              REAR
+            </button>
+          </div>
+          <div className="button-group" style={{ marginTop: '5px' }}>
           <button 
             className={followMode ? 'active' : ''} 
             onClick={() => setFollowMode(!followMode)}

@@ -4,15 +4,14 @@ import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, PerspectiveCamera, Grid, ContactShadows } from '@react-three/drei';
 import { RobotModel } from './RobotModel';
-import { ShipHull } from './ShipHull';
+import { ShipAssembly } from './ShipAssembly';
+import { DryDock } from './DryDock';
 import { SupplySystem } from './SupplySystem';
 import { SafetyCables } from './SafetyCables';
 import { HoseSystem } from './HoseSystem';
 import { CameraController } from './CameraController';
 import { SimulationController } from './SimulationController';
 import { useRobotStore } from '@/lib/robotState';
-
-import { ShipyardEnvironment } from './ShipyardEnvironment';
 
 export function DigitalTwin() {
   const [cameraView, setCameraView] = React.useState<'overview' | 'isometric' | 'presentation' | 'hull' | 'side' | 'bottom' | 'closeupTrack' | 'closeupArm' | 'closeupTorch' | 'cutting' | 'robot' | 'cut' | 'ship'>('presentation');
@@ -24,7 +23,6 @@ export function DigitalTwin() {
         <color attach="background" args={['#10151a']} />
         <fog attach="fog" args={['#10151a', 50, 250]} />
         
-        <SimulationController />
         <CameraController />
         
         {/* Adjusted atmospheric lighting */}
@@ -44,9 +42,18 @@ export function DigitalTwin() {
           color="#90b0d0" 
         />
         
-        <RobotModel showAxes={uiMode === 'debug'} />
-        <ShipHull />
-        <ShipyardEnvironment />
+        
+        {/* Robot Integration Layer: Scene-level transform for the unmodified robot */}
+        <group position={[10.05, 0, 7.5]} rotation={[0, Math.PI / 2, 0]}>
+          <SimulationController />
+          <RobotModel showAxes={uiMode === 'debug'} />
+        </group>
+        
+        {/* Procedural Ship and Industrial Environment */}
+        <ShipAssembly />
+        <DryDock />
+        
+        {/* Support Infrastructure (using world coordinates) */}
         <SupplySystem />
         <SafetyCables />
         <HoseSystem />
