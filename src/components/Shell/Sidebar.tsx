@@ -38,7 +38,7 @@ const navGroups = [
       { name: 'Command Center', path: '/command-center', icon: MonitorDot },
       { name: 'Missions', path: '/operations/missions', icon: Map },
       { name: 'Cutting Planner', path: '/operations/planner', icon: Crosshair },
-      { name: 'AI Cut Strategy', path: '/operations/ai-strategy', icon: BrainCircuit },
+      { name: 'AI Cut Strategy', path: '/operations/cut-strategy', icon: BrainCircuit },
     ]
   },
   {
