@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePlatformStore } from '@/lib/platformStore';
+import { usePlannerStore } from '@/lib/cutting';
 import { DigitalTwin } from '@/components/DigitalTwin';
 import { ControlPanel } from '@/components/ControlPanel';
 import { MissionControls } from '@/components/MissionControls';
@@ -10,6 +11,8 @@ import { telemetrySimulator, SimulationScenario } from '@/lib/telemetry';
 
 export default function CommandCenterPage() {
   const { robot, safety, sensor, environment, events } = usePlatformStore();
+  const { plannedCuts, currentCutId } = usePlannerStore();
+  const activeCut = plannedCuts.find(c => c.id === currentCutId);
   const [currentScenario, setCurrentScenario] = useState<SimulationScenario>(SimulationScenario.NORMAL_OPERATION);
 
   useEffect(() => {
@@ -39,6 +42,14 @@ export default function CommandCenterPage() {
         <div className="ui-panel">
           <div className="ui-panel-title">MISSION CONTROL (DEMO)</div>
           <MissionControls />
+          {activeCut && (
+            <div style={{ marginTop: '12px', borderTop: '1px solid #30363d', paddingTop: '8px' }}>
+              <div className="ui-metric"><span className="ui-metric-label">Active Cut</span><span className="ui-metric-value">{activeCut.id}</span></div>
+              <div className="ui-metric"><span className="ui-metric-label">Validation</span><span className="ui-metric-value" style={{color: activeCut.validation?.isValidGeometry ? '#2ea043' : (activeCut.validation ? '#f85149' : '#8b949e')}}>{activeCut.validation?.isValidGeometry ? 'VALID' : (activeCut.validation ? 'INVALID' : 'PENDING')}</span></div>
+              <div className="ui-metric"><span className="ui-metric-label">Risk</span><span className="ui-metric-value" style={{color: activeCut.validation?.overallRisk === 'BLOCKED' ? '#f85149' : (activeCut.validation?.overallRisk === 'LOW' ? '#2ea043' : '#d29922')}}>{activeCut.validation?.overallRisk || 'N/A'}</span></div>
+              <div className="ui-metric"><span className="ui-metric-label">Status</span><span className="ui-metric-value" style={{color: '#58a6ff'}}>{activeCut.approvalState}</span></div>
+            </div>
+          )}
         </div>
 
         <div className="ui-panel">
