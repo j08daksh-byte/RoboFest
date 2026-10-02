@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useRobotStore } from '@/lib/robotState';
+import { usePlatformStore } from '@/lib/platformStore';
 import { robotConfig } from '@/lib/robotConfig';
 import { Play, Pause, RotateCcw, Power, Monitor, Settings2, ShieldCheck, AlertCircle } from 'lucide-react';
 
@@ -26,6 +27,8 @@ export function ControlPanel({ mode = 'full' }: { mode?: 'full' | 'compact' }) {
     setXRayMode,
     reset,
   } = useRobotStore();
+  
+  const safety = usePlatformStore(state => state.safety);
 
   const handleSimToggle = () => {
     setSimulationState(simulationState === 'playing' ? 'paused' : 'playing');
@@ -72,7 +75,9 @@ export function ControlPanel({ mode = 'full' }: { mode?: 'full' | 'compact' }) {
           </div>
           <div className="status-item">
             <span className="label">SAFETY SYSTEM</span>
-            <span className="value good">SAFE <span className="sim-badge">SIM</span></span>
+            <span className={safety.emergencyStateActive || safety.level !== 'NORMAL' ? 'value critical' : 'value good'}>
+              {safety.emergencyStateActive ? 'EMERGENCY' : safety.level} <span className="sim-badge">SIM</span>
+            </span>
           </div>
         </div>
       </div>
@@ -94,36 +99,45 @@ export function ControlPanel({ mode = 'full' }: { mode?: 'full' | 'compact' }) {
         <div className="dpad-group">
           <div className="dpad-row">
             <button 
-              onMouseDown={() => !electromagnet.enabled && setLocomotionIntent(0, 1)}
+              onMouseDown={() => safety.movementPermission && !electromagnet.enabled && setLocomotionIntent(0, 1)}
               onMouseUp={() => setLocomotionIntent(0, 0)}
               onMouseLeave={() => setLocomotionIntent(0, 0)}
-              disabled={electromagnet.enabled}
+              disabled={!safety.movementPermission || electromagnet.enabled}
+              style={!safety.movementPermission ? { opacity: 0.5, border: '1px solid var(--critical)' } : undefined}
             >▲ UP</button>
           </div>
           <div className="dpad-row">
             <button 
-              onMouseDown={() => !electromagnet.enabled && setLocomotionIntent(-1, 0)}
+              onMouseDown={() => safety.movementPermission && !electromagnet.enabled && setLocomotionIntent(-1, 0)}
               onMouseUp={() => setLocomotionIntent(0, 0)}
               onMouseLeave={() => setLocomotionIntent(0, 0)}
-              disabled={electromagnet.enabled}
+              disabled={!safety.movementPermission || electromagnet.enabled}
+              style={!safety.movementPermission ? { opacity: 0.5, border: '1px solid var(--critical)' } : undefined}
             >◀ LEFT</button>
             <button 
-              onMouseDown={() => !electromagnet.enabled && setLocomotionIntent(1, 0)}
+              onMouseDown={() => safety.movementPermission && !electromagnet.enabled && setLocomotionIntent(1, 0)}
               onMouseUp={() => setLocomotionIntent(0, 0)}
               onMouseLeave={() => setLocomotionIntent(0, 0)}
-              disabled={electromagnet.enabled}
+              disabled={!safety.movementPermission || electromagnet.enabled}
+              style={!safety.movementPermission ? { opacity: 0.5, border: '1px solid var(--critical)' } : undefined}
             >RIGHT ▶</button>
           </div>
           <div className="dpad-row">
             <button 
-              onMouseDown={() => !electromagnet.enabled && setLocomotionIntent(0, -1)}
+              onMouseDown={() => safety.movementPermission && !electromagnet.enabled && setLocomotionIntent(0, -1)}
               onMouseUp={() => setLocomotionIntent(0, 0)}
               onMouseLeave={() => setLocomotionIntent(0, 0)}
-              disabled={electromagnet.enabled}
+              disabled={!safety.movementPermission || electromagnet.enabled}
+              style={!safety.movementPermission ? { opacity: 0.5, border: '1px solid var(--critical)' } : undefined}
             >▼ DOWN</button>
           </div>
         </div>
         {electromagnet.enabled && <p className="warning-text">Unlock magnet to move</p>}
+        {!safety.movementPermission && (
+          <p className="warning-text" style={{ color: 'var(--critical)' }}>
+            BLOCKED BY SAFETY{safety.activeHazards.length > 0 ? `: ${safety.activeHazards[0].description}` : ''}
+          </p>
+        )}
       </div>
 
       <div className="hud-section">
@@ -161,11 +175,24 @@ export function ControlPanel({ mode = 'full' }: { mode?: 'full' | 'compact' }) {
         <div className="button-group">
           <button 
             className={torch.enabled ? 'active-flame' : ''} 
-            onClick={() => setTorch(!torch.enabled)}
+            onClick={() => {
+              if (torch.enabled) {
+                setTorch(false);
+              } else if (safety.torchPermission) {
+                setTorch(true);
+              }
+            }}
+            disabled={!safety.torchPermission && !torch.enabled}
+            style={(!safety.torchPermission && !torch.enabled) ? { opacity: 0.5, border: '1px solid var(--critical)' } : undefined}
           >
             <Power size={16} /> OXY-ACETYLENE TORCH {torch.enabled ? 'IGNITED' : 'OFF'}
           </button>
         </div>
+        {!safety.torchPermission && (
+          <p className="warning-text" style={{ color: 'var(--critical)' }}>
+            BLOCKED BY SAFETY{safety.activeHazards.length > 0 ? `: ${safety.activeHazards[0].description}` : ''}
+          </p>
+        )}
       </div>
         </>
       )}
@@ -276,7 +303,7 @@ export function ControlPanel({ mode = 'full' }: { mode?: 'full' | 'compact' }) {
             LATERAL: {useRobotStore.getState().locomotionIntent.x !== 0 ? 'MOVING' : 'STOPPED'}<br/><br/>
             
             <strong>MAGNETIC HOLD:</strong> {electromagnet.enabled ? 'ON' : 'OFF'}<br/>
-            <strong>SAFETY SYSTEM:</strong> SAFE<br/><br/>
+            <strong>SAFETY SYSTEM:</strong> <span style={{ color: safety.emergencyStateActive || safety.level !== 'NORMAL' ? 'var(--critical)' : 'inherit' }}>{safety.emergencyStateActive ? 'EMERGENCY' : safety.level}</span><br/><br/>
 
             <strong>POSITIONING CABLE</strong><br/>
             LENGTH: {(useRobotStore.getState().fifthCableLength * 1000).toFixed(0)} mm<br/>
