@@ -3,12 +3,8 @@ import Link from 'next/link';
 
 export default function RobotLandingPage() {
   return (
-    <div className="module-container">
-      <header className="module-header">
-        <h1>Robot</h1>
-        <p>Overview and sub-modules for Robot</p>
-        <span className="sim-badge">SIMULATED / DEMO</span>
-      </header>
+    <div className="page-container">
+      <header className="page-header"><div className="page-header-top"><h1 className="page-title">Robot</h1><span className="sim-badge">SIMULATED / DEMO</span></div><p className="page-subtitle">Overview and sub-modules for Robot</p></header>
       <main className="module-content" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
           

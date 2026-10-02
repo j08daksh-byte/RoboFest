@@ -25,6 +25,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            try {
+              var theme = localStorage.getItem('theme');
+              if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+            } catch (e) {}
+          })();
+        ` }} />
+      </head>
       <body style={{ margin: 0 }}>
         <AppShell>{children}</AppShell>
       </body>

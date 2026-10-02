@@ -3,12 +3,8 @@ import Link from 'next/link';
 
 export default function OperationsLandingPage() {
   return (
-    <div className="module-container">
-      <header className="module-header">
-        <h1>Operations</h1>
-        <p>Overview and sub-modules for Operations</p>
-        <span className="sim-badge">SIMULATED / DEMO</span>
-      </header>
+    <div className="page-container">
+      <header className="page-header"><div className="page-header-top"><h1 className="page-title">Operations</h1><span className="sim-badge">SIMULATED / DEMO</span></div><p className="page-subtitle">Overview and sub-modules for Operations</p></header>
       <main className="module-content" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
           

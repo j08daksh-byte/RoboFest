@@ -8,16 +8,16 @@ export default function RobotHealthPage() {
 
   const getStatusColor = (status: string) => {
     switch(status) {
-      case 'HEALTHY': return '#2ea043';
-      case 'WARNING': return '#d29922';
-      case 'CRITICAL': return '#f85149';
-      default: return '#8b949e';
+      case 'HEALTHY': return 'var(--good)';
+      case 'WARNING': return 'var(--warning)';
+      case 'CRITICAL': return 'var(--critical)';
+      default: return 'var(--text-muted)';
     }
   };
 
-  const evalBattery = () => {
-    if (robot.batteryVoltage < 21) return 'CRITICAL';
-    if (robot.batteryVoltage < 23) return 'WARNING';
+  const evalPower = () => {
+    if (!robot.powerConnected) return 'CRITICAL';
+    if (robot.powerVoltage < 210) return 'WARNING';
     return 'HEALTHY';
   };
 
@@ -35,7 +35,7 @@ export default function RobotHealthPage() {
   };
 
   const subsystems = [
-    { name: 'Battery System', status: evalBattery(), detail: `${robot.batteryVoltage.toFixed(1)}V / ${robot.batteryPercentage}%` },
+    { name: 'External Power', status: evalPower(), detail: robot.powerConnected ? `${robot.powerVoltage.toFixed(1)}V / ${robot.powerCurrent.toFixed(1)}A` : 'DISCONNECTED' },
     { name: 'Drive Motors', status: evalMotors(), detail: `Max ${Math.max(sensor.motors.tempLeft, sensor.motors.tempRight)}°C` },
     { name: 'Gas / Torch', status: evalGas(), detail: `Oxy: ${sensor.gas.oxyPressurePsi.toFixed(0)} PSI` },
     { name: 'Sensors / IMU', status: sensor.metadata.isStale ? 'WARNING' : 'HEALTHY', detail: sensor.metadata.isStale ? 'Stale Data' : 'Active' },
@@ -44,40 +44,41 @@ export default function RobotHealthPage() {
   ];
 
   return (
-    <div className="module-container">
-      <header className="module-header">
-        <h1>Robot Health Summary</h1>
-        <p>Deterministic component health analysis from telemetry.</p>
-        <span className="sim-badge" style={{ background: '#d29922', color: 'black', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-          {systemMode}
-        </span>
+    <div className="page-container">
+      <header className="page-header">
+        <div className="page-header-top">
+          <h1 className="page-title">ROBOT HEALTH</h1>
+          <span className="sim-badge" style={{ margin: 0 }}>[{systemMode}]</span>
+        </div>
+        <p className="page-subtitle">Deterministic component health analysis from telemetry.</p>
       </header>
       
-      <main className="module-content" style={{ maxWidth: '800px', margin: '0 auto' }}>
-        
-        <div className="ui-panel" style={{ background: '#161b22', padding: '24px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center' }}>
-          <h2 style={{ color: getStatusColor(robot.overallHealth), fontSize: '2rem', marginBottom: '8px' }}>
+      <main className="grid-1-col">
+        <div className="ui-panel" style={{ padding: '32px', textAlign: 'center' }}>
+          <h2 style={{ color: getStatusColor(robot.overallHealth), fontSize: '2.5rem', marginBottom: '8px', letterSpacing: '1px' }}>
             {robot.overallHealth}
           </h2>
-          <p style={{ color: '#8b949e' }}>OVERALL SYSTEM HEALTH</p>
+          <div className="heading-technical" style={{ justifyContent: 'center', marginBottom: 0 }}>OVERALL SYSTEM HEALTH</div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="grid-3-col">
           {subsystems.map(sys => (
-            <div key={sys.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0d1117', padding: '16px', borderRadius: '6px', border: '1px solid #30363d' }}>
-              <div>
-                <h4 style={{ color: '#c9d1d9', margin: '0 0 4px 0' }}>{sys.name}</h4>
-                <div style={{ color: '#8b949e', fontSize: '0.9rem' }}>{sys.detail}</div>
+            <div key={sys.name} className="ui-panel" style={{ padding: '20px', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <h4 style={{ color: 'var(--text-main)', margin: 0, fontSize: '0.95rem' }}>{sys.name}</h4>
+                <div style={{ padding: '4px 8px', borderRadius: 'var(--radius-sm)', fontSize: '0.75rem', fontWeight: 600, background: `color-mix(in srgb, ${getStatusColor(sys.status)} 15%, transparent)`, color: getStatusColor(sys.status), border: `1px solid color-mix(in srgb, ${getStatusColor(sys.status)} 30%, transparent)` }}>
+                  {sys.status}
+                </div>
               </div>
-              <div style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold', background: `${getStatusColor(sys.status)}20`, color: getStatusColor(sys.status), border: `1px solid ${getStatusColor(sys.status)}` }}>
-                {sys.status}
+              <div style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', fontFamily: 'var(--font-mono)' }}>
+                {sys.detail}
               </div>
             </div>
           ))}
         </div>
 
-        <div style={{ marginTop: '20px', padding: '16px', background: 'rgba(210, 153, 34, 0.1)', border: '1px solid #d29922', borderRadius: '6px', color: '#d29922', fontSize: '0.85rem' }}>
-          <strong>Note:</strong> This is a simulation health model. Values map deterministically from active telemetry.
+        <div style={{ padding: '16px', background: 'color-mix(in srgb, var(--warning) 10%, transparent)', border: '1px solid var(--warning)', borderRadius: 'var(--radius-md)', color: 'var(--warning)', fontSize: '0.85rem' }}>
+          <strong>NOTE:</strong> This is a simulation health model. Values map deterministically from active telemetry.
         </div>
       </main>
     </div>

@@ -65,8 +65,8 @@ class TelemetrySimulator {
       timestamp: new Date().toISOString(),
       sourceMode: store.systemMode,
       robot: {
-        batteryVoltage: store.robot.batteryVoltage,
-        batteryCurrent: store.robot.batteryCurrent
+        powerVoltage: store.robot.powerVoltage,
+        powerCurrent: store.robot.powerCurrent
       },
       motors: newSensor.motors,
       imu: newSensor.imu,

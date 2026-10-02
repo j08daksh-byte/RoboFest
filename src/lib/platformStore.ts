@@ -52,9 +52,9 @@ const initialPlatformState = {
   
   robot: {
     status: 'ONLINE' as const,
-    batteryPercentage: 92,
-    batteryVoltage: 24.1,
-    batteryCurrent: 1.2,
+    powerConnected: true,
+    powerVoltage: 220,
+    powerCurrent: 3.5,
     overallHealth: 'GOOD' as const,
     connectionPingMs: 14,
     torchEnabled: false,

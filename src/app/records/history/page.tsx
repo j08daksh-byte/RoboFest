@@ -16,24 +16,24 @@ export default function RecordsHistoryPage() {
   });
 
   return (
-    <div className="module-container">
-      <header className="module-header">
-        <h1>Operational Event History</h1>
-        <p>Complete historical log of platform and safety events.</p>
-        <span className="sim-badge" style={{ background: '#d29922', color: 'black', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-          {systemMode}
-        </span>
+    <div className="page-container">
+      <header className="page-header">
+        <div className="page-header-top">
+          <h1 className="page-title">OPERATIONAL EVENT HISTORY</h1>
+          <span className="sim-badge" style={{ margin: 0 }}>[{systemMode}]</span>
+        </div>
+        <p className="page-subtitle">Complete historical log of platform and safety events.</p>
       </header>
       
-      <main className="module-content" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <main className="grid-1-col" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', padding: '16px', background: '#161b22', borderRadius: '8px' }}>
+        <div className="ui-panel" style={{ display: 'flex', gap: '20px', padding: '16px', background: 'var(--bg-dark)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ color: '#8b949e', fontSize: '0.9rem' }}>Category:</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 600 }}>CATEGORY:</span>
             <select 
               value={filterCat} 
               onChange={e => setFilterCat(e.target.value as EventCategory | 'ALL')}
-              style={{ background: '#0d1117', color: '#c9d1d9', border: '1px solid #30363d', padding: '6px 12px', borderRadius: '4px' }}
+              style={{ background: 'var(--bg-panel)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', outline: 'none' }}
             >
               <option value="ALL">All Categories</option>
               {Object.values(EventCategory).map(cat => <option key={cat} value={cat}>{cat}</option>)}
@@ -41,11 +41,11 @@ export default function RecordsHistoryPage() {
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ color: '#8b949e', fontSize: '0.9rem' }}>Severity:</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 600 }}>SEVERITY:</span>
             <select 
               value={filterSev} 
               onChange={e => setFilterSev(e.target.value as 'ALL' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL')}
-              style={{ background: '#0d1117', color: '#c9d1d9', border: '1px solid #30363d', padding: '6px 12px', borderRadius: '4px' }}
+              style={{ background: 'var(--bg-panel)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', outline: 'none' }}
             >
               <option value="ALL">All Severities</option>
               <option value="INFO">INFO</option>
@@ -56,35 +56,41 @@ export default function RecordsHistoryPage() {
           </div>
         </div>
 
-        <div className="ui-panel" style={{ background: '#161b22', borderRadius: '8px', overflow: 'hidden', padding: 0 }}>
+        <div className="ui-panel" style={{ flex: 1, padding: 0, overflow: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-            <thead style={{ background: '#21262d', textAlign: 'left' }}>
+            <thead style={{ background: 'var(--bg-dark)', textAlign: 'left', position: 'sticky', top: 0, zIndex: 10 }}>
               <tr>
-                <th style={{ padding: '12px 16px', color: '#8b949e', fontWeight: 'normal', borderBottom: '1px solid #30363d' }}>Timestamp</th>
-                <th style={{ padding: '12px 16px', color: '#8b949e', fontWeight: 'normal', borderBottom: '1px solid #30363d' }}>Severity</th>
-                <th style={{ padding: '12px 16px', color: '#8b949e', fontWeight: 'normal', borderBottom: '1px solid #30363d' }}>Category</th>
-                <th style={{ padding: '12px 16px', color: '#8b949e', fontWeight: 'normal', borderBottom: '1px solid #30363d' }}>Message</th>
-                <th style={{ padding: '12px 16px', color: '#8b949e', fontWeight: 'normal', borderBottom: '1px solid #30363d' }}>Mission ID</th>
+                <th style={{ padding: '16px', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border-color)' }}>TIMESTAMP</th>
+                <th style={{ padding: '16px', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border-color)' }}>SEVERITY</th>
+                <th style={{ padding: '16px', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border-color)' }}>CATEGORY</th>
+                <th style={{ padding: '16px', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border-color)' }}>MESSAGE</th>
+                <th style={{ padding: '16px', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border-color)' }}>MISSION ID</th>
               </tr>
             </thead>
             <tbody>
               {filteredEvents.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ padding: '30px', textAlign: 'center', color: '#8b949e' }}>No matching events found in history buffer.</td>
+                  <td colSpan={5}>
+                    <div className="empty-state" style={{ border: 'none', background: 'transparent' }}>
+                      <div className="empty-state-title">NO EVENTS FOUND</div>
+                      <div>No matching events found in history buffer.</div>
+                    </div>
+                  </td>
                 </tr>
               ) : (
                 filteredEvents.map(ev => {
-                  let sevColor = '#c9d1d9';
-                  if (ev.severity === 'CRITICAL') sevColor = '#f85149';
-                  if (ev.severity === 'WARNING') sevColor = '#d29922';
+                  let sevColor = 'var(--text-main)';
+                  if (ev.severity === 'CRITICAL') sevColor = 'var(--critical)';
+                  if (ev.severity === 'WARNING') sevColor = 'var(--warning)';
+                  if (ev.severity === 'ERROR') sevColor = 'var(--critical)';
                   
                   return (
-                    <tr key={ev.id} style={{ borderBottom: '1px solid #30363d' }}>
-                      <td style={{ padding: '12px 16px', color: '#8b949e', whiteSpace: 'nowrap' }}>{new Date(ev.timestamp).toLocaleString()}</td>
+                    <tr key={ev.id} style={{ borderBottom: '1px solid var(--border-color)', background: 'var(--bg-panel)' }}>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{new Date(ev.timestamp).toLocaleString()}</td>
                       <td style={{ padding: '12px 16px', color: sevColor, fontWeight: 'bold' }}>{ev.severity}</td>
-                      <td style={{ padding: '12px 16px', color: '#c9d1d9' }}>{ev.category}</td>
-                      <td style={{ padding: '12px 16px', color: '#c9d1d9' }}>{ev.message}</td>
-                      <td style={{ padding: '12px 16px', color: '#58a6ff' }}>{ev.missionId || '-'}</td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-main)' }}>{ev.category}</td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{ev.message}</td>
+                      <td style={{ padding: '12px 16px', color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>{ev.missionId || '-'}</td>
                     </tr>
                   );
                 })

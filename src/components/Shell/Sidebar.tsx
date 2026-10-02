@@ -99,8 +99,7 @@ export function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-header">
-        RF6 PLATFORM
+      <div className="sidebar-header" style={{ borderBottom: 'none', height: '20px' }}>
       </div>
       <nav className="sidebar-nav">
         {navGroups.map((group, i) => (

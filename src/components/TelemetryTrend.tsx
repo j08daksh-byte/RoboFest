@@ -5,10 +5,10 @@ export function TelemetryTrend() {
   const { telemetryHistory } = usePlatformStore();
   
   if (telemetryHistory.length === 0) {
-    return <div style={{ color: '#8b949e', fontSize: '0.85rem' }}>Awaiting telemetry...</div>;
+    return <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Awaiting telemetry...</div>;
   }
 
-  // Draw simple SVG line chart for Battery & Motor Temp
+  // Draw simple SVG line chart for Motor Temp & Tilt Trend
   const width = 200;
   const height = 40;
   
@@ -27,14 +27,14 @@ export function TelemetryTrend() {
   }).join(' ');
 
   return (
-    <div style={{ marginTop: '10px' }}>
-      <div style={{ fontSize: '0.75rem', color: '#8b949e', marginBottom: '4px' }}>Motor Temp Trend</div>
-      <svg width={width} height={height} style={{ background: '#0d1117', border: '1px solid #30363d' }}>
-        <polyline points={tempPoints} fill="none" stroke="#f85149" strokeWidth="2" />
+    <div style={{ marginTop: '10px', width: '100%' }}>
+      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Motor Temp Trend</div>
+      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ background: 'var(--bg-dark)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}>
+        <polyline points={tempPoints} fill="none" stroke="var(--critical)" strokeWidth="2" />
       </svg>
-      <div style={{ fontSize: '0.75rem', color: '#8b949e', marginBottom: '4px', marginTop: '8px' }}>Tilt Trend</div>
-      <svg width={width} height={height} style={{ background: '#0d1117', border: '1px solid #30363d' }}>
-        <polyline points={tiltPoints} fill="none" stroke="#d29922" strokeWidth="2" />
+      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px', marginTop: '8px' }}>Tilt Trend</div>
+      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ background: 'var(--bg-dark)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}>
+        <polyline points={tiltPoints} fill="none" stroke="var(--warning)" strokeWidth="2" />
       </svg>
     </div>
   );

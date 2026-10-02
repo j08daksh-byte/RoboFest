@@ -20,15 +20,15 @@ export function TopBar() {
   // Dynamic color for safety
   const getSafetyColor = (level: SafetyLevel) => {
     switch(level) {
-      case SafetyLevel.NORMAL: return '#2ea043';
-      case SafetyLevel.WARNING: return '#d29922';
+      case SafetyLevel.NORMAL: return 'var(--good)';
+      case SafetyLevel.WARNING: return 'var(--warning)';
       case SafetyLevel.CRITICAL:
       case SafetyLevel.TORCH_OFF:
       case SafetyLevel.ROBOT_STOP:
       case SafetyLevel.ALARM:
       case SafetyLevel.EVACUATION:
-        return '#f85149';
-      default: return '#8b949e';
+        return 'var(--critical)';
+      default: return 'var(--text-muted)';
     }
   };
   
@@ -37,6 +37,13 @@ export function TopBar() {
   return (
     <header className="top-bar">
       <div className="top-bar-left">
+        <div style={{ fontWeight: 800, letterSpacing: '1px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '12px', height: '12px', background: 'var(--accent)', borderRadius: '2px' }}></div>
+          RF6 COMMAND
+        </div>
+      </div>
+      
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
         <div className={`status-indicator ${isSimulated ? 'simulated' : 'live'}`}>
           {isSimulated ? <ActivitySquare size={16} /> : <Wifi size={16} />}
           {systemMode.replace('_', ' ')}
@@ -48,21 +55,45 @@ export function TopBar() {
             OFFLINE
           </div>
         )}
-      </div>
-      
-      <div className="top-bar-right">
-        <div className="status-indicator" style={{ border: '1px solid #30363d', color: '#8b949e' }}>
+
+        <div className="status-indicator" style={{ border: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
           MISSION: {mission.status.replace(/_/g, ' ')}
         </div>
-        
-        <div className="status-indicator" style={{ border: `1px solid ${safetyColor}`, color: safetyColor }}>
+      </div>
+
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+        <div className="status-indicator" style={{ border: `1px solid ${safetyColor}`, color: safetyColor, background: `color-mix(in srgb, ${safetyColor} 10%, transparent)` }}>
+          <AlertTriangle size={16} />
           SAFETY: {safety.level.replace(/_/g, ' ')}
         </div>
         
-        <div style={{ marginLeft: '12px', color: '#8b949e', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <UserCircle size={24} />
-          <span style={{ fontSize: '0.85rem' }}>Operator 01</span>
+        <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '8px' }}>
+          <UserCircle size={20} />
+          <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>OP-01</span>
         </div>
+
+        <button 
+          onClick={() => {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+          }}
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-main)',
+            padding: '4px 8px',
+            borderRadius: 'var(--radius-sm)',
+            cursor: 'pointer',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            marginLeft: '8px',
+            transition: 'background 0.2s'
+          }}
+        >
+          THEME
+        </button>
       </div>
     </header>
   );

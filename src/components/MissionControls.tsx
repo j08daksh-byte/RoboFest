@@ -10,7 +10,7 @@ export function MissionControls() {
       <div style={{ display: 'flex', gap: '8px' }}>
         <button 
           onClick={() => createMission({ shipName: 'Demo Vessel', hullSection: 'STARBOARD-A', objective: 'Demonstration hull cutting mission' })}
-          style={{ padding: '6px 12px', background: '#238636', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
+          style={{ padding: '6px 12px', background: 'var(--good)', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '0.8rem' }}
           disabled={!!mission.id && !['COMPLETED', 'CANCELLED'].includes(mission.status)}
         >
           Create Mission
@@ -18,7 +18,7 @@ export function MissionControls() {
         
         <button 
           onClick={() => startMission()}
-          style={{ padding: '6px 12px', background: '#1f6feb', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
+          style={{ padding: '6px 12px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '0.8rem' }}
           disabled={!['PLANNED', 'INTERRUPTED'].includes(mission.status)}
         >
           Start
@@ -26,7 +26,7 @@ export function MissionControls() {
 
         <button 
           onClick={() => interruptMission()}
-          style={{ padding: '6px 12px', background: '#d29922', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
+          style={{ padding: '6px 12px', background: 'var(--warning)', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '0.8rem' }}
           disabled={mission.status !== 'IN_PROGRESS'}
         >
           Interrupt
@@ -36,7 +36,7 @@ export function MissionControls() {
       <div style={{ display: 'flex', gap: '8px' }}>
         <button 
           onClick={() => completeMission()}
-          style={{ padding: '6px 12px', background: '#8957e5', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', flex: 1 }}
+          style={{ padding: '6px 12px', background: '#8957e5', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '0.8rem', flex: 1 }}
           disabled={mission.status !== 'IN_PROGRESS'}
         >
           Complete
@@ -44,7 +44,7 @@ export function MissionControls() {
         
         <button 
           onClick={() => cancelMission()}
-          style={{ padding: '6px 12px', background: '#da3633', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', flex: 1 }}
+          style={{ padding: '6px 12px', background: 'var(--critical)', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '0.8rem', flex: 1 }}
           disabled={!['PLANNED', 'IN_PROGRESS', 'INTERRUPTED'].includes(mission.status)}
         >
           Cancel

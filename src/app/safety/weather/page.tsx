@@ -15,43 +15,58 @@ export default function SafetyWeatherPage() {
     }
   };
 
-  const renderMetric = (label: string, value: string | number) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px' }}>
-      <span style={{ color: '#8b949e' }}>{label}</span>
-      <span style={{ color: '#c9d1d9', fontWeight: 600 }}>{value}</span>
-    </div>
-  );
-
   return (
-    <div className="module-container">
-      <header className="module-header">
-        <h1>Weather & Site Workability</h1>
-        <p>Environmental conditions and operational restrictions.</p>
-        <span className="sim-badge" style={{ background: '#d29922', color: 'black', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-          {systemMode}
-        </span>
+    <div className="page-container">
+      <header className="page-header">
+        <div className="page-header-top">
+          <h1 className="page-title">WEATHER & SITE</h1>
+          <span className="sim-badge" style={{ margin: 0 }}>[{systemMode}]</span>
+        </div>
+        <p className="page-subtitle">Environmental conditions and operational restrictions.</p>
       </header>
       
-      <main className="module-content" style={{ maxWidth: '800px', margin: '0 auto' }}>
-        
-        <div className="ui-panel" style={{ background: '#161b22', padding: '24px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center' }}>
-          <div style={{ fontSize: '0.9rem', color: '#8b949e', marginBottom: '8px' }}>SITE WORKABILITY STATUS</div>
-          <h2 style={{ color: getWorkabilityColor(environment.stormWorkabilityState), fontSize: '2.5rem', margin: 0 }}>
+      <main className="grid-1-col">
+        <div className="ui-panel" style={{ padding: '32px', textAlign: 'center' }}>
+          <h2 style={{ color: getWorkabilityColor(environment.stormWorkabilityState), fontSize: '2.5rem', marginBottom: '8px', letterSpacing: '1px' }}>
             {environment.stormWorkabilityState.replace('_', ' ')}
           </h2>
+          <div className="heading-technical" style={{ justifyContent: 'center', marginBottom: 0 }}>SITE WORKABILITY STATUS</div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-          {renderMetric('Temperature', `${environment.temperatureC}°C`)}
-          {renderMetric('Humidity', `${environment.humidityPercentage}%`)}
-          {renderMetric('Wind Speed', `${environment.windSpeedKmh} km/h`)}
-          {renderMetric('Atmospheric Pressure', `${environment.atmosphericPressureHpa} hPa`)}
-          {renderMetric('Precipitation', environment.rain ? 'Yes' : 'No')}
-          {renderMetric('Visibility', environment.visibilityStatus)}
+        <div className="ui-panel">
+          <div className="ui-panel-header">
+            <h2 className="heading-technical" style={{ marginBottom: 0 }}>ENVIRONMENTAL METRICS</h2>
+          </div>
+          <div className="ui-panel-body grid-3-col">
+            <div className="metric-group">
+              <div className="metric-label">Temperature</div>
+              <div className="metric-value">{environment.temperatureC}°C</div>
+            </div>
+            <div className="metric-group">
+              <div className="metric-label">Humidity</div>
+              <div className="metric-value">{environment.humidityPercentage}%</div>
+            </div>
+            <div className="metric-group">
+              <div className="metric-label">Wind Speed</div>
+              <div className="metric-value">{environment.windSpeedKmh} km/h</div>
+            </div>
+            <div className="metric-group">
+              <div className="metric-label">Atmospheric Pressure</div>
+              <div className="metric-value">{environment.atmosphericPressureHpa} hPa</div>
+            </div>
+            <div className="metric-group">
+              <div className="metric-label">Precipitation</div>
+              <div className="metric-value">{environment.rain ? 'Yes' : 'No'}</div>
+            </div>
+            <div className="metric-group">
+              <div className="metric-label">Visibility</div>
+              <div className="metric-value">{environment.visibilityStatus}</div>
+            </div>
+          </div>
         </div>
 
-        <div style={{ padding: '16px', background: 'rgba(210, 153, 34, 0.1)', border: '1px solid #d29922', borderRadius: '6px', color: '#d29922', fontSize: '0.85rem' }}>
-          <strong>Important Disclaimer:</strong> This module provides deterministic decision support data for DEMO purposes based on the simulated platform state. Do not use this as a certified industrial weather safety system. No real weather API is connected.
+        <div style={{ padding: '16px', background: 'color-mix(in srgb, var(--warning) 10%, transparent)', border: '1px solid var(--warning)', borderRadius: 'var(--radius-md)', color: 'var(--warning)', fontSize: '0.85rem' }}>
+          <strong>IMPORTANT DISCLAIMER:</strong> This module provides deterministic decision support data for DEMO purposes based on the simulated platform state. Do not use this as a certified industrial weather safety system. No real weather API is connected.
         </div>
       </main>
     </div>

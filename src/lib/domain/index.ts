@@ -9,9 +9,9 @@ export enum SystemMode {
 // ROBOT DOMAIN
 export interface RobotDomainState {
   status: 'ONLINE' | 'OFFLINE' | 'FAULT' | 'MAINTENANCE';
-  batteryPercentage: number;
-  batteryVoltage: number;
-  batteryCurrent: number;
+  powerConnected: boolean;
+  powerVoltage: number;
+  powerCurrent: number;
   overallHealth: 'GOOD' | 'WARNING' | 'CRITICAL';
   connectionPingMs: number;
   // High-level operational commands (Not 3D mesh states)
@@ -135,8 +135,8 @@ export interface TelemetrySample {
   timestamp: string;
   sourceMode: SystemMode;
   robot: {
-    batteryVoltage: number;
-    batteryCurrent: number;
+    powerVoltage: number;
+    powerCurrent: number;
   };
   motors: MotorData;
   imu: ImuData;

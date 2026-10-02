@@ -11,63 +11,63 @@ export default function RobotPassportPage() {
   const emergencyStopsCount = events.filter(e => e.category === 'SAFETY' && e.message.includes('EVACUATION') || e.message.includes('EMERGENCY_STOP')).length;
 
   return (
-    <div className="module-container">
-      <header className="module-header">
-        <h1>Robot Passport</h1>
-        <p>Operational lifecycle and historical metrics.</p>
-        <span className="sim-badge" style={{ background: '#d29922', color: 'black', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-          {systemMode}
-        </span>
+    <div className="page-container">
+      <header className="page-header">
+        <div className="page-header-top">
+          <h1 className="page-title">ROBOT PASSPORT</h1>
+          <span className="sim-badge" style={{ margin: 0 }}>[{systemMode}]</span>
+        </div>
+        <p className="page-subtitle">Operational lifecycle and historical metrics.</p>
       </header>
       
-      <main className="module-content" style={{ maxWidth: '800px', margin: '0 auto' }}>
-        
-        <div className="ui-panel" style={{ background: '#161b22', padding: '24px', borderRadius: '8px', marginBottom: '20px' }}>
-          <h2 style={{ color: '#c9d1d9', borderBottom: '1px solid #30363d', paddingBottom: '12px', marginBottom: '20px' }}>Identity & Lifecycle</h2>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            <div>
-              <div style={{ color: '#8b949e', fontSize: '0.85rem' }}>Robot Serial</div>
-              <div style={{ fontSize: '1.2rem', color: '#58a6ff' }}>RBG-6.0-PROTO</div>
+      <main className="grid-1-col">
+        <div className="ui-panel">
+          <div className="ui-panel-header">
+            <h2 className="heading-technical" style={{ marginBottom: 0 }}>IDENTITY & LIFECYCLE</h2>
+          </div>
+          <div className="ui-panel-body grid-4-col">
+            <div className="metric-group">
+              <div className="metric-label">Robot Serial</div>
+              <div className="metric-value" style={{ fontSize: '1.2rem', color: 'var(--accent)' }}>RBG-6.0-PROTO</div>
             </div>
-            <div>
-              <div style={{ color: '#8b949e', fontSize: '0.85rem' }}>Current Mode</div>
-              <div style={{ fontSize: '1.2rem', color: '#d29922' }}>{systemMode}</div>
+            <div className="metric-group">
+              <div className="metric-label">Current Mode</div>
+              <div className="metric-value" style={{ fontSize: '1.2rem', color: 'var(--warning)' }}>{systemMode}</div>
             </div>
-            <div>
-              <div style={{ color: '#8b949e', fontSize: '0.85rem' }}>Commissioned</div>
-              <div style={{ fontSize: '1.1rem' }}>2026-10-01</div>
+            <div className="metric-group">
+              <div className="metric-label">Commissioned</div>
+              <div className="metric-value" style={{ fontSize: '1.2rem' }}>2026-10-01</div>
             </div>
-            <div>
-              <div style={{ color: '#8b949e', fontSize: '0.85rem' }}>Operating Time</div>
-              <div style={{ fontSize: '1.1rem', color: '#8b949e' }}>NOT AVAILABLE IN CURRENT SIMULATION</div>
+            <div className="metric-group">
+              <div className="metric-label">Operating Time</div>
+              <div className="metric-value" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>NOT AVAILABLE IN SIMULATION</div>
             </div>
           </div>
         </div>
 
-        <div className="ui-panel" style={{ background: '#161b22', padding: '24px', borderRadius: '8px' }}>
-          <h2 style={{ color: '#c9d1d9', borderBottom: '1px solid #30363d', paddingBottom: '12px', marginBottom: '20px' }}>Operational Metrics</h2>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            <div style={{ background: '#0d1117', padding: '16px', borderRadius: '6px', border: '1px solid #30363d' }}>
-              <div style={{ color: '#8b949e', fontSize: '0.9rem', marginBottom: '8px' }}>Total Completed Missions</div>
-              <div style={{ fontSize: '2rem', color: '#2ea043' }}>{completedMissionsCount}</div>
+        <div className="ui-panel">
+          <div className="ui-panel-header">
+            <h2 className="heading-technical" style={{ marginBottom: 0 }}>OPERATIONAL METRICS</h2>
+          </div>
+          <div className="ui-panel-body grid-4-col">
+            <div className="ui-panel" style={{ background: 'var(--bg-dark)', padding: '16px' }}>
+              <div className="metric-label" style={{ marginBottom: '8px' }}>Completed Missions</div>
+              <div className="metric-value" style={{ fontSize: '2rem', color: 'var(--good)' }}>{completedMissionsCount}</div>
             </div>
-            <div style={{ background: '#0d1117', padding: '16px', borderRadius: '6px', border: '1px solid #30363d' }}>
-              <div style={{ color: '#8b949e', fontSize: '0.9rem', marginBottom: '8px' }}>Emergency Stops Triggered</div>
-              <div style={{ fontSize: '2rem', color: '#f85149' }}>{emergencyStopsCount}</div>
+            <div className="ui-panel" style={{ background: 'var(--bg-dark)', padding: '16px' }}>
+              <div className="metric-label" style={{ marginBottom: '8px' }}>Emergency Stops</div>
+              <div className="metric-value" style={{ fontSize: '2rem', color: 'var(--critical)' }}>{emergencyStopsCount}</div>
             </div>
-            <div style={{ background: '#0d1117', padding: '16px', borderRadius: '6px', border: '1px solid #30363d' }}>
-              <div style={{ color: '#8b949e', fontSize: '0.9rem', marginBottom: '8px' }}>Total Cuts Performed</div>
-              <div style={{ fontSize: '1rem', color: '#8b949e', marginTop: '10px' }}>NOT AVAILABLE IN CURRENT SIMULATION</div>
+            <div className="ui-panel" style={{ background: 'var(--bg-dark)', padding: '16px' }}>
+              <div className="metric-label" style={{ marginBottom: '8px' }}>Total Cuts</div>
+              <div className="metric-value" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px' }}>NOT AVAILABLE IN SIMULATION</div>
             </div>
-            <div style={{ background: '#0d1117', padding: '16px', borderRadius: '6px', border: '1px solid #30363d' }}>
-              <div style={{ color: '#8b949e', fontSize: '0.9rem', marginBottom: '8px' }}>Maintenance Events</div>
-              <div style={{ fontSize: '1rem', color: '#8b949e', marginTop: '10px' }}>NOT AVAILABLE IN CURRENT SIMULATION</div>
+            <div className="ui-panel" style={{ background: 'var(--bg-dark)', padding: '16px' }}>
+              <div className="metric-label" style={{ marginBottom: '8px' }}>Maintenance Events</div>
+              <div className="metric-value" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px' }}>NOT AVAILABLE IN SIMULATION</div>
             </div>
           </div>
         </div>
-
       </main>
     </div>
   );

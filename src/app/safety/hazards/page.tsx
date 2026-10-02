@@ -20,72 +20,82 @@ export default function SafetyHazardsPage() {
   };
 
   return (
-    <div className="module-container">
-      <header className="module-header">
-        <h1>Safety & Hazards</h1>
-        <p>Deterministic safety hierarchy and active interlocks.</p>
-        <span className="sim-badge" style={{ background: '#d29922', color: 'black', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-          {systemMode}
-        </span>
+    <div className="page-container">
+      <header className="page-header">
+        <div className="page-header-top">
+          <h1 className="page-title">SAFETY & HAZARDS</h1>
+          <span className="sim-badge" style={{ margin: 0 }}>[{systemMode}]</span>
+        </div>
+        <p className="page-subtitle">Deterministic safety hierarchy and active interlocks.</p>
       </header>
       
-      <main className="module-content" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'start' }}>
+      <main className="grid-2-col">
         
-        <div className="ui-panel" style={{ background: '#161b22', padding: '24px', borderRadius: '8px' }}>
-          <h2 style={{ color: '#c9d1d9', borderBottom: '1px solid #30363d', paddingBottom: '12px', marginBottom: '20px' }}>Current State</h2>
-          
-          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-            <div style={{ fontSize: '0.9rem', color: '#8b949e', marginBottom: '8px' }}>SAFETY LEVEL</div>
-            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: getLevelColor(safety.level) }}>{safety.level}</div>
+        <div className="ui-panel">
+          <div className="ui-panel-header">
+            <h2 className="heading-technical" style={{ marginBottom: 0 }}>CURRENT STATE</h2>
           </div>
+          <div className="ui-panel-body">
+            <div style={{ textAlign: 'center', marginBottom: '32px', marginTop: '16px' }}>
+              <div className="heading-technical" style={{ justifyContent: 'center' }}>SAFETY LEVEL</div>
+              <div style={{ fontSize: '3.5rem', fontWeight: 700, color: getLevelColor(safety.level), letterSpacing: '1px' }}>{safety.level}</div>
+            </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div style={{ background: '#0d1117', padding: '16px', borderRadius: '6px', border: '1px solid #30363d' }}>
-              <div style={{ color: '#8b949e', fontSize: '0.85rem', marginBottom: '4px' }}>Movement Permission</div>
-              <div style={{ fontSize: '1.2rem', color: safety.movementPermission ? '#2ea043' : '#f85149' }}>
-                {safety.movementPermission ? 'GRANTED' : 'DENIED'}
+            <div className="grid-2-col" style={{ marginBottom: '24px' }}>
+              <div className="ui-panel" style={{ background: 'var(--bg-dark)', padding: '16px' }}>
+                <div className="metric-label" style={{ marginBottom: '8px' }}>Movement Permission</div>
+                <div className="metric-value" style={{ fontSize: '1.2rem', color: safety.movementPermission ? 'var(--good)' : 'var(--critical)' }}>
+                  {safety.movementPermission ? 'GRANTED' : 'DENIED'}
+                </div>
+              </div>
+              <div className="ui-panel" style={{ background: 'var(--bg-dark)', padding: '16px' }}>
+                <div className="metric-label" style={{ marginBottom: '8px' }}>Torch Permission</div>
+                <div className="metric-value" style={{ fontSize: '1.2rem', color: safety.torchPermission ? 'var(--good)' : 'var(--critical)' }}>
+                  {safety.torchPermission ? 'GRANTED' : 'DENIED'}
+                </div>
               </div>
             </div>
-            <div style={{ background: '#0d1117', padding: '16px', borderRadius: '6px', border: '1px solid #30363d' }}>
-              <div style={{ color: '#8b949e', fontSize: '0.85rem', marginBottom: '4px' }}>Torch Permission</div>
-              <div style={{ fontSize: '1.2rem', color: safety.torchPermission ? '#2ea043' : '#f85149' }}>
-                {safety.torchPermission ? 'GRANTED' : 'DENIED'}
+            
+            <div className="ui-panel" style={{ background: 'var(--bg-dark)', padding: '16px' }}>
+              <div className="metric-label" style={{ marginBottom: '8px' }}>E-Stop State</div>
+              <div className="metric-value" style={{ fontSize: '1.2rem', color: safety.emergencyStateActive ? 'var(--critical)' : 'var(--good)' }}>
+                {safety.emergencyStateActive ? 'ACTIVE' : 'CLEAR'}
               </div>
-            </div>
-          </div>
-          
-          <div style={{ marginTop: '20px', padding: '12px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px' }}>
-            <div style={{ color: '#8b949e', fontSize: '0.85rem', marginBottom: '4px' }}>E-Stop State</div>
-            <div style={{ fontSize: '1.2rem', color: safety.emergencyStateActive ? '#f85149' : '#2ea043' }}>
-              {safety.emergencyStateActive ? 'ACTIVE' : 'CLEAR'}
             </div>
           </div>
         </div>
 
-        <div className="ui-panel" style={{ background: '#161b22', padding: '24px', borderRadius: '8px' }}>
-          <h2 style={{ color: '#c9d1d9', borderBottom: '1px solid #30363d', paddingBottom: '12px', marginBottom: '20px' }}>Active Hazards</h2>
-          
-          {safety.activeHazards.length === 0 ? (
-            <div style={{ color: '#2ea043', padding: '20px', textAlign: 'center', background: '#0d1117', borderRadius: '6px', border: '1px solid #30363d' }}>
-              No active hazards. System is clear.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {safety.activeHazards.map(hazard => (
-                <div key={hazard.id} style={{ background: '#0d1117', padding: '16px', borderRadius: '6px', borderLeft: `4px solid ${hazard.severity === 'HIGH' ? '#f85149' : '#d29922'}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <strong style={{ color: '#c9d1d9' }}>{hazard.id}</strong>
-                    <span style={{ fontSize: '0.8rem', color: '#8b949e' }}>{new Date(hazard.timestamp).toLocaleTimeString()}</span>
+        <div className="ui-panel">
+          <div className="ui-panel-header">
+            <h2 className="heading-technical" style={{ marginBottom: 0 }}>ACTIVE HAZARDS</h2>
+          </div>
+          <div className="ui-panel-body" style={{ display: 'flex', flexDirection: 'column' }}>
+            
+            {safety.activeHazards.length === 0 ? (
+              <div className="empty-state" style={{ flex: 1 }}>
+                <div className="empty-state-title" style={{ color: 'var(--good)' }}>NO ACTIVE HAZARDS</div>
+                <div>System is clear. Safety conditions nominal.</div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {safety.activeHazards.map(hazard => (
+                  <div key={hazard.id} className="ui-panel" style={{ background: 'var(--bg-dark)', padding: '16px', borderLeft: `4px solid ${hazard.severity === 'HIGH' ? 'var(--critical)' : 'var(--warning)'}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <strong style={{ color: 'var(--text-main)' }}>{hazard.id}</strong>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(hazard.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <div style={{ color: hazard.severity === 'HIGH' ? 'var(--critical)' : 'var(--warning)' }}>{hazard.description}</div>
+                    <div style={{ marginTop: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Severity: {hazard.severity}</div>
                   </div>
-                  <div style={{ color: hazard.severity === 'HIGH' ? '#f85149' : '#d29922' }}>{hazard.description}</div>
-                  <div style={{ marginTop: '8px', fontSize: '0.8rem', color: '#8b949e' }}>Severity: {hazard.severity}</div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
 
-          <div style={{ marginTop: '30px', padding: '16px', background: 'rgba(48, 54, 61, 0.5)', borderRadius: '6px', fontSize: '0.85rem', color: '#8b949e' }}>
-            <strong>Architecture Note:</strong> Safety decisions displayed here are generated by deterministic platform rules processing live simulated telemetry. UI logic does not compute safety states.
+            <div style={{ marginTop: 'auto', paddingTop: '24px' }}>
+              <div style={{ padding: '16px', background: 'color-mix(in srgb, var(--accent) 10%, transparent)', borderRadius: 'var(--radius-md)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <strong>ARCHITECTURE NOTE:</strong> Safety decisions displayed here are generated by deterministic platform rules processing live simulated telemetry. UI logic does not compute safety states.
+              </div>
+            </div>
           </div>
         </div>
 
