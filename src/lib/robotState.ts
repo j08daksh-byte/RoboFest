@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { robotConfig } from './robotConfig';
+import { usePlatformStore } from './platformStore';
 
 export interface CutRecord {
   id: string;
@@ -74,6 +75,13 @@ export const useRobotStore = create<RobotState>((set, get) => ({
   setArmPosition: (y, x) => set((state) => ({ arm: { yPosition: y, xExtension: x } })),
   setElectromagnet: (enabled) => set((state) => ({ electromagnet: { enabled } })),
   setTorch: (enabled) => set((state) => {
+    // 1. SAFETY INTERLOCK
+    const safety = usePlatformStore.getState().safety;
+    if (enabled && !safety.torchPermission) {
+      console.warn("Safety Interlock: Torch activation rejected due to safety permission.");
+      return state;
+    }
+
     if (!enabled && state.activeCutPath.length > 0) {
       return {
         torch: { enabled },
@@ -109,6 +117,13 @@ export const useRobotStore = create<RobotState>((set, get) => ({
   clearAllCuts: () => set({ activeCutPath: [], completedCuts: [] }),
   setLocomotionIntent: (x, y) => set({ locomotionIntent: { x, y } }),
   updateLocomotion: (x, y, trackOffsetDelta) => set((state) => {
+    // 1. SAFETY INTERLOCK
+    const safety = usePlatformStore.getState().safety;
+    if (!safety.movementPermission) {
+      // Do not mutate position if safety permission is missing
+      return state;
+    }
+
     // Keep robot Z locked to the hull based on X curvature
     const { hullRadius, hullCenterZ, hullSurfaceOffsetZ } = robotConfig;
     const theta = Math.asin(x / hullRadius);
