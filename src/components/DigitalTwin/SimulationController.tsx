@@ -23,11 +23,16 @@ export function SimulationController() {
       let newX = intent.x;
       let newY = intent.y;
 
+      // Coordinate Frame Mapping:
+      // The RobotModel is rotated +90deg around Z. Thus its visual front (+Y) aligns with Local -X.
+      // Its visual right (+X) aligns with Local +Y.
+      // To move the robot visually UP on the hull (Forward), we must decrease Local X (newX = -1).
+      // To move the robot visually RIGHT on the hull, we must increase Local Y (newY = 1).
       switch(e.key.toLowerCase()) {
-        case 'w': case 'arrowup': newY = 1; break; // UP: move UP along hull vertical (+Y)
-        case 's': case 'arrowdown': newY = -1; break; // DOWN: move DOWN along hull vertical (-Y)
-        case 'a': case 'arrowleft': newX = 1; break; // LEFT: move LEFT along hull longitudinal (+X)
-        case 'd': case 'arrowright': newX = -1; break; // RIGHT: move RIGHT along hull longitudinal (-X)
+        case 'w': case 'arrowup': newX = -1; break; // UP: visually move up (Local -X)
+        case 's': case 'arrowdown': newX = 1; break; // DOWN: visually move down (Local +X)
+        case 'a': case 'arrowleft': newY = -1; break; // LEFT: visually move left (Local -Y)
+        case 'd': case 'arrowright': newY = 1; break; // RIGHT: visually move right (Local +Y)
         case ' ':
           const em = useRobotStore.getState().electromagnet.enabled;
           useRobotStore.getState().setElectromagnet(!em);
@@ -42,10 +47,10 @@ export function SimulationController() {
       let newY = intent.y;
 
       switch(e.key.toLowerCase()) {
-        case 'w': case 'arrowup': if (newY === 1) newY = 0; break;
-        case 's': case 'arrowdown': if (newY === -1) newY = 0; break;
-        case 'a': case 'arrowleft': if (newX === 1) newX = 0; break;
-        case 'd': case 'arrowright': if (newX === -1) newX = 0; break;
+        case 'w': case 'arrowup': if (newX === -1) newX = 0; break;
+        case 's': case 'arrowdown': if (newX === 1) newX = 0; break;
+        case 'a': case 'arrowleft': if (newY === -1) newY = 0; break;
+        case 'd': case 'arrowright': if (newY === 1) newY = 0; break;
       }
       setLocomotionIntent(newX, newY);
     };

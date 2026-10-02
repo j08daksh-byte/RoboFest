@@ -94,7 +94,7 @@ export function ControlPanel({ mode = 'full' }: { mode?: 'full' | 'compact' }) {
         <div className="dpad-group">
           <div className="dpad-row">
             <button 
-              onMouseDown={() => !electromagnet.enabled && setLocomotionIntent(0, 1)}
+              onMouseDown={() => !electromagnet.enabled && setLocomotionIntent(-1, 0)}
               onMouseUp={() => setLocomotionIntent(0, 0)}
               onMouseLeave={() => setLocomotionIntent(0, 0)}
               disabled={electromagnet.enabled}
@@ -102,13 +102,13 @@ export function ControlPanel({ mode = 'full' }: { mode?: 'full' | 'compact' }) {
           </div>
           <div className="dpad-row">
             <button 
-              onMouseDown={() => !electromagnet.enabled && setLocomotionIntent(-1, 0)}
+              onMouseDown={() => !electromagnet.enabled && setLocomotionIntent(0, -1)}
               onMouseUp={() => setLocomotionIntent(0, 0)}
               onMouseLeave={() => setLocomotionIntent(0, 0)}
               disabled={electromagnet.enabled}
             >◀ LEFT</button>
             <button 
-              onMouseDown={() => !electromagnet.enabled && setLocomotionIntent(1, 0)}
+              onMouseDown={() => !electromagnet.enabled && setLocomotionIntent(0, 1)}
               onMouseUp={() => setLocomotionIntent(0, 0)}
               onMouseLeave={() => setLocomotionIntent(0, 0)}
               disabled={electromagnet.enabled}
@@ -116,7 +116,7 @@ export function ControlPanel({ mode = 'full' }: { mode?: 'full' | 'compact' }) {
           </div>
           <div className="dpad-row">
             <button 
-              onMouseDown={() => !electromagnet.enabled && setLocomotionIntent(0, -1)}
+              onMouseDown={() => !electromagnet.enabled && setLocomotionIntent(1, 0)}
               onMouseUp={() => setLocomotionIntent(0, 0)}
               onMouseLeave={() => setLocomotionIntent(0, 0)}
               disabled={electromagnet.enabled}
