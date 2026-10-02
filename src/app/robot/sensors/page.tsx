@@ -1,12 +1,18 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePlatformStore } from '@/lib/platformStore';
 import { Activity } from 'lucide-react';
 import { Sparkline } from '@/components/Sparkline';
 
 export default function RobotSensorsPage() {
   const { sensor, environment, robot, systemMode, telemetryHistory } = usePlatformStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
   
   // Use last 40 ticks for sparklines
   const history = [...telemetryHistory].reverse().slice(-40);
@@ -117,7 +123,7 @@ export default function RobotSensorsPage() {
       <div className="ui-panel" style={{ flexShrink: 0, marginTop: '16px', background: 'transparent' }}>
         <div className="ui-panel-body" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Last Updated: {new Date(sensor.metadata.lastUpdated).toLocaleTimeString()}
+            Last Updated: {mounted ? new Date(sensor.metadata.lastUpdated).toLocaleTimeString() : '--:--:--'}
           </span>
           <span className={`status-badge ${sensor.metadata.isStale ? 'warning' : 'good'}`}>
             <Activity size={14} style={{ marginRight: '6px' }} />
