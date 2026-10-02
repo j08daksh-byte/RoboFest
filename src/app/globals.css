@@ -1,15 +1,41 @@
 :root {
-  --bg-dark: #0a0a0c;
-  --bg-panel: #141417;
-  --bg-card: #1c1c21;
-  --text-main: #f0f0f0;
-  --text-muted: #8a8d98;
-  --accent: #00e5ff;
-  --accent-hover: #00b3cc;
-  --border-color: #2a2b32;
-  --good: #00ff88;
-  --warning: #ffb000;
-  --critical: #ff3333;
+  /* DARK THEME (default) */
+  --bg-dark: #0d1117;
+  --bg-panel: #161b22;
+  --bg-card: #21262d;
+  --text-main: #e6edf3;
+  --text-secondary: #c9d1d9;
+  --text-muted: #8b949e;
+  --accent: #2f81f7;
+  --accent-hover: #58a6ff;
+  --border-color: #30363d;
+  --good: #3fb950;
+  --warning: #d29922;
+  --critical: #f85149;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --font-sans: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+}
+
+[data-theme='light'] {
+  --bg-dark: #f6f8fa;
+  --bg-panel: #ffffff;
+  --bg-card: #ffffff;
+  --text-main: #1f2328;
+  --text-secondary: #57606a;
+  --text-muted: #656d76;
+  --accent: #0969da;
+  --accent-hover: #0349b4;
+  --border-color: #d0d7de;
+  --good: #1a7f37;
+  --warning: #9a6700;
+  --critical: #cf222e;
+  --shadow-sm: 0 1px 3px rgba(27,31,36,0.04);
+  --shadow-md: 0 4px 12px rgba(27,31,36,0.15);
 }
 
 * {
@@ -19,11 +45,88 @@
 }
 
 body {
-  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-sans);
   background-color: var(--bg-dark);
   color: var(--text-main);
   height: 100vh;
   overflow: hidden;
+}
+
+/* Base Utility Classes */
+.ui-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.module-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.module-header {
+  margin-bottom: 24px;
+}
+
+.module-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.module-header p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+
+/* Typography Hierarchy */
+.heading-technical {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.heading-technical::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+  opacity: 0.5;
+}
+
+.metric-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.9rem;
+}
+
+.metric-label {
+  color: var(--text-secondary);
+}
+
+.metric-value {
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-weight: 600;
 }
 
 .app-container {
@@ -348,7 +451,8 @@ body {
 }
 
 .button-group {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
 }
 
@@ -368,6 +472,10 @@ body {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.5px;
+}
+
+.button-group button:only-child {
+  grid-column: 1 / -1;
 }
 
 .button-group button:hover {

@@ -5,7 +5,7 @@ import { useRobotStore } from '@/lib/robotState';
 import { robotConfig } from '@/lib/robotConfig';
 import { Play, Pause, RotateCcw, Power, Monitor, Settings2, ShieldCheck, AlertCircle } from 'lucide-react';
 
-export function ControlPanel() {
+export function ControlPanel({ mode = 'full' }: { mode?: 'full' | 'compact' }) {
   const {
     arm,
     electromagnet,
@@ -35,23 +35,27 @@ export function ControlPanel() {
     <div className={`control-panel ${uiMode}`}>
       <div className="panel-header">
         <h2>DIGITAL TWIN HUD</h2>
-        <div className="mode-toggle">
-          <button 
-            className={uiMode === 'debug' ? 'active' : ''} 
-            onClick={() => setUiMode('debug')}
-          >
-            <Settings2 size={14} /> DEBUG
-          </button>
-          <button 
-            className={uiMode === 'presentation' ? 'active' : ''} 
-            onClick={() => setUiMode('presentation')}
-          >
-            <Monitor size={14} /> PRESENT
-          </button>
-        </div>
+        {mode === 'full' && (
+          <div className="mode-toggle">
+            <button 
+              className={uiMode === 'debug' ? 'active' : ''} 
+              onClick={() => setUiMode('debug')}
+            >
+              <Settings2 size={14} /> DEBUG
+            </button>
+            <button 
+              className={uiMode === 'presentation' ? 'active' : ''} 
+              onClick={() => setUiMode('presentation')}
+            >
+              <Monitor size={14} /> PRESENT
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="hud-section">
+      {mode === 'full' && (
+        <>
+          <div className="hud-section">
         <h3><ShieldCheck size={16} /> SYSTEM STATUS</h3>
         <div className="status-grid">
           <div className="status-item">
@@ -163,6 +167,8 @@ export function ControlPanel() {
           </button>
         </div>
       </div>
+        </>
+      )}
 
       <div className="hud-section">
         <h3>INSPECTION / CAMERA</h3>
@@ -194,34 +200,38 @@ export function ControlPanel() {
               RESET VIEW
             </button>
           </div>
-          <div className="button-group" style={{ marginTop: '5px' }}>
-            <button 
-              className={cameraTarget === 'starboard' ? 'active' : ''} 
-              onClick={() => triggerCameraFocus('starboard')}
-            >
-              STARBOARD
-            </button>
-            <button 
-              className={cameraTarget === 'port' ? 'active' : ''} 
-              onClick={() => triggerCameraFocus('port')}
-            >
-              PORT
-            </button>
-          </div>
-          <div className="button-group" style={{ marginTop: '5px' }}>
-            <button 
-              className={cameraTarget === 'front' ? 'active' : ''} 
-              onClick={() => triggerCameraFocus('front')}
-            >
-              FRONT
-            </button>
-            <button 
-              className={cameraTarget === 'rear' ? 'active' : ''} 
-              onClick={() => triggerCameraFocus('rear')}
-            >
-              REAR
-            </button>
-          </div>
+          {mode === 'full' && (
+            <>
+              <div className="button-group" style={{ marginTop: '5px' }}>
+                <button 
+                  className={cameraTarget === 'starboard' ? 'active' : ''} 
+                  onClick={() => triggerCameraFocus('starboard')}
+                >
+                  STARBOARD
+                </button>
+                <button 
+                  className={cameraTarget === 'port' ? 'active' : ''} 
+                  onClick={() => triggerCameraFocus('port')}
+                >
+                  PORT
+                </button>
+              </div>
+              <div className="button-group" style={{ marginTop: '5px' }}>
+                <button 
+                  className={cameraTarget === 'front' ? 'active' : ''} 
+                  onClick={() => triggerCameraFocus('front')}
+                >
+                  FRONT
+                </button>
+                <button 
+                  className={cameraTarget === 'rear' ? 'active' : ''} 
+                  onClick={() => triggerCameraFocus('rear')}
+                >
+                  REAR
+                </button>
+              </div>
+            </>
+          )}
           <div className="button-group" style={{ marginTop: '5px' }}>
           <button 
             className={followMode ? 'active' : ''} 
@@ -238,8 +248,10 @@ export function ControlPanel() {
         </div>
       </div>
 
-      <div className="hud-section">
-        <h3>SIMULATION</h3>
+      {mode === 'full' && (
+        <>
+          <div className="hud-section">
+            <h3>SIMULATION</h3>
         <div className="button-group">
           <button onClick={handleSimToggle}>
             {simulationState === 'playing' ? <><Pause size={16}/> PAUSE</> : <><Play size={16}/> PLAY</>}
@@ -273,9 +285,11 @@ export function ControlPanel() {
             <strong>CUTTING ENGINE</strong><br/>
             TORCH: {torch.enabled ? 'ON' : 'OFF'}<br/>
             ACTIVE POINTS: {useRobotStore.getState().activeCutPath.length}<br/>
-            COMPLETED CUTS: {useRobotStore.getState().completedCuts.length}<br/>
+            <strong>COMPLETED CUTS:</strong> {useRobotStore.getState().completedCuts.length}<br/>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   );
