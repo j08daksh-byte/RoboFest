@@ -61,13 +61,11 @@ export function SafetyCables() {
   const boomEndX = mastX - 45.0; // Reach out over the ship towards 50.25
   const boomEndZ = mastZTop - 0.8;
   
+  // 4 Primary support cable anchors on the boom
   const boomPoint1 = new THREE.Vector3(boomEndX, mastY - 0.3, boomEndZ);
   const boomPoint2 = new THREE.Vector3(boomEndX, mastY + 0.3, boomEndZ);
   const boomPoint3 = new THREE.Vector3(boomEndX + 0.3, mastY - 0.15, boomEndZ);
   const boomPoint4 = new THREE.Vector3(boomEndX + 0.3, mastY + 0.15, boomEndZ);
-  
-  // Cable 5 (Lateral Positioning Cable) originates from a distinct lateral mounting arm
-  const lateralBoomPoint = new THREE.Vector3(boomEndX - 1.0, mastY, boomEndZ + 0.5);
 
   const rWidth = robotConfig.structureWidthX; 
   const rLen = robotConfig.structureLengthY;  
@@ -78,8 +76,8 @@ export function SafetyCables() {
   const corner3 = getRobotWorldPosition({ x: position.x - rLen/2, y: position.y + rWidth/2, z: position.z + rHeight });
   const corner4 = getRobotWorldPosition({ x: position.x + rLen/2, y: position.y + rWidth/2, z: position.z + rHeight });
 
-  // Pulley at the SINGLE top point of the ship (highest working edge)
-  const shipTopWorld = getRobotWorldPosition({ x: -4.0, y: position.y, z: 0.1 });
+  // Pulley at the SINGLE top point of the ship (attached to the existing upper white ship bar/rail)
+  const shipTopWorld = getRobotWorldPosition({ x: -4.5, y: position.y, z: -0.1 });
   // Lateral cable attaches to the center-top of the robot chassis (NOT passing through it)
   const robotTopCenter = getRobotWorldPosition({ x: position.x, y: position.y, z: position.z + rHeight + 0.1 });
 
@@ -117,11 +115,6 @@ export function SafetyCables() {
             <cylinderGeometry args={[0.3, 0.3, 0.5, 24]} />
             <meshStandardMaterial color="#111" metalness={0.9} roughness={0.3} />
           </mesh>
-          {/* Lateral support arm for Cable 5 */}
-          <mesh position={[-0.5, 0, 1.0]} castShadow>
-            <boxGeometry args={[1.5, 0.2, 0.2]} />
-            <meshStandardMaterial color="#2c3e50" metalness={0.8} roughness={0.4} />
-          </mesh>
         </group>
       </group>
       {/* 4 Primary Support Cables */}
@@ -132,10 +125,8 @@ export function SafetyCables() {
 
       {/* 1 Separate Lateral Positioning Cable & Pulley */}
       <PulleySystem position={shipTopWorld} />
-      {/* Cable from Mast to Pulley */}
-      <CatenaryCable start={lateralBoomPoint} end={shipTopWorld} sag={0.1} color="#666" thickness={0.012} />
-      {/* Cable from Pulley to Robot */}
-      <CatenaryCable start={shipTopWorld} end={robotTopCenter} sag={0.05} color="#666" thickness={0.012} />
+      {/* Cable from Pulley to Robot (Yellow/Amber to communicate lateral positioning, NOT structural support) */}
+      <CatenaryCable start={shipTopWorld} end={robotTopCenter} sag={0.05} color="#ffaa00" thickness={0.012} />
     </group>
   );
 }
