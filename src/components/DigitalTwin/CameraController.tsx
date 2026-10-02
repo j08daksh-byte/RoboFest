@@ -23,6 +23,8 @@ export function CameraController() {
 
   const currentTarget = useRef(new THREE.Vector3(10, 0, 7.5));
   const desiredTarget = useRef(new THREE.Vector3(10, 0, 7.5));
+  const desiredCamPos = useRef(new THREE.Vector3(25, -25, 17.5));
+  const isTransitioning = useRef(false);
 
   const lastTrigger = useRef(cameraFocusTrigger);
 
@@ -38,85 +40,108 @@ export function CameraController() {
       lastTrigger.current = cameraFocusTrigger;
       
       const worldPos = getRobotWorldPosition(position);
-      
-      const camPos = new THREE.Vector3();
+      isTransitioning.current = true;
       
       switch (cameraTarget) {
         case 'robot':
           desiredTarget.current.copy(worldPos);
-          camPos.set(worldPos.x + 2.5, worldPos.y - 1.5, worldPos.z + 1.5);
           if (isInitial) {
-            camera.position.copy(camPos);
+            // OVERVIEW: Frame robot, hull, and mast
+            desiredCamPos.current.set(worldPos.x + 15, worldPos.y - 25, worldPos.z + 10);
+            camera.position.copy(desiredCamPos.current);
+            currentTarget.current.copy(desiredTarget.current);
+            if (controlsRef.current) {
+              controlsRef.current.target.copy(currentTarget.current);
+              controlsRef.current.update();
+            }
+            isTransitioning.current = false;
           } else {
-            camera.position.lerp(camPos, 0.5);
+            // FOCUS ROBOT: Tightly frame the crawler
+            desiredCamPos.current.set(worldPos.x + 3, worldPos.y - 3, worldPos.z + 3);
           }
           break;
         case 'cut':
+          // FOCUS CUT: Frame the active or most recent cut
           const cuts = useRobotStore.getState().completedCuts;
           const active = useRobotStore.getState().activeCutPath;
+          let cutWorld = worldPos;
           if (active.length > 0) {
-            const cutWorld = getRobotWorldPosition({ x: active[0].x, y: active[0].y, z: -0.05 });
-            desiredTarget.current.copy(cutWorld);
-            camPos.set(cutWorld.x + 1.5, cutWorld.y - 1, cutWorld.z + 1);
+            cutWorld = getRobotWorldPosition({ x: active[0].x, y: active[0].y, z: -0.05 });
           } else if (cuts.length > 0) {
             const lastCut = cuts[cuts.length - 1];
-            const cutWorld = getRobotWorldPosition({ x: lastCut.path[0].x, y: lastCut.path[0].y, z: -0.05 });
-            desiredTarget.current.copy(cutWorld);
-            camPos.set(cutWorld.x + 1.5, cutWorld.y - 1, cutWorld.z + 1);
-          } else {
-            desiredTarget.current.copy(worldPos); 
-            camPos.set(worldPos.x + 2.5, worldPos.y - 1.5, worldPos.z + 1.5);
+            cutWorld = getRobotWorldPosition({ x: lastCut.path[0].x, y: lastCut.path[0].y, z: -0.05 });
           }
-          camera.position.lerp(camPos, 0.5);
+          desiredTarget.current.copy(cutWorld);
+          desiredCamPos.current.set(cutWorld.x + 2, cutWorld.y - 2, cutWorld.z + 2);
           break;
         case 'ship':
-          desiredTarget.current.set(0, 30, 37.5); // Center of new ship
-          camPos.set(200, 300, 250); // View full new ship from an impressive high angle
-          camera.position.lerp(camPos, 0.5);
+          // FOCUS SHIP: High level view of the whole hull
+          desiredTarget.current.set(0, 30, 37.5);
+          desiredCamPos.current.set(120, -120, 80); 
+          break;
+        case 'free':
+          // RESET VIEW: Return to Overview smoothly
+          desiredTarget.current.copy(worldPos);
+          desiredCamPos.current.set(worldPos.x + 15, worldPos.y - 25, worldPos.z + 10);
           break;
         case 'starboard':
           desiredTarget.current.set(0, 0, 37.5);
-          camPos.set(400, 0, 37.5); // Look from starboard side horizontally, further back to see whole ship
-          camera.position.lerp(camPos, 0.5);
+          desiredCamPos.current.set(150, 0, 37.5); 
           break;
         case 'port':
           desiredTarget.current.set(0, 0, 37.5);
-          camPos.set(-400, 0, 37.5); // Look from port side horizontally, further back
-          camera.position.lerp(camPos, 0.5);
+          desiredCamPos.current.set(-150, 0, 37.5); 
           break;
         case 'front':
           desiredTarget.current.set(0, 0, 37.5);
-          camPos.set(0, 400, 37.5); // Look from Bow
-          camera.position.lerp(camPos, 0.5);
+          desiredCamPos.current.set(0, 150, 37.5); 
           break;
         case 'rear':
           desiredTarget.current.set(0, 0, 37.5);
-          camPos.set(0, -400, 37.5); // Look from Stern
-          camera.position.lerp(camPos, 0.5);
-          break;
-        case 'free':
+          desiredCamPos.current.set(0, -150, 37.5); 
           break;
       }
     }
-  }, [cameraFocusTrigger, lastTrigger, cameraTarget, position, camera]);
+    // Intentionally omitting position from dependency array.
+    // If the robot moves, followMode handles it. We only calculate the target position
+    // when a camera trigger explicitly fires.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cameraFocusTrigger, cameraTarget, camera]); 
 
   useFrame((state, delta) => {
     if (!controlsRef.current) return;
     
     if (followMode) {
+      // Dynamic tracking of the robot
       const worldPos = getRobotWorldPosition(position);
       desiredTarget.current.copy(worldPos);
     }
     
-    const distToDesired = currentTarget.current.distanceTo(desiredTarget.current);
-    const isTransitioning = distToDesired > 0.05 && (cameraTarget !== 'free');
-
-    if (followMode || isTransitioning) {
-      currentTarget.current.lerp(desiredTarget.current, delta * 5.0);
+    if (isTransitioning.current) {
+      // Smoothly interpolate both target and camera position to the exact defined state
+      currentTarget.current.lerp(desiredTarget.current, delta * 4.0);
       controlsRef.current.target.copy(currentTarget.current);
+      
+      camera.position.lerp(desiredCamPos.current, delta * 4.0);
+      controlsRef.current.update();
+      
+      const distTarget = currentTarget.current.distanceTo(desiredTarget.current);
+      const distCam = camera.position.distanceTo(desiredCamPos.current);
+      
+      // Release camera for free roaming once close enough
+      if (distTarget < 0.05 && distCam < 0.1) {
+        isTransitioning.current = false;
+      }
     } else {
-      currentTarget.current.copy(controlsRef.current.target);
-      desiredTarget.current.copy(controlsRef.current.target);
+      // Allow OrbitControls to rule, just sync our target refs
+      if (followMode) {
+        currentTarget.current.lerp(desiredTarget.current, delta * 4.0);
+        controlsRef.current.target.copy(currentTarget.current);
+        controlsRef.current.update();
+      } else {
+        currentTarget.current.copy(controlsRef.current.target);
+        desiredTarget.current.copy(controlsRef.current.target);
+      }
     }
   });
 
