@@ -142,7 +142,7 @@ export interface TelemetrySample {
   imu: ImuData;
   hardware: HardwareData;
   gas: GasData;
-  environment: Pick<EnvironmentState, 'o2Percentage' | 'coPpm' | 'co2Ppm' | 'combustibleGasLel'>;
+  environment: Pick<EnvironmentState, 'o2Percentage' | 'coPpm' | 'co2Ppm' | 'combustibleGasLel' | 'temperatureC' | 'humidityPercentage' | 'atmosphericPressureHpa' | 'windSpeedKmh' | 'rain' | 'visibilityStatus'>;
 }
 
 // SYSTEM EVENT

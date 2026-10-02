@@ -114,8 +114,12 @@ export default function RobotSensorsPage() {
             {renderRow('Combustible', `${environment.combustibleGasLel}% LEL`, history.map(h => h.environment?.combustibleGasLel), 'var(--critical)')}
             {renderRow('CO', `${environment.coPpm} ppm`, history.map(h => h.environment?.coPpm), 'var(--warning)')}
             {renderRow('CO2', `${environment.co2Ppm} ppm`, history.map(h => h.environment?.co2Ppm), 'var(--warning)')}
-            {renderRow('Temperature', `${environment.temperatureC.toFixed(1)}°C`)}
-            {renderRow('Humidity', `${environment.humidityPercentage.toFixed(1)}%`)}
+            {renderRow('Temperature', `${environment.temperatureC.toFixed(1)}°C`, history.map(h => h.environment?.temperatureC), 'var(--accent)')}
+            {renderRow('Humidity', `${environment.humidityPercentage.toFixed(1)}%`, history.map(h => h.environment?.humidityPercentage), 'var(--accent)')}
+            {renderRow('Pressure', `${environment.atmosphericPressureHpa.toFixed(0)} hPa`, history.map(h => h.environment?.atmosphericPressureHpa), 'var(--good)')}
+            {renderRow('Wind Speed', `${environment.windSpeedKmh.toFixed(1)} km/h`, history.map(h => h.environment?.windSpeedKmh), 'var(--accent)')}
+            {renderRow('Rain', environment.rain ? 'YES' : 'NO')}
+            {renderRow('Visibility', environment.visibilityStatus)}
           </div>
         </div>
       </main>

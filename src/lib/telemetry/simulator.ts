@@ -76,7 +76,13 @@ class TelemetrySimulator {
         o2Percentage: newEnv.o2Percentage,
         coPpm: newEnv.coPpm,
         co2Ppm: newEnv.co2Ppm,
-        combustibleGasLel: newEnv.combustibleGasLel
+        combustibleGasLel: newEnv.combustibleGasLel,
+        temperatureC: newEnv.temperatureC,
+        humidityPercentage: newEnv.humidityPercentage,
+        atmosphericPressureHpa: newEnv.atmosphericPressureHpa,
+        windSpeedKmh: newEnv.windSpeedKmh,
+        rain: newEnv.rain,
+        visibilityStatus: newEnv.visibilityStatus
       }
     });
 
