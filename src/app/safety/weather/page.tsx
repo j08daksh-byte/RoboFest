@@ -6,12 +6,12 @@ import { usePlatformStore } from '@/lib/platformStore';
 export default function SafetyWeatherPage() {
   const { environment, systemMode } = usePlatformStore();
 
-  const getWorkabilityColor = (status: string) => {
+  const getWorkabilityColorClass = (status: string) => {
     switch (status) {
-      case 'WORKABLE': return '#2ea043';
-      case 'RESTRICTED': return '#d29922';
-      case 'NO_GO': return '#f85149';
-      default: return '#8b949e';
+      case 'WORKABLE': return 'good';
+      case 'RESTRICTED': return 'warning';
+      case 'NO_GO': return 'critical';
+      default: return 'neutral';
     }
   };
 
@@ -20,53 +20,58 @@ export default function SafetyWeatherPage() {
       <header className="page-header">
         <div className="page-header-top">
           <h1 className="page-title">WEATHER & SITE</h1>
-          <span className="sim-badge" style={{ margin: 0 }}>[{systemMode}]</span>
+          <span className="status-badge simulated">[{systemMode}]</span>
         </div>
         <p className="page-subtitle">Environmental conditions and operational restrictions.</p>
       </header>
       
-      <main className="grid-1-col">
-        <div className="ui-panel" style={{ padding: '32px', textAlign: 'center' }}>
-          <h2 style={{ color: getWorkabilityColor(environment.stormWorkabilityState), fontSize: '2.5rem', marginBottom: '8px', letterSpacing: '1px' }}>
-            {environment.stormWorkabilityState.replace('_', ' ')}
-          </h2>
-          <div className="heading-technical" style={{ justifyContent: 'center', marginBottom: 0 }}>SITE WORKABILITY STATUS</div>
+      <main className="grid-2-col-asym">
+        
+        <div className="ui-panel">
+          <div className="ui-panel-header">
+            <h2 className="heading-technical">SITE WORKABILITY STATUS</h2>
+          </div>
+          <div className="ui-panel-body" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: 'var(--sp-24)' }}>
+            <div className={`status-badge ${getWorkabilityColorClass(environment.stormWorkabilityState)}`} style={{ fontSize: '24px', padding: 'var(--sp-12) var(--sp-24)', letterSpacing: '2px' }}>
+              {environment.stormWorkabilityState.replace('_', ' ')}
+            </div>
+          </div>
         </div>
 
         <div className="ui-panel">
           <div className="ui-panel-header">
-            <h2 className="heading-technical" style={{ marginBottom: 0 }}>ENVIRONMENTAL METRICS</h2>
+            <h2 className="heading-technical">ENVIRONMENTAL METRICS</h2>
           </div>
-          <div className="ui-panel-body grid-3-col">
-            <div className="metric-group">
-              <div className="metric-label">Temperature</div>
-              <div className="metric-value">{environment.temperatureC}°C</div>
+          <div className="ui-panel-body grid-2-col" style={{ gap: '0 var(--sp-24)' }}>
+            <div className="metric-row">
+              <span className="metric-label">Temperature</span>
+              <span className="metric-value">{environment.temperatureC.toFixed(1)}°C</span>
             </div>
-            <div className="metric-group">
-              <div className="metric-label">Humidity</div>
-              <div className="metric-value">{environment.humidityPercentage}%</div>
+            <div className="metric-row">
+              <span className="metric-label">Humidity</span>
+              <span className="metric-value">{environment.humidityPercentage.toFixed(1)}%</span>
             </div>
-            <div className="metric-group">
-              <div className="metric-label">Wind Speed</div>
-              <div className="metric-value">{environment.windSpeedKmh} km/h</div>
+            <div className="metric-row">
+              <span className="metric-label">Wind Speed</span>
+              <span className="metric-value">{environment.windSpeedKmh} km/h</span>
             </div>
-            <div className="metric-group">
-              <div className="metric-label">Atmospheric Pressure</div>
-              <div className="metric-value">{environment.atmosphericPressureHpa} hPa</div>
+            <div className="metric-row">
+              <span className="metric-label">Atmospheric Pressure</span>
+              <span className="metric-value">{environment.atmosphericPressureHpa} hPa</span>
             </div>
-            <div className="metric-group">
-              <div className="metric-label">Precipitation</div>
-              <div className="metric-value">{environment.rain ? 'Yes' : 'No'}</div>
+            <div className="metric-row">
+              <span className="metric-label">Precipitation</span>
+              <span className="metric-value">{environment.rain ? 'YES' : 'NO'}</span>
             </div>
-            <div className="metric-group">
-              <div className="metric-label">Visibility</div>
-              <div className="metric-value">{environment.visibilityStatus}</div>
+            <div className="metric-row">
+              <span className="metric-label">Visibility</span>
+              <span className="metric-value">{environment.visibilityStatus}</span>
             </div>
           </div>
         </div>
 
-        <div style={{ padding: '16px', background: 'color-mix(in srgb, var(--warning) 10%, transparent)', border: '1px solid var(--warning)', borderRadius: 'var(--radius-md)', color: 'var(--warning)', fontSize: '0.85rem' }}>
-          <strong>IMPORTANT DISCLAIMER:</strong> This module provides deterministic decision support data for DEMO purposes based on the simulated platform state. Do not use this as a certified industrial weather safety system. No real weather API is connected.
+        <div style={{ gridColumn: '1 / -1', padding: 'var(--sp-12)', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: 'var(--radius-sm)', color: 'var(--warning)', fontSize: '12px' }}>
+          <strong style={{ color: 'var(--warning)' }}>IMPORTANT DISCLAIMER:</strong> This module provides deterministic decision support data for DEMO purposes based on the simulated platform state. Do not use this as a certified industrial weather safety system. No real weather API is connected.
         </div>
       </main>
     </div>

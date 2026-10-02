@@ -14,7 +14,6 @@ export default function RobotTwinPage() {
   const safetyState = usePlatformStore(state => state.safety);
 
   useEffect(() => {
-    // Add escape key listener to exit immersive
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && immersive) {
         setImmersive(false);
@@ -33,7 +32,7 @@ export default function RobotTwinPage() {
     right: 0,
     bottom: 0,
     zIndex: 9999,
-    backgroundColor: 'var(--bg-main)',
+    backgroundColor: 'var(--bg-dark)',
     display: 'flex',
     flexDirection: 'column'
   } : {
@@ -50,27 +49,28 @@ export default function RobotTwinPage() {
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        padding: '12px 24px', 
+        padding: '0 var(--sp-16)', 
         borderBottom: '1px solid var(--border-color)',
         backgroundColor: 'var(--bg-panel)',
-        minHeight: '52px'
+        minHeight: '48px',
+        flexShrink: 0
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <h1 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: '1px', fontWeight: 600, color: 'var(--text-main)' }}>RF6 DIGITAL TWIN</h1>
+          <h1 style={{ margin: 0, fontSize: '14px', letterSpacing: '1px', fontWeight: 700, color: 'var(--accent)' }}>RF6 DIGITAL TWIN</h1>
           {immersive && safetyState.level === 'NORMAL' && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--good)', fontSize: '0.8rem', fontWeight: 600, padding: '4px 8px', border: '1px solid var(--good)', borderRadius: '4px' }}>
-              <ShieldCheck size={14} /> SAFETY: NORMAL
+            <span className="status-badge good">
+              <ShieldCheck size={14} style={{ marginRight: '4px' }} /> SAFETY: NORMAL
             </span>
           )}
           {immersive && safetyState.level !== 'NORMAL' && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--critical)', fontSize: '0.8rem', fontWeight: 600, padding: '4px 8px', border: '1px solid var(--critical)', borderRadius: '4px', animation: 'pulse 2s infinite' }}>
-              <AlertTriangle size={14} /> SAFETY: {safetyState.level}
+            <span className="status-badge critical" style={{ animation: 'pulse 2s infinite' }}>
+              <AlertTriangle size={14} style={{ marginRight: '4px' }} /> SAFETY: {safetyState.level}
             </span>
           )}
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span className="sim-badge" style={{ margin: 0 }}>SIMULATED</span>
+          <span className="status-badge simulated">SIMULATED</span>
           <button 
             onClick={() => setImmersive(!immersive)}
             style={{ 
@@ -80,14 +80,15 @@ export default function RobotTwinPage() {
               background: 'var(--bg-card)', 
               color: 'var(--text-main)', 
               border: '1px solid var(--border-color)', 
-              padding: '6px 12px', 
-              borderRadius: '4px', 
+              padding: '4px 12px', 
+              borderRadius: 'var(--radius-sm)', 
               cursor: 'pointer',
               fontWeight: 600,
-              fontSize: '0.8rem'
+              fontSize: '11px',
+              textTransform: 'uppercase'
             }}
           >
-            {immersive ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            {immersive ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
             {immersive ? 'EXIT IMMERSIVE' : 'IMMERSIVE'}
           </button>
         </div>
@@ -120,26 +121,27 @@ export default function RobotTwinPage() {
         display: 'flex',
         borderTop: '1px solid var(--border-color)',
         backgroundColor: 'var(--bg-panel)',
-        minHeight: '70px',
-        padding: '0 24px',
+        minHeight: '60px',
+        padding: '0 var(--sp-24)',
         alignItems: 'center',
-        gap: '32px'
+        gap: '40px',
+        flexShrink: 0
       }}>
-        <div className="ui-metric" style={{ border: 'none', flexDirection: 'column', gap: '4px', padding: 0 }}>
-          <span className="ui-metric-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>ROBOT STATUS</span>
-          <span className="ui-metric-value" style={{ color: 'var(--good)' }}>ONLINE</span>
+        <div className="metric-group">
+          <span className="metric-label">ROBOT STATUS</span>
+          <span className="metric-value" style={{ color: 'var(--good)' }}>ONLINE</span>
         </div>
-        <div className="ui-metric" style={{ border: 'none', flexDirection: 'column', gap: '4px', padding: 0 }}>
-          <span className="ui-metric-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>POWER</span>
-          <span className="ui-metric-value" style={{ color: robot.powerConnected ? 'var(--good)' : 'var(--critical)' }}>EXTERNAL CABLE</span>
+        <div className="metric-group">
+          <span className="metric-label">POWER</span>
+          <span className="metric-value" style={{ color: robot.powerConnected ? 'var(--good)' : 'var(--critical)' }}>EXTERNAL CABLE</span>
         </div>
-        <div className="ui-metric" style={{ border: 'none', flexDirection: 'column', gap: '4px', padding: 0 }}>
-          <span className="ui-metric-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>MAGNET</span>
-          <span className="ui-metric-value" style={{ color: electromagnet.enabled ? 'var(--warning)' : 'var(--good)' }}>{electromagnet.enabled ? 'LOCKED' : 'RELEASED'}</span>
+        <div className="metric-group">
+          <span className="metric-label">MAGNET</span>
+          <span className="metric-value" style={{ color: electromagnet.enabled ? 'var(--warning)' : 'var(--good)' }}>{electromagnet.enabled ? 'LOCKED' : 'RELEASED'}</span>
         </div>
-        <div className="ui-metric" style={{ border: 'none', flexDirection: 'column', gap: '4px', padding: 0 }}>
-          <span className="ui-metric-label" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>TORCH</span>
-          <span className="ui-metric-value" style={{ color: torch.enabled ? 'var(--accent)' : 'var(--text-main)' }}>{torch.enabled ? 'IGNITED' : 'OFF'}</span>
+        <div className="metric-group">
+          <span className="metric-label">TORCH</span>
+          <span className="metric-value" style={{ color: torch.enabled ? 'var(--accent)' : 'var(--text-main)' }}>{torch.enabled ? 'IGNITED' : 'OFF'}</span>
         </div>
       </footer>
     </div>

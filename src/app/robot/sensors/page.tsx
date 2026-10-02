@@ -2,14 +2,15 @@
 
 import React from 'react';
 import { usePlatformStore } from '@/lib/platformStore';
+import { Activity } from 'lucide-react';
 
 export default function RobotSensorsPage() {
   const { sensor, environment, robot, systemMode } = usePlatformStore();
 
-  const renderMetric = (label: string, value: string | number) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px', borderBottom: '1px solid var(--border-color)' }}>
-      <span style={{ color: 'var(--text-muted)' }}>{label}</span>
-      <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{value}</span>
+  const renderRow = (label: string, value: string | number) => (
+    <div className="metric-row">
+      <span className="metric-label">{label}</span>
+      <span className="metric-value">{value}</span>
     </div>
   );
 
@@ -18,82 +19,101 @@ export default function RobotSensorsPage() {
       <header className="page-header">
         <div className="page-header-top">
           <h1 className="page-title">SENSOR CENTER</h1>
-          <span className="sim-badge" style={{ margin: 0 }}>[{systemMode}]</span>
+          <span className="status-badge simulated">[{systemMode}]</span>
         </div>
-        <p className="page-subtitle">Live diagnostic view of all onboard sensors.</p>
+        <p className="page-subtitle">Live diagnostic view of all onboard sensors and subsystems.</p>
       </header>
       
       <main className="grid-3-col">
-        
         <div className="ui-panel">
-          <h3 className="heading-technical">IMU SUBSYSTEM</h3>
-          <div className="metric-group">
-            {renderMetric('Tilt Angle', `${sensor.imu.tiltAngle.toFixed(2)}°`)}
-            {renderMetric('Accel X', `${sensor.imu.acceleration.x.toFixed(2)} g`)}
-            {renderMetric('Accel Y', `${sensor.imu.acceleration.y.toFixed(2)} g`)}
-            {renderMetric('Accel Z', `${sensor.imu.acceleration.z.toFixed(2)} g`)}
+          <div className="ui-panel-header">
+            <h3 className="heading-technical">IMU SUBSYSTEM</h3>
+          </div>
+          <div className="ui-panel-body metric-group">
+            {renderRow('Tilt Angle', `${sensor.imu.tiltAngle.toFixed(2)}°`)}
+            {renderRow('Accel X', `${sensor.imu.acceleration.x.toFixed(2)} g`)}
+            {renderRow('Accel Y', `${sensor.imu.acceleration.y.toFixed(2)} g`)}
+            {renderRow('Accel Z', `${sensor.imu.acceleration.z.toFixed(2)} g`)}
           </div>
         </div>
 
         <div className="ui-panel">
-          <h3 className="heading-technical">DRIVE SUBSYSTEM</h3>
-          <div className="metric-group">
-            {renderMetric('Left Motor Temp', `${sensor.motors.tempLeft}°C`)}
-            {renderMetric('Right Motor Temp', `${sensor.motors.tempRight}°C`)}
-            {renderMetric('Left Motor Current', `${sensor.motors.currentLeft.toFixed(2)} A`)}
-            {renderMetric('Right Motor Current', `${sensor.motors.currentRight.toFixed(2)} A`)}
-            {renderMetric('Vibration Level', `${sensor.hardware.vibrationLevel.toFixed(2)} m/s²`)}
+          <div className="ui-panel-header">
+            <h3 className="heading-technical">DRIVE SUBSYSTEM</h3>
+          </div>
+          <div className="ui-panel-body metric-group">
+            {renderRow('Left Motor Temp', `${sensor.motors.tempLeft.toFixed(1)}°C`)}
+            {renderRow('Right Motor Temp', `${sensor.motors.tempRight.toFixed(1)}°C`)}
+            {renderRow('Left Motor Cur', `${sensor.motors.currentLeft.toFixed(2)} A`)}
+            {renderRow('Right Motor Cur', `${sensor.motors.currentRight.toFixed(2)} A`)}
+            {renderRow('Vibration', `${sensor.hardware.vibrationLevel.toFixed(2)} m/s²`)}
           </div>
         </div>
 
         <div className="ui-panel">
-          <h3 className="heading-technical">POWER SUBSYSTEM</h3>
-          <div className="metric-group">
-            {renderMetric('Power Source', 'EXTERNAL CABLE')}
-            {renderMetric('Connection', robot.powerConnected ? 'CONNECTED' : 'DISCONNECTED')}
-            {renderMetric('Line Voltage', `${robot.powerVoltage.toFixed(1)} V`)}
-            {renderMetric('Line Current', `${robot.powerCurrent.toFixed(1)} A`)}
+          <div className="ui-panel-header">
+            <h3 className="heading-technical">POWER SUBSYSTEM</h3>
+          </div>
+          <div className="ui-panel-body metric-group">
+            {renderRow('Power Source', 'EXTERNAL CABLE')}
+            {renderRow('Connection', robot.powerConnected ? 'CONNECTED' : 'DISCONNECTED')}
+            {renderRow('Line Voltage', `${robot.powerVoltage.toFixed(1)} V`)}
+            {renderRow('Line Current', `${robot.powerCurrent.toFixed(1)} A`)}
           </div>
         </div>
 
         <div className="ui-panel">
-          <h3 className="heading-technical">ACTUATION SUBSYSTEM</h3>
-          <div className="metric-group">
-            {renderMetric('Electromagnet Current', `${sensor.hardware.electromagnetCurrent.toFixed(1)} A`)}
-            {renderMetric('Electromagnet Status', robot.electromagnetEnabled ? 'ON' : 'OFF')}
-            {renderMetric('Arm Ext X', sensor.hardware.armExtensionX.toFixed(2))}
-            {renderMetric('Arm Ext Y', sensor.hardware.armExtensionY.toFixed(2))}
-            {renderMetric('Torch Enable', robot.torchEnabled ? 'ENABLED' : 'DISABLED')}
+          <div className="ui-panel-header">
+            <h3 className="heading-technical">ACTUATION SUBSYSTEM</h3>
+          </div>
+          <div className="ui-panel-body metric-group">
+            {renderRow('Magnet Current', `${sensor.hardware.electromagnetCurrent.toFixed(1)} A`)}
+            {renderRow('Magnet Status', robot.electromagnetEnabled ? 'ON' : 'OFF')}
+            {renderRow('Arm Ext X', sensor.hardware.armExtensionX.toFixed(2))}
+            {renderRow('Arm Ext Y', sensor.hardware.armExtensionY.toFixed(2))}
+            {renderRow('Torch Enable', robot.torchEnabled ? 'ENABLED' : 'DISABLED')}
           </div>
         </div>
 
         <div className="ui-panel">
-          <h3 className="heading-technical">GAS & CUTTING</h3>
-          <div className="metric-group">
-            {renderMetric('Torch Ignited', sensor.gas.torchStatus)}
-            {renderMetric('Oxy Pressure', `${sensor.gas.oxyPressurePsi.toFixed(1)} PSI`)}
-            {renderMetric('Oxy Flow', `${sensor.gas.oxyFlowRate.toFixed(1)} LPM`)}
-            {renderMetric('Ace Pressure', `${sensor.gas.acePressurePsi.toFixed(1)} PSI`)}
-            {renderMetric('Ace Flow', `${sensor.gas.aceFlowRate.toFixed(1)} LPM`)}
+          <div className="ui-panel-header">
+            <h3 className="heading-technical">GAS & CUTTING</h3>
+          </div>
+          <div className="ui-panel-body metric-group">
+            {renderRow('Torch Ignited', sensor.gas.torchStatus)}
+            {renderRow('Oxy Pressure', `${sensor.gas.oxyPressurePsi.toFixed(1)} PSI`)}
+            {renderRow('Oxy Flow', `${sensor.gas.oxyFlowRate.toFixed(1)} LPM`)}
+            {renderRow('Ace Pressure', `${sensor.gas.acePressurePsi.toFixed(1)} PSI`)}
+            {renderRow('Ace Flow', `${sensor.gas.aceFlowRate.toFixed(1)} LPM`)}
           </div>
         </div>
 
         <div className="ui-panel">
-          <h3 className="heading-technical">ENVIRONMENTAL</h3>
-          <div className="metric-group">
-            {renderMetric('O2', `${environment.o2Percentage}%`)}
-            {renderMetric('Combustible Gas', `${environment.combustibleGasLel}% LEL`)}
-            {renderMetric('CO', `${environment.coPpm} ppm`)}
-            {renderMetric('CO2', `${environment.co2Ppm} ppm`)}
-            {renderMetric('Temperature', `${environment.temperatureC}°C`)}
-            {renderMetric('Humidity', `${environment.humidityPercentage}%`)}
+          <div className="ui-panel-header">
+            <h3 className="heading-technical">ENVIRONMENTAL</h3>
+          </div>
+          <div className="ui-panel-body metric-group">
+            {renderRow('O2', `${environment.o2Percentage}%`)}
+            {renderRow('Combustible', `${environment.combustibleGasLel}% LEL`)}
+            {renderRow('CO', `${environment.coPpm} ppm`)}
+            {renderRow('CO2', `${environment.co2Ppm} ppm`)}
+            {renderRow('Temperature', `${environment.temperatureC.toFixed(1)}°C`)}
+            {renderRow('Humidity', `${environment.humidityPercentage.toFixed(1)}%`)}
           </div>
         </div>
 
       </main>
-      <div style={{ marginTop: '24px', padding: '16px', background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--text-muted)', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between' }}>
-        <span>Last Updated: {new Date(sensor.metadata.lastUpdated).toLocaleTimeString()}</span>
-        <span style={{ color: sensor.metadata.isStale ? 'var(--warning)' : 'var(--good)', fontWeight: 'bold' }}>{sensor.metadata.isStale ? 'STALE DATA' : 'LIVE TELEMETRY'}</span>
+      
+      <div className="ui-panel" style={{ marginTop: 'auto', background: 'transparent' }}>
+        <div className="ui-panel-body" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Last Updated: {new Date(sensor.metadata.lastUpdated).toLocaleTimeString()}
+          </span>
+          <span className={`status-badge ${sensor.metadata.isStale ? 'warning' : 'good'}`}>
+            <Activity size={14} style={{ marginRight: '6px' }} />
+            {sensor.metadata.isStale ? 'STALE DATA' : 'LIVE TELEMETRY'}
+          </span>
+        </div>
       </div>
     </div>
   );

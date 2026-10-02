@@ -48,39 +48,61 @@ export default function RobotHealthPage() {
       <header className="page-header">
         <div className="page-header-top">
           <h1 className="page-title">ROBOT HEALTH</h1>
-          <span className="sim-badge" style={{ margin: 0 }}>[{systemMode}]</span>
+          <span className="status-badge simulated">[{systemMode}]</span>
         </div>
         <p className="page-subtitle">Deterministic component health analysis from telemetry.</p>
       </header>
       
-      <main className="grid-1-col">
-        <div className="ui-panel" style={{ padding: '32px', textAlign: 'center' }}>
-          <h2 style={{ color: getStatusColor(robot.overallHealth), fontSize: '2.5rem', marginBottom: '8px', letterSpacing: '1px' }}>
-            {robot.overallHealth}
-          </h2>
-          <div className="heading-technical" style={{ justifyContent: 'center', marginBottom: 0 }}>OVERALL SYSTEM HEALTH</div>
-        </div>
-
-        <div className="grid-3-col">
-          {subsystems.map(sys => (
-            <div key={sys.name} className="ui-panel" style={{ padding: '20px', gap: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <h4 style={{ color: 'var(--text-main)', margin: 0, fontSize: '0.95rem' }}>{sys.name}</h4>
-                <div style={{ padding: '4px 8px', borderRadius: 'var(--radius-sm)', fontSize: '0.75rem', fontWeight: 600, background: `color-mix(in srgb, ${getStatusColor(sys.status)} 15%, transparent)`, color: getStatusColor(sys.status), border: `1px solid color-mix(in srgb, ${getStatusColor(sys.status)} 30%, transparent)` }}>
+      <main className="grid-2-col-asym">
+        
+        {/* Left: Component Matrix */}
+        <div className="ui-panel">
+          <div className="ui-panel-header">
+            <h2 className="heading-technical">SUBSYSTEM HEALTH MATRIX</h2>
+          </div>
+          <div className="ui-panel-body" style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            {subsystems.map((sys, idx) => (
+              <div key={sys.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: idx !== subsystems.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
+                <div>
+                  <div style={{ color: 'var(--text-main)', fontSize: '13px', fontWeight: 600 }}>{sys.name}</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>{sys.detail}</div>
+                </div>
+                <div className={`status-badge ${sys.status.toLowerCase()}`}>
                   {sys.status}
                 </div>
               </div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', fontFamily: 'var(--font-mono)' }}>
-                {sys.detail}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        <div style={{ padding: '16px', background: 'color-mix(in srgb, var(--warning) 10%, transparent)', border: '1px solid var(--warning)', borderRadius: 'var(--radius-md)', color: 'var(--warning)', fontSize: '0.85rem' }}>
-          <strong>NOTE:</strong> This is a simulation health model. Values map deterministically from active telemetry.
+        {/* Right: Overall / Trends */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="ui-panel">
+            <div className="ui-panel-body" style={{ textAlign: 'center', padding: '32px 16px' }}>
+              <div className="heading-technical" style={{ justifyContent: 'center', border: 'none', marginBottom: '8px' }}>OVERALL SYSTEM HEALTH</div>
+              <div style={{ color: getStatusColor(robot.overallHealth), fontSize: '32px', fontWeight: 800, letterSpacing: '1px' }}>
+                {robot.overallHealth}
+              </div>
+            </div>
+          </div>
+          
+          <div className="ui-panel">
+            <div className="ui-panel-header">
+              <h2 className="heading-technical">KEY TRENDS</h2>
+            </div>
+            <div className="ui-panel-body">
+              <div className="metric-row"><span className="metric-label">Operating Hrs</span><span className="metric-value">1,420 h</span></div>
+              <div className="metric-row"><span className="metric-label">Next Service</span><span className="metric-value">45 h</span></div>
+              <div className="metric-row"><span className="metric-label">Critical Faults (24h)</span><span className="metric-value">0</span></div>
+            </div>
+          </div>
         </div>
+
       </main>
+      
+      <div style={{ padding: '12px', marginTop: 'auto', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: 'var(--radius-sm)', color: 'var(--warning)', fontSize: '12px' }}>
+        <strong>SIMULATION NOTE:</strong> This is a simulation health model. Values map deterministically from active telemetry. No live predictions are currently available.
+      </div>
     </div>
   );
 }
