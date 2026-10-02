@@ -113,6 +113,7 @@
   display: flex;
   flex-direction: column;
   background-color: var(--bg-dark);
+  min-height: 0; /* CRITICAL: allows flex child to shrink instead of blowing out viewport */
 }
 
 /* Command Center Strict Layout */
@@ -122,6 +123,7 @@
   grid-template-rows: minmax(0, 1fr) auto;
   gap: var(--sp-12);
   flex: 1;
+  min-height: 0; /* CRITICAL: prevents grid from blowing out the flex container */
   height: 100%;
   padding: var(--sp-12);
   box-sizing: border-box;
@@ -145,6 +147,7 @@
   flex-direction: column;
   gap: var(--sp-12);
   overflow-y: auto; /* Right rail can scroll if needed */
+  min-height: 0; /* CRITICAL: prevents content from stretching the grid row */
 }
 
 .cc-bottom-panel {

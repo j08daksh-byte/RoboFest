@@ -273,3 +273,87 @@ body {
 .status-badge.critical { background: rgba(239, 68, 68, 0.1); color: var(--critical); border: 1px solid rgba(239, 68, 68, 0.2); }
 .status-badge.neutral { background: rgba(100, 116, 139, 0.1); color: var(--text-secondary); border: 1px solid rgba(100, 116, 139, 0.2); }
 .status-badge.simulated { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+
+/* Ensure the digital twin container explicitly fills its parent */
+.digital-twin-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+/* Control Panel / HUD Restored Styling */
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-12);
+  padding: var(--sp-16);
+  background: var(--bg-panel);
+  height: 100%;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: var(--sp-8);
+}
+.panel-header h2 { font-size: 14px; color: var(--text-main); font-weight: 700; margin: 0; }
+
+.mode-toggle { display: flex; gap: 4px; }
+.mode-toggle button {
+  background: transparent; color: var(--text-muted); border: 1px solid transparent; border-radius: var(--radius-sm); padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;
+}
+.mode-toggle button.active { background: rgba(255,255,255,0.05); color: var(--accent); border-color: var(--border-color); }
+
+.hud-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+  padding: var(--sp-12);
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+.hud-section h3 {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.status-item { display: flex; flex-direction: column; background: var(--bg-panel); padding: 6px; border-radius: 2px; }
+.status-item .label { font-size: 10px; color: var(--text-muted); }
+.status-item .value { font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+.status-item .value.good { color: var(--good); }
+.status-item .value.warning { color: var(--warning); }
+.sim-badge { background: var(--warning); color: #000; font-size: 8px; padding: 1px 4px; border-radius: 2px; }
+
+.button-group { display: flex; gap: 8px; }
+.button-group button {
+  flex: 1; padding: 8px; background: var(--bg-panel); color: var(--text-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s;
+}
+.button-group button:hover { background: rgba(255,255,255,0.05); }
+.button-group button.active { background: rgba(56, 189, 248, 0.1); color: var(--accent); border-color: var(--accent); }
+.button-group button.active-magnet { background: rgba(245, 158, 11, 0.1); color: var(--warning); border-color: var(--warning); }
+.button-group button.active-flame { background: rgba(239, 68, 68, 0.1); color: var(--critical); border-color: var(--critical); }
+
+.dpad-group { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.dpad-row { display: flex; gap: 4px; }
+.dpad-row button {
+  width: 60px; height: 36px; background: var(--bg-panel); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 4px; font-size: 11px; cursor: pointer;
+}
+.dpad-row button:active:not(:disabled) { background: var(--accent); color: #000; }
+.dpad-row button:disabled { opacity: 0.3; cursor: not-allowed; }
+.warning-text { font-size: 11px; color: var(--warning); text-align: center; margin: 0; }
+
+.slider-group { display: flex; flex-direction: column; gap: 12px; }
+.slider-group label { display: flex; flex-direction: column; gap: 4px; }
+.slider-group .label-text { font-size: 10px; color: var(--text-muted); }
+.slider-group .value-text { font-size: 13px; color: var(--text-main); font-family: var(--font-mono); font-weight: 600; text-align: right; margin-top: -16px; }
+.slider-group input[type=range] { width: 100%; accent-color: var(--accent); }
