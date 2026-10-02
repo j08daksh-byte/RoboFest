@@ -1,18 +1,94 @@
+"use client";
+
 import React from 'react';
+import { usePlatformStore } from '@/lib/platformStore';
 
 export default function SafetyHazardsPage() {
+  const { safety, systemMode } = usePlatformStore();
+
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'NORMAL': return '#2ea043';
+      case 'WARNING': return '#d29922';
+      case 'CRITICAL':
+      case 'TORCH_OFF':
+      case 'ROBOT_STOP':
+      case 'ALARM':
+      case 'EVACUATION': return '#f85149';
+      default: return '#8b949e';
+    }
+  };
+
   return (
     <div className="module-container">
       <header className="module-header">
-        <h1>Safety Hazards</h1>
-        <p>Module purpose: Placeholder for Safety Hazards</p>
-        <span className="sim-badge">SIMULATED / DEMO</span>
+        <h1>Safety & Hazards</h1>
+        <p>Deterministic safety hierarchy and active interlocks.</p>
+        <span className="sim-badge" style={{ background: '#d29922', color: 'black', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' }}>
+          {systemMode}
+        </span>
       </header>
-      <main className="module-content">
-        <div className="empty-state">
-          <h2>No active data</h2>
-          <p>The Safety Hazards module is currently offline.</p>
+      
+      <main className="module-content" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'start' }}>
+        
+        <div className="ui-panel" style={{ background: '#161b22', padding: '24px', borderRadius: '8px' }}>
+          <h2 style={{ color: '#c9d1d9', borderBottom: '1px solid #30363d', paddingBottom: '12px', marginBottom: '20px' }}>Current State</h2>
+          
+          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+            <div style={{ fontSize: '0.9rem', color: '#8b949e', marginBottom: '8px' }}>SAFETY LEVEL</div>
+            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: getLevelColor(safety.level) }}>{safety.level}</div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div style={{ background: '#0d1117', padding: '16px', borderRadius: '6px', border: '1px solid #30363d' }}>
+              <div style={{ color: '#8b949e', fontSize: '0.85rem', marginBottom: '4px' }}>Movement Permission</div>
+              <div style={{ fontSize: '1.2rem', color: safety.movementPermission ? '#2ea043' : '#f85149' }}>
+                {safety.movementPermission ? 'GRANTED' : 'DENIED'}
+              </div>
+            </div>
+            <div style={{ background: '#0d1117', padding: '16px', borderRadius: '6px', border: '1px solid #30363d' }}>
+              <div style={{ color: '#8b949e', fontSize: '0.85rem', marginBottom: '4px' }}>Torch Permission</div>
+              <div style={{ fontSize: '1.2rem', color: safety.torchPermission ? '#2ea043' : '#f85149' }}>
+                {safety.torchPermission ? 'GRANTED' : 'DENIED'}
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ marginTop: '20px', padding: '12px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px' }}>
+            <div style={{ color: '#8b949e', fontSize: '0.85rem', marginBottom: '4px' }}>E-Stop State</div>
+            <div style={{ fontSize: '1.2rem', color: safety.emergencyStateActive ? '#f85149' : '#2ea043' }}>
+              {safety.emergencyStateActive ? 'ACTIVE' : 'CLEAR'}
+            </div>
+          </div>
         </div>
+
+        <div className="ui-panel" style={{ background: '#161b22', padding: '24px', borderRadius: '8px' }}>
+          <h2 style={{ color: '#c9d1d9', borderBottom: '1px solid #30363d', paddingBottom: '12px', marginBottom: '20px' }}>Active Hazards</h2>
+          
+          {safety.activeHazards.length === 0 ? (
+            <div style={{ color: '#2ea043', padding: '20px', textAlign: 'center', background: '#0d1117', borderRadius: '6px', border: '1px solid #30363d' }}>
+              No active hazards. System is clear.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {safety.activeHazards.map(hazard => (
+                <div key={hazard.id} style={{ background: '#0d1117', padding: '16px', borderRadius: '6px', borderLeft: `4px solid ${hazard.severity === 'HIGH' ? '#f85149' : '#d29922'}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <strong style={{ color: '#c9d1d9' }}>{hazard.id}</strong>
+                    <span style={{ fontSize: '0.8rem', color: '#8b949e' }}>{new Date(hazard.timestamp).toLocaleTimeString()}</span>
+                  </div>
+                  <div style={{ color: hazard.severity === 'HIGH' ? '#f85149' : '#d29922' }}>{hazard.description}</div>
+                  <div style={{ marginTop: '8px', fontSize: '0.8rem', color: '#8b949e' }}>Severity: {hazard.severity}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ marginTop: '30px', padding: '16px', background: 'rgba(48, 54, 61, 0.5)', borderRadius: '6px', fontSize: '0.85rem', color: '#8b949e' }}>
+            <strong>Architecture Note:</strong> Safety decisions displayed here are generated by deterministic platform rules processing live simulated telemetry. UI logic does not compute safety states.
+          </div>
+        </div>
+
       </main>
     </div>
   );
