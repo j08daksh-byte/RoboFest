@@ -8,8 +8,14 @@ import {
   SafetyLevel,
   SensorState,
   EnvironmentState,
-  SystemEvent
+  SystemEvent,
+  TelemetrySample
 } from './domain';
+
+export interface ActionResponse {
+  success: boolean;
+  reason?: string;
+}
 
 interface PlatformStoreState {
   systemMode: SystemMode;
@@ -19,8 +25,9 @@ interface PlatformStoreState {
   sensor: SensorState;
   environment: EnvironmentState;
   events: SystemEvent[];
+  telemetryHistory: TelemetrySample[];
 
-  // Actions
+  // Base Setters
   setSystemMode: (mode: SystemMode) => void;
   setRobotState: (robotState: Partial<RobotDomainState>) => void;
   setMission: (missionState: Partial<MissionState>) => void;
@@ -28,6 +35,15 @@ interface PlatformStoreState {
   updateSensor: (sensorState: Partial<SensorState>) => void;
   updateEnvironment: (environmentState: Partial<EnvironmentState>) => void;
   addSystemEvent: (event: SystemEvent) => void;
+  addTelemetrySample: (sample: TelemetrySample) => void;
+
+  // Mission Actions
+  createMission: (missionPayload: Partial<MissionState>) => ActionResponse;
+  startMission: () => ActionResponse;
+  completeMission: () => ActionResponse;
+  cancelMission: () => ActionResponse;
+  interruptMission: () => ActionResponse;
+  setMissionProgress: (progress: number) => ActionResponse;
 }
 
 // Initial deterministic SIMULATED/DEMO state
@@ -43,19 +59,21 @@ const initialPlatformState = {
     connectionPingMs: 14,
     torchEnabled: false,
     electromagnetEnabled: false,
-    activeMissionId: 'MIS-2026-A1'
+    activeMissionId: null
   },
   
   mission: {
-    id: 'MIS-2026-A1',
-    shipName: 'Vessel Alpha',
-    hullSection: 'Starboard-A',
-    objective: 'Standard Panel Cut',
+    id: null,
+    shipName: '',
+    hullSection: '',
+    objective: '',
     status: MissionStatus.PLANNED,
     progressPercentage: 0,
     startTime: null,
     estimatedCompletionTime: null,
-    currentCutReference: null
+    currentCutReference: null,
+    createdAt: null,
+    updatedAt: null
   },
   
   safety: {
@@ -113,10 +131,13 @@ const initialPlatformState = {
     combustibleGasLel: 0
   },
   
-  events: []
+  events: [],
+  telemetryHistory: []
 };
 
-export const usePlatformStore = create<PlatformStoreState>((set) => ({
+const MAX_HISTORY = 100;
+
+export const usePlatformStore = create<PlatformStoreState>((set, get) => ({
   ...initialPlatformState,
 
   setSystemMode: (mode) => set({ systemMode: mode }),
@@ -142,6 +163,128 @@ export const usePlatformStore = create<PlatformStoreState>((set) => ({
   })),
   
   addSystemEvent: (event) => set((state) => ({ 
-    events: [event, ...state.events].slice(0, 100) // Keep last 100
-  }))
+    events: [event, ...state.events].slice(0, MAX_HISTORY)
+  })),
+
+  addTelemetrySample: (sample) => set((state) => ({
+    telemetryHistory: [sample, ...state.telemetryHistory].slice(0, MAX_HISTORY)
+  })),
+
+  // Mission Actions
+  createMission: (payload) => {
+    const { mission } = get();
+    if (mission.id && ![MissionStatus.COMPLETED, MissionStatus.CANCELLED].includes(mission.status)) {
+      return { success: false, reason: 'Active mission already exists' };
+    }
+    
+    set({
+      mission: {
+        id: payload.id || 'MIS-' + Date.now(),
+        shipName: payload.shipName || 'Unknown',
+        hullSection: payload.hullSection || 'Unknown',
+        objective: payload.objective || '',
+        status: MissionStatus.PLANNED,
+        progressPercentage: 0,
+        startTime: null,
+        estimatedCompletionTime: null,
+        currentCutReference: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      robot: { ...get().robot, activeMissionId: payload.id || 'MIS-' + Date.now() }
+    });
+    return { success: true };
+  },
+
+  startMission: () => {
+    const { mission } = get();
+    if (!mission.id) return { success: false, reason: 'No mission active' };
+    if (![MissionStatus.PLANNED, MissionStatus.INTERRUPTED].includes(mission.status)) {
+      return { success: false, reason: 'Cannot start mission from current status' };
+    }
+    
+    set({
+      mission: {
+        ...mission,
+        status: MissionStatus.IN_PROGRESS,
+        startTime: mission.startTime || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    });
+    return { success: true };
+  },
+
+  completeMission: () => {
+    const { mission } = get();
+    if (!mission.id) return { success: false, reason: 'No mission active' };
+    if (mission.status !== MissionStatus.IN_PROGRESS) {
+      return { success: false, reason: 'Only in-progress missions can be completed' };
+    }
+    
+    set({
+      mission: {
+        ...mission,
+        status: MissionStatus.COMPLETED,
+        progressPercentage: 100,
+        updatedAt: new Date().toISOString()
+      },
+      robot: { ...get().robot, activeMissionId: null }
+    });
+    return { success: true };
+  },
+
+  cancelMission: () => {
+    const { mission } = get();
+    if (!mission.id) return { success: false, reason: 'No mission active' };
+    if ([MissionStatus.COMPLETED, MissionStatus.CANCELLED].includes(mission.status)) {
+      return { success: false, reason: 'Mission is already finished' };
+    }
+    
+    set({
+      mission: {
+        ...mission,
+        status: MissionStatus.CANCELLED,
+        updatedAt: new Date().toISOString()
+      },
+      robot: { ...get().robot, activeMissionId: null }
+    });
+    return { success: true };
+  },
+
+  interruptMission: () => {
+    const { mission } = get();
+    if (!mission.id) return { success: false, reason: 'No mission active' };
+    if (mission.status !== MissionStatus.IN_PROGRESS) {
+      return { success: false, reason: 'Only in-progress missions can be interrupted' };
+    }
+    
+    set({
+      mission: {
+        ...mission,
+        status: MissionStatus.INTERRUPTED,
+        updatedAt: new Date().toISOString()
+      }
+    });
+    return { success: true };
+  },
+
+  setMissionProgress: (progress) => {
+    const { mission } = get();
+    if (!mission.id) return { success: false, reason: 'No mission active' };
+    if (mission.status !== MissionStatus.IN_PROGRESS) {
+      return { success: false, reason: 'Cannot update progress of inactive mission' };
+    }
+    if (progress < 0 || progress > 100) {
+      return { success: false, reason: 'Progress out of bounds' };
+    }
+    
+    set({
+      mission: {
+        ...mission,
+        progressPercentage: progress,
+        updatedAt: new Date().toISOString()
+      }
+    });
+    return { success: true };
+  }
 }));

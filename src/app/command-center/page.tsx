@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { usePlatformStore } from '@/lib/platformStore';
 import { DigitalTwin } from '@/components/DigitalTwin';
 import { ControlPanel } from '@/components/ControlPanel';
+import { MissionControls } from '@/components/MissionControls';
+import { TelemetryTrend } from '@/components/TelemetryTrend';
 import { telemetrySimulator, SimulationScenario } from '@/lib/telemetry';
 
 export default function CommandCenterPage() {
@@ -11,7 +13,6 @@ export default function CommandCenterPage() {
   const [currentScenario, setCurrentScenario] = useState<SimulationScenario>(SimulationScenario.NORMAL_OPERATION);
 
   useEffect(() => {
-    // Keep local state in sync with simulator just in case
     const interval = setInterval(() => {
       setCurrentScenario(telemetrySimulator.getScenario());
     }, 1000);
@@ -34,12 +35,18 @@ export default function CommandCenterPage() {
       </div>
       
       {/* Right: Side Panels */}
-      <div className="cc-side-panel">
+      <div className="cc-side-panel" style={{ width: '300px' }}>
+        <div className="ui-panel">
+          <div className="ui-panel-title">MISSION CONTROL (DEMO)</div>
+          <MissionControls />
+        </div>
+
         <div className="ui-panel">
           <div className="ui-panel-title">ROBOT HEALTH</div>
           <div className="ui-metric"><span className="ui-metric-label">Motor Temps</span><span className="ui-metric-value">{sensor.motors.tempLeft}°C</span></div>
           <div className="ui-metric"><span className="ui-metric-label">Battery</span><span className="ui-metric-value">{robot.batteryPercentage}%</span></div>
           <div className="ui-metric"><span className="ui-metric-label">Vibration</span><span className="ui-metric-value">{sensor.hardware.vibrationLevel.toFixed(2)} m/s²</span></div>
+          <TelemetryTrend />
         </div>
         
         <div className="ui-panel">
@@ -56,11 +63,6 @@ export default function CommandCenterPage() {
             </div>
           )}
         </div>
-
-        <div className="ui-panel" style={{ flex: 1 }}>
-          <div className="ui-panel-title">MANUAL OVERRIDE</div>
-          <ControlPanel />
-        </div>
       </div>
       
       {/* Bottom: Secondary Data */}
@@ -70,6 +72,11 @@ export default function CommandCenterPage() {
           <div className="ui-metric"><span className="ui-metric-label">Combustible</span><span className="ui-metric-value" style={{color: environment.combustibleGasLel > 5 ? '#f85149' : 'inherit'}}>{environment.combustibleGasLel}% LEL</span></div>
           <div className="ui-metric"><span className="ui-metric-label">O2 Level</span><span className="ui-metric-value" style={{color: environment.o2Percentage < 19.5 ? '#f85149' : 'inherit'}}>{environment.o2Percentage}%</span></div>
           <div className="ui-metric"><span className="ui-metric-label">CO Level</span><span className="ui-metric-value" style={{color: environment.coPpm > 35 ? '#f85149' : 'inherit'}}>{environment.coPpm} ppm</span></div>
+        </div>
+
+        <div className="ui-panel" style={{ flex: 1 }}>
+          <div className="ui-panel-title">MANUAL OVERRIDE</div>
+          <ControlPanel />
         </div>
         
         <div className="ui-panel" style={{ flex: 1.5 }}>
@@ -87,11 +94,18 @@ export default function CommandCenterPage() {
               <option key={scen} value={scen}>{scen.replace(/_/g, ' ')}</option>
             ))}
           </select>
-          <div style={{ marginTop: '12px', fontSize: '0.8rem', color: '#8b949e', height: '60px', overflowY: 'auto' }}>
-            <strong>RECENT EVENTS:</strong>
-            {events.slice(0, 3).map(ev => (
-              <div key={ev.id} style={{ color: ev.severity === 'CRITICAL' ? '#f85149' : (ev.severity === 'WARNING' ? '#d29922' : 'inherit') }}>
-                [{ev.category}] {ev.message}
+        </div>
+
+        <div className="ui-panel" style={{ flex: 2 }}>
+          <div className="ui-panel-title">EVENT TIMELINE</div>
+          <div style={{ marginTop: '4px', fontSize: '0.8rem', color: '#8b949e', height: '100px', overflowY: 'auto' }}>
+            {events.length === 0 ? 'No events.' : events.slice(0, 15).map(ev => (
+              <div key={ev.id} style={{ 
+                color: ev.severity === 'CRITICAL' ? '#f85149' : (ev.severity === 'WARNING' ? '#d29922' : 'inherit'),
+                padding: '2px 0', borderBottom: '1px solid #30363d'
+              }}>
+                <span style={{opacity: 0.7}}>{new Date(ev.timestamp).toLocaleTimeString()}</span> [{ev.category}] {ev.message} 
+                {ev.missionId ? <span style={{color: '#58a6ff', marginLeft: '4px'}}>({ev.missionId})</span> : ''}
               </div>
             ))}
           </div>

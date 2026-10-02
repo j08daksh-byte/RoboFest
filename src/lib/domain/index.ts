@@ -41,6 +41,8 @@ export interface MissionState {
   startTime: string | null;
   estimatedCompletionTime: string | null;
   currentCutReference: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 // SAFETY DOMAIN
@@ -128,6 +130,21 @@ export interface EnvironmentState {
   combustibleGasLel: number;
 }
 
+// TELEMETRY SAMPLE DOMAIN
+export interface TelemetrySample {
+  timestamp: string;
+  sourceMode: SystemMode;
+  robot: {
+    batteryVoltage: number;
+    batteryCurrent: number;
+  };
+  motors: MotorData;
+  imu: ImuData;
+  hardware: HardwareData;
+  gas: GasData;
+  environment: Pick<EnvironmentState, 'o2Percentage' | 'coPpm' | 'co2Ppm' | 'combustibleGasLel'>;
+}
+
 // SYSTEM EVENT
 export enum EventCategory {
   CONNECTION = 'CONNECTION',
@@ -144,4 +161,7 @@ export interface SystemEvent {
   category: EventCategory;
   message: string;
   severity: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
+  missionId?: string;
+  robotId?: string;
+  source?: string;
 }

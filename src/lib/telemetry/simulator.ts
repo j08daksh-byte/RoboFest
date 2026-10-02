@@ -60,6 +60,26 @@ class TelemetrySimulator {
     store.updateSensor(newSensor);
     store.updateEnvironment(newEnv);
 
+    // 3. Append Telemetry Sample
+    store.addTelemetrySample({
+      timestamp: new Date().toISOString(),
+      sourceMode: store.systemMode,
+      robot: {
+        batteryVoltage: store.robot.batteryVoltage,
+        batteryCurrent: store.robot.batteryCurrent
+      },
+      motors: newSensor.motors,
+      imu: newSensor.imu,
+      hardware: newSensor.hardware,
+      gas: newSensor.gas,
+      environment: {
+        o2Percentage: newEnv.o2Percentage,
+        coPpm: newEnv.coPpm,
+        co2Ppm: newEnv.co2Ppm,
+        combustibleGasLel: newEnv.combustibleGasLel
+      }
+    });
+
     // 3. Evaluate safety engine
     const { state: newSafetyState, newEvents } = evaluateSafetyState(newSensor, newEnv, forceEStop);
 
@@ -90,14 +110,17 @@ class TelemetrySimulator {
   }
 
   private logEvent(category: EventCategory, message: string, severity: SystemEvent['severity']) {
+    const store = usePlatformStore.getState();
     const event: SystemEvent = {
       id: Math.random().toString(36).substring(2, 9),
       timestamp: new Date().toISOString(),
       category,
       message,
-      severity
+      severity,
+      missionId: store.mission.id || undefined,
+      robotId: 'ROBOT-01'
     };
-    usePlatformStore.getState().addSystemEvent(event);
+    store.addSystemEvent(event);
   }
 }
 
