@@ -12,14 +12,14 @@ export function Torch({ position }: { position: [number, number, number] }) {
       <group rotation={[-Math.PI / 2, 0, 0]}>
         {/* Main Torch Barrel/Body (Brass) */}
         <mesh castShadow>
-          <cylinderGeometry args={[torchRadius, torchRadius, torchLength * 0.7, 16]} />
-          <meshStandardMaterial color="#b5a642" metalness={0.8} roughness={0.3} />
+          <cylinderGeometry args={[torchRadius, torchRadius, torchLength * 0.7, 24]} />
+          <meshStandardMaterial color="#c5b358" metalness={0.9} roughness={0.2} /> {/* Shiny brass */}
         </mesh>
         
         {/* Torch Valves / Mixing Chamber */}
         <mesh position={[0, -torchLength * 0.35, 0]} castShadow>
-          <cylinderGeometry args={[torchRadius * 1.5, torchRadius * 1.5, 0.04, 16]} />
-          <meshStandardMaterial color="#888" metalness={0.9} roughness={0.4} />
+          <cylinderGeometry args={[torchRadius * 1.5, torchRadius * 1.5, 0.04, 24]} />
+          <meshStandardMaterial color="#555" metalness={0.9} roughness={0.5} />
         </mesh>
         {/* Hose Connectors */}
         <mesh position={[0.015, -torchLength * 0.4, 0]} castShadow>
@@ -33,13 +33,13 @@ export function Torch({ position }: { position: [number, number, number] }) {
 
         {/* Nozzle/Tip (Copper) */}
         <mesh position={[0, torchLength * 0.35 + 0.02, 0]} castShadow>
-          <cylinderGeometry args={[torchRadius, torchRadius * 0.3, 0.04, 16]} />
-          <meshStandardMaterial color="#b87333" metalness={0.9} roughness={0.4} />
+          <cylinderGeometry args={[torchRadius, torchRadius * 0.3, 0.04, 24]} />
+          <meshStandardMaterial color="#b87333" metalness={0.8} roughness={0.4} />
         </mesh>
-        {/* Small tip end */}
+        {/* Small tip end (Heat discolored) */}
         <mesh position={[0, torchLength * 0.35 + 0.045, 0]} castShadow>
           <cylinderGeometry args={[torchRadius * 0.3, torchRadius * 0.2, 0.01, 16]} />
-          <meshStandardMaterial color="#b87333" metalness={0.9} roughness={0.4} />
+          <meshStandardMaterial color="#4a3b32" metalness={0.9} roughness={0.6} /> {/* Scorched metal */}
         </mesh>
       </group>
 

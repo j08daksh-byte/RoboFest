@@ -108,14 +108,14 @@ function CrawlerTrack({ side, offsetX }: { side: 'left' | 'right'; offsetX: numb
       
       {/* Drive Wheel (Front / +Y) */}
       <mesh position={[0, halfStraight, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-        <cylinderGeometry args={[wheelRadius * 0.9, wheelRadius * 0.9, trackWidthX * 0.8, 24]} />
-        <meshStandardMaterial color="#222" metalness={0.8} roughness={0.4} />
+        <cylinderGeometry args={[wheelRadius * 0.9, wheelRadius * 0.9, trackWidthX * 0.8, 32]} />
+        <meshStandardMaterial color="#1a1a1a" metalness={0.7} roughness={0.6} />
       </mesh>
       
       {/* Idler Wheel (Rear / -Y) */}
       <mesh position={[0, -halfStraight, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-        <cylinderGeometry args={[wheelRadius * 0.9, wheelRadius * 0.9, trackWidthX * 0.8, 24]} />
-        <meshStandardMaterial color="#222" metalness={0.8} roughness={0.4} />
+        <cylinderGeometry args={[wheelRadius * 0.9, wheelRadius * 0.9, trackWidthX * 0.8, 32]} />
+        <meshStandardMaterial color="#1a1a1a" metalness={0.7} roughness={0.6} />
       </mesh>
 
       {/* Internal Support Frame */}
@@ -130,12 +130,12 @@ function CrawlerTrack({ side, offsetX }: { side: 'left' | 'right'; offsetX: numb
           <mesh position={[0, 0, -0.01]} castShadow>
             {/* Belt link */}
             <boxGeometry args={[trackWidthX, 0.04, 0.015]} />
-            <meshStandardMaterial color="#111" roughness={0.9} />
+            <meshStandardMaterial color="#2c2c2c" roughness={0.8} metalness={0.2} />
           </mesh>
           <mesh position={[0, 0, -0.02]} castShadow>
             {/* Outer grip ridge */}
             <boxGeometry args={[trackWidthX * 0.9, 0.015, 0.01]} />
-            <meshStandardMaterial color="#050505" roughness={1.0} />
+            <meshStandardMaterial color="#151515" roughness={0.9} metalness={0.1} />
           </mesh>
         </group>
       ))}
@@ -148,23 +148,23 @@ function CrawlerTrack({ side, offsetX }: { side: 'left' | 'right'; offsetX: numb
              <mesh position={[0, 0, -0.025]} castShadow>
                 {/* Rectangular metallic base */}
                 <boxGeometry args={[0.04, 0.05, 0.015]} />
-                <meshStandardMaterial color="#555" metalness={0.9} roughness={0.4} />
+                <meshStandardMaterial color="#444" metalness={0.8} roughness={0.5} />
              </mesh>
              <mesh position={[0, 0, -0.035]} castShadow>
                 {/* Dark magnetic core block */}
                 <boxGeometry args={[0.03, 0.04, 0.005]} />
-                <meshStandardMaterial color="#1a1a1a" metalness={0.5} roughness={0.8} />
+                <meshStandardMaterial color="#111" metalness={0.9} roughness={0.2} /> {/* Shiny dark neodymium look */}
              </mesh>
           </group>
           {/* Right Magnet in this row */}
           <group position={m.positionRight}>
              <mesh position={[0, 0, -0.025]} castShadow>
                 <boxGeometry args={[0.04, 0.05, 0.015]} />
-                <meshStandardMaterial color="#555" metalness={0.9} roughness={0.4} />
+                <meshStandardMaterial color="#444" metalness={0.8} roughness={0.5} />
              </mesh>
              <mesh position={[0, 0, -0.035]} castShadow>
                 <boxGeometry args={[0.03, 0.04, 0.005]} />
-                <meshStandardMaterial color="#1a1a1a" metalness={0.5} roughness={0.8} />
+                <meshStandardMaterial color="#111" metalness={0.9} roughness={0.2} />
              </mesh>
           </group>
         </group>

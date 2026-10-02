@@ -24,7 +24,7 @@ export function RobotModel({ showAxes = true }: { showAxes?: boolean }) {
         {/* Main central block */}
         <mesh castShadow receiveShadow>
           <boxGeometry args={[bodyWidthX, bodyLengthY, bodyHeightZ]} />
-          <meshStandardMaterial color="#2d333b" metalness={0.7} roughness={0.4} />
+          <meshStandardMaterial color="#fca311" metalness={0.6} roughness={0.4} /> {/* Industrial Safety Orange */}
         </mesh>
         
         {/* Chassis cross-members / bracing */}
@@ -40,11 +40,20 @@ export function RobotModel({ showAxes = true }: { showAxes?: boolean }) {
         {/* Side mounting plates connecting tracks */}
         <mesh position={[(bodyWidthX + 0.02) / 2, 0, 0]} receiveShadow>
           <boxGeometry args={[0.02, bodyLengthY * 0.7, bodyHeightZ * 1.1]} />
-          <meshStandardMaterial color="#444" metalness={0.9} roughness={0.3} />
+          <meshStandardMaterial color="#222" metalness={0.9} roughness={0.3} />
         </mesh>
         <mesh position={[-(bodyWidthX + 0.02) / 2, 0, 0]} receiveShadow>
           <boxGeometry args={[0.02, bodyLengthY * 0.7, bodyHeightZ * 1.1]} />
-          <meshStandardMaterial color="#444" metalness={0.9} roughness={0.3} />
+          <meshStandardMaterial color="#222" metalness={0.9} roughness={0.3} />
+        </mesh>
+        {/* Decorative caution stripes on the side plates */}
+        <mesh position={[(bodyWidthX + 0.04) / 2, 0, 0]} receiveShadow>
+          <boxGeometry args={[0.005, bodyLengthY * 0.6, bodyHeightZ * 0.2]} />
+          <meshStandardMaterial color="#111" roughness={0.8} />
+        </mesh>
+        <mesh position={[-(bodyWidthX + 0.04) / 2, 0, 0]} receiveShadow>
+          <boxGeometry args={[0.005, bodyLengthY * 0.6, bodyHeightZ * 0.2]} />
+          <meshStandardMaterial color="#111" roughness={0.8} />
         </mesh>
       </group>
 
@@ -74,7 +83,12 @@ export function RobotModel({ showAxes = true }: { showAxes?: boolean }) {
         {/* The Upper Deck Plate */}
         <mesh castShadow receiveShadow>
           <boxGeometry args={[structureWidthX, structureLengthY, 0.04]} />
-          <meshStandardMaterial color="#4a5056" metalness={0.7} roughness={0.3} />
+          <meshStandardMaterial color="#333" metalness={0.8} roughness={0.4} />
+        </mesh>
+        {/* Top cover housing */}
+        <mesh position={[0, -0.05, 0.04]} castShadow receiveShadow>
+          <boxGeometry args={[structureWidthX * 0.8, structureLengthY * 0.6, 0.06]} />
+          <meshStandardMaterial color="#14213d" metalness={0.7} roughness={0.3} /> {/* Industrial Blue casing */}
         </mesh>
       </group>
 

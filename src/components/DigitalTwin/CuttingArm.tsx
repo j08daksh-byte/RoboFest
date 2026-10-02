@@ -34,17 +34,17 @@ export function CuttingArm() {
         <meshStandardMaterial color="#3a3a3a" metalness={0.8} roughness={0.4} />
       </mesh>
       
-      {/* Carriage detailing */}
-      <mesh position={[structureWidthX / 2 - 0.08, 0, 0.12]} receiveShadow>
-         <boxGeometry args={[0.18, 0.15, 0.02]} />
-         <meshStandardMaterial color="#666" metalness={0.9} roughness={0.2} />
+      {/* Carriage detailing (Industrial warning stripe) */}
+      <mesh position={[structureWidthX / 2 - 0.08, 0, 0.121]} receiveShadow>
+         <boxGeometry args={[0.18, 0.05, 0.02]} />
+         <meshStandardMaterial color="#fca311" metalness={0.5} roughness={0.7} />
       </mesh>
 
       {/* X-Axis Extension Arm */}
       <group position={[structureWidthX / 2 + xExtension / 2, 0, 0.06]}>
         <mesh castShadow receiveShadow>
           <boxGeometry args={[xExtension + 0.2, armThickness, armThickness]} />
-          <meshStandardMaterial color="#444" metalness={0.8} roughness={0.3} />
+          <meshStandardMaterial color="#4a5056" metalness={0.9} roughness={0.3} />
         </mesh>
         
         {/* Rack and pinion or linear rail visual on the arm */}

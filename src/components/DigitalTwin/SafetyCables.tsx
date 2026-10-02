@@ -84,37 +84,37 @@ export function SafetyCables() {
         {/* Main Column */}
         <mesh position={[0, 0, mastHeight / 2]} castShadow receiveShadow>
           <boxGeometry args={[0.8, 0.8, mastHeight]} />
-          <meshStandardMaterial color="#2c3e50" metalness={0.8} roughness={0.4} />
+          <meshStandardMaterial color="#fca311" metalness={0.7} roughness={0.4} /> {/* Safety Orange Mast */}
         </mesh>
         {/* Base */}
         <mesh position={[0, 0, 0.2]} castShadow receiveShadow>
           <boxGeometry args={[3, 3, 0.4]} />
-          <meshStandardMaterial color="#1a1c1e" metalness={0.9} roughness={0.6} />
+          <meshStandardMaterial color="#222" metalness={0.8} roughness={0.6} />
         </mesh>
         {/* Base Bracing */}
         {[0, Math.PI/2, Math.PI, Math.PI*1.5].map((rot, i) => (
           <mesh key={i} position={[Math.cos(rot)*0.7, Math.sin(rot)*0.7, 1.5]} rotation={[0, 0, rot]} castShadow>
             <mesh position={[0, 0, 0]} rotation={[0, -Math.PI/6, 0]}>
               <boxGeometry args={[0.2, 0.2, 3]} />
-              <meshStandardMaterial color="#e67e22" metalness={0.7} />
+              <meshStandardMaterial color="#fca311" metalness={0.7} roughness={0.4} />
             </mesh>
           </mesh>
         ))}
         {/* Boom */}
         <mesh position={[-3, 0, mastHeight - 0.4]} castShadow receiveShadow>
           <boxGeometry args={[6.8, 0.6, 0.8]} />
-          <meshStandardMaterial color="#f39c12" metalness={0.7} roughness={0.4} />
+          <meshStandardMaterial color="#2c3e50" metalness={0.8} roughness={0.4} /> {/* Dark gray boom */}
         </mesh>
         {/* Sheaves */}
         <group position={[-5.5, 0, mastHeight - 0.8]}>
           <mesh rotation={[Math.PI/2, 0, 0]} castShadow>
-            <cylinderGeometry args={[0.3, 0.3, 0.5, 16]} />
-            <meshStandardMaterial color="#111" roughness={0.8} />
+            <cylinderGeometry args={[0.3, 0.3, 0.5, 24]} />
+            <meshStandardMaterial color="#111" metalness={0.9} roughness={0.3} />
           </mesh>
           {/* Lateral support arm for Cable 4 */}
           <mesh position={[-0.5, 0, 1.0]} castShadow>
             <boxGeometry args={[1.5, 0.2, 0.2]} />
-            <meshStandardMaterial color="#f39c12" metalness={0.7} />
+            <meshStandardMaterial color="#2c3e50" metalness={0.8} roughness={0.4} />
           </mesh>
         </group>
       </group>
