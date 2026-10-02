@@ -46,8 +46,8 @@ export function CameraController() {
         case 'robot':
           desiredTarget.current.copy(worldPos);
           if (isInitial) {
-            // OVERVIEW: Frame robot, hull, and mast
-            desiredCamPos.current.set(worldPos.x + 15, worldPos.y - 25, worldPos.z + 10);
+            // OVERVIEW: Frame robot, hull, and mast (closer to robot)
+            desiredCamPos.current.set(worldPos.x + 10, worldPos.y - 15, worldPos.z + 8);
             camera.position.copy(desiredCamPos.current);
             currentTarget.current.copy(desiredTarget.current);
             if (controlsRef.current) {
@@ -80,9 +80,9 @@ export function CameraController() {
           desiredCamPos.current.set(120, -120, 80); 
           break;
         case 'free':
-          // RESET VIEW: Return to Overview smoothly
+          // RESET VIEW: Return to Overview smoothly (robot-centric)
           desiredTarget.current.copy(worldPos);
-          desiredCamPos.current.set(worldPos.x + 15, worldPos.y - 25, worldPos.z + 10);
+          desiredCamPos.current.set(worldPos.x + 10, worldPos.y - 15, worldPos.z + 8);
           break;
         case 'starboard':
           desiredTarget.current.set(0, 0, 37.5);
