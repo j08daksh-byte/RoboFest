@@ -67,7 +67,7 @@ body {
   background-color: var(--bg-dark);
   color: var(--text-main);
   /* The shell handles height, body is just 100vh hidden */
-  height: 100vh;
+  height: 100dvh;
   width: 100vw;
   overflow: hidden;
   font-size: 13px; /* Base body font size */
