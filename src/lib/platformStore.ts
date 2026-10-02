@@ -106,7 +106,11 @@ const initialPlatformState = {
     rain: false,
     visibilityStatus: 'CLEAR' as const,
     atmosphericPressureHpa: 1013,
-    stormWorkabilityState: 'WORKABLE' as const
+    stormWorkabilityState: 'WORKABLE' as const,
+    o2Percentage: 20.9,
+    coPpm: 0,
+    co2Ppm: 400,
+    combustibleGasLel: 0
   },
   
   events: []

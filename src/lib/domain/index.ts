@@ -120,6 +120,12 @@ export interface EnvironmentState {
   visibilityStatus: 'CLEAR' | 'MODERATE' | 'POOR';
   atmosphericPressureHpa: number;
   stormWorkabilityState: 'WORKABLE' | 'RESTRICTED' | 'NO_GO';
+  
+  // Gas environment (from Phase 4B)
+  o2Percentage: number;
+  coPpm: number;
+  co2Ppm: number;
+  combustibleGasLel: number;
 }
 
 // SYSTEM EVENT
