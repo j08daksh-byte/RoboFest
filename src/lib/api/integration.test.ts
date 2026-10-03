@@ -2,6 +2,7 @@ import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { signToken, verifyToken } from '@/lib/auth';
 import { UserRole } from '@/lib/domain';
+import { validateMissionPayload } from '@/lib/api/persistence';
 
 // Using actual jose token signing
 describe('Authentication & Authorization Boundary', () => {
@@ -23,7 +24,6 @@ describe('Authentication & Authorization Boundary', () => {
 
 describe('API Route Boundary Integration', () => {
   it('TEST 3: validates mission creation payload independently of DB', () => {
-    const { validateMissionPayload } = require('@/lib/api/persistence');
     const valid = validateMissionPayload({
       shipName: 'TestShip',
       objective: 'Testing',
