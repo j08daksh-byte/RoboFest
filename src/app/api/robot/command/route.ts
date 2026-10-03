@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     
     return NextResponse.json(result, { status: 200 });
     
-  } catch (err) {
+  } catch {
     return NextResponse.json({
       commandId: 'unknown',
       status: 'REJECTED',

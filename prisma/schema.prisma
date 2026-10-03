@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id           String      @id @default(uuid())
+  username     String      @unique
+  passwordHash String
+  role         String      // OPERATOR, ENGINEER, SUPERVISOR, ADMIN
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  eventLogs    EventLog[]
+}
+
+model Mission {
+  id                      String       @id @default(uuid())
+  shipName                String
+  objective               String
+  hullSection             String
+  status                  String
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+  cutRecords              CutRecord[]
+  eventLogs               EventLog[]
+}
+
+model CutRecord {
+  id           String   @id @default(uuid())
+  missionId    String
+  geometryJson String
+  status       String   // PLANNED, APPROVED, CUTTING, COMPLETED
+  createdAt    DateTime @default(now())
+  mission      Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+}
+
+model EventLog {
+  id        String   @id @default(uuid())
+  category  String
+  severity  String
+  message   String
+  timestamp DateTime @default(now())
+  missionId String?
+  userId    String?
+  mission   Mission? @relation(fields: [missionId], references: [id], onDelete: SetNull)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}

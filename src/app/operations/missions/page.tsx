@@ -3,6 +3,8 @@
 import React from 'react';
 import { usePlatformStore } from '@/lib/platformStore';
 import { MissionControls } from '@/components/MissionControls';
+import { ShipCutPanel } from '@/components/ShipCutPanel';
+import { CutEditor } from '@/components/CutEditor';
 
 export default function OperationsMissionsPage() {
   const { mission, events, systemMode } = usePlatformStore();
@@ -64,6 +66,10 @@ export default function OperationsMissionsPage() {
               </div>
             </div>
           </div>
+
+          <CutEditor />
+
+          <ShipCutPanel />
 
           <div className="ui-panel">
             <div className="ui-panel-header">
