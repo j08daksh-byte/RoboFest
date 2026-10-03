@@ -40,4 +40,14 @@ describe('Phase 4C: Simulator Integration (Events + Mission Link)', () => {
       assert.strictEqual(latestEvent.missionId, 'TEST-MISSION');
     }
   });
+
+  it('tick appends a telemetry sample to history', () => {
+    const storeBefore = usePlatformStore.getState();
+    const historyLengthBefore = storeBefore.telemetryHistory.length;
+
+    (telemetrySimulator as unknown as { tick: () => void }).tick();
+
+    const storeAfter = usePlatformStore.getState();
+    assert.strictEqual(storeAfter.telemetryHistory.length, historyLengthBefore + 1);
+  });
 });
