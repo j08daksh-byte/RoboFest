@@ -127,29 +127,8 @@ export function SimulationController() {
                 // VALID CLOSED LOOP DETECTED!
                 console.log(`CUT LOOP CLOSED! Found ${newPolygons.length} new region(s)`);
                 
-                // Commit the loops as closed cuts
-                useRobotStore.setState((s) => {
-                  const newCuts = newPolygons.map(poly => ({
-                    id: poly.id,
-                    path: poly.points,
-                    isClosed: true
-                  }));
-                  
-                  // Also commit the current active path prefix as an open cut if substantial
-                  const prefixPath = s.activeCutPath.slice(0, -1);
-                  if (prefixPath.length > 2) {
-                    newCuts.push({
-                      id: Math.random().toString(36).substring(2, 9),
-                      path: prefixPath,
-                      isClosed: false
-                    });
-                  }
-                  
-                  return {
-                    completedCuts: [...s.completedCuts, ...newCuts],
-                    activeCutPath: [] // clear active path so we start fresh from here
-                  };
-                });
+                // Commit the loops as closed cuts via authoritative platform action
+                storeState.commitClosedCuts(newPolygons);
               }
             }
           }

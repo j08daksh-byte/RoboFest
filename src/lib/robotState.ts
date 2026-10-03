@@ -42,6 +42,7 @@ export interface RobotState {
   triggerCameraFocus: (target: 'robot' | 'cut' | 'ship' | 'free' | 'starboard' | 'port' | 'front' | 'rear') => void;
   addCutPoint: (x: number, y: number) => void;
   completeCut: (isClosed?: boolean) => void;
+  commitClosedCuts: (newPolygons: Array<{id: string, points: Array<{x: number, y: number}>}>) => void;
   discardActiveCut: () => void;
   clearAllCuts: () => void;
   setLocomotionIntent: (x: number, y: number) => void;
@@ -118,6 +119,28 @@ export const useRobotStore = create<RobotState>((set, get) => ({
     return {
       completedCuts: [...state.completedCuts, newCut],
       activeCutPath: [] // clear active path
+    };
+  }),
+  commitClosedCuts: (newPolygons) => set((state) => {
+    const newCuts: CutRecord[] = newPolygons.map(poly => ({
+      id: poly.id,
+      path: poly.points,
+      isClosed: true
+    }));
+    
+    // Also commit the current active path prefix as an open cut if substantial
+    const prefixPath = state.activeCutPath.slice(0, -1);
+    if (prefixPath.length > 2) {
+      newCuts.push({
+        id: Math.random().toString(36).substring(2, 9),
+        path: prefixPath,
+        isClosed: false
+      });
+    }
+    
+    return {
+      completedCuts: [...state.completedCuts, ...newCuts],
+      activeCutPath: [] // clear active path so we start fresh from here
     };
   }),
   discardActiveCut: () => set({ activeCutPath: [] }),
