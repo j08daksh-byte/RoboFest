@@ -62,4 +62,37 @@ describe('Safety Interlocks in robotState', () => {
     assert.strictEqual(pos.y, initialPos.y);
     assert.strictEqual(pos.z, initialPos.z);
   });
+
+  it('TEST 7: movementPermission = true -> setArmPosition changes arm position', () => {
+    usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, movementPermission: true } });
+    useRobotStore.getState().setArmPosition(0.2, 0.5);
+    const arm = useRobotStore.getState().arm;
+    assert.strictEqual(arm.yPosition, 0.2);
+    assert.strictEqual(arm.xExtension, 0.5);
+  });
+
+  it('TEST 8: movementPermission = false -> setArmPosition does NOT change arm position', () => {
+    useRobotStore.getState().setArmPosition(0.0, 0.3); // Set initial state
+    usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, movementPermission: false } });
+    
+    useRobotStore.getState().setArmPosition(0.2, 0.5); // Attempt mutation
+    
+    const arm = useRobotStore.getState().arm;
+    assert.strictEqual(arm.yPosition, 0.0);
+    assert.strictEqual(arm.xExtension, 0.3);
+  });
+
+  it('TEST 9: restoring movementPermission -> setArmPosition changes arm position again', () => {
+    useRobotStore.getState().setArmPosition(0.0, 0.3);
+    
+    usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, movementPermission: false } });
+    useRobotStore.getState().setArmPosition(0.2, 0.5); // Blocked
+    
+    usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, movementPermission: true } });
+    useRobotStore.getState().setArmPosition(0.25, 0.6); // Allowed
+    
+    const arm = useRobotStore.getState().arm;
+    assert.strictEqual(arm.yPosition, 0.25);
+    assert.strictEqual(arm.xExtension, 0.6);
+  });
 });

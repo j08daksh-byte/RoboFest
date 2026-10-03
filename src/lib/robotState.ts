@@ -72,7 +72,14 @@ const initialState = {
 export const useRobotStore = create<RobotState>((set, get) => ({
   ...initialState,
   
-  setArmPosition: (y, x) => set((state) => ({ arm: { yPosition: y, xExtension: x } })),
+  setArmPosition: (y, x) => set((state) => {
+    const safety = usePlatformStore.getState().safety;
+    if (!safety.movementPermission) {
+      console.warn("Safety Interlock: Arm movement rejected due to safety permission.");
+      return state;
+    }
+    return { arm: { yPosition: y, xExtension: x } };
+  }),
   setElectromagnet: (enabled) => set((state) => ({ electromagnet: { enabled } })),
   setTorch: (enabled) => set((state) => {
     // 1. SAFETY INTERLOCK
