@@ -62,18 +62,18 @@ export function validateCommand(cmd: unknown): { isValid: boolean; error?: strin
   
   switch (cmdObj.type) {
     case 'UPDATE_LOCOMOTION':
-      if (!cmdObj.payload || typeof (cmdObj.payload as any).x !== 'number' || typeof (cmdObj.payload as any).y !== 'number' || typeof (cmdObj.payload as any).trackOffsetDelta !== 'number') {
+      if (!cmdObj.payload || typeof (cmdObj.payload as Record<string, unknown>).x !== 'number' || typeof (cmdObj.payload as Record<string, unknown>).y !== 'number' || typeof (cmdObj.payload as Record<string, unknown>).trackOffsetDelta !== 'number') {
         return { isValid: false, error: 'Invalid payload for UPDATE_LOCOMOTION' };
       }
       break;
     case 'SET_ARM_POSITION':
-      if (!cmdObj.payload || typeof (cmdObj.payload as any).xExtension !== 'number' || typeof (cmdObj.payload as any).yPosition !== 'number') {
+      if (!cmdObj.payload || typeof (cmdObj.payload as Record<string, unknown>).xExtension !== 'number' || typeof (cmdObj.payload as Record<string, unknown>).yPosition !== 'number') {
         return { isValid: false, error: 'Invalid payload for SET_ARM_POSITION' };
       }
       break;
     case 'SET_TORCH':
     case 'SET_ELECTROMAGNET':
-      if (!cmdObj.payload || typeof (cmdObj.payload as any).enabled !== 'boolean') {
+      if (!cmdObj.payload || typeof (cmdObj.payload as Record<string, unknown>).enabled !== 'boolean') {
         return { isValid: false, error: `Invalid payload for ${cmdObj.type}` };
       }
       break;
