@@ -32,7 +32,7 @@ export function generateDeterministicStrategy(cut: CutDefinition): StrategyRecom
       isOptimal = false;
     }
     
-    if (cut.validation.overallRisk === 'WARNING') {
+    if (cut.validation.overallRisk === 'HIGH' || cut.validation.overallRisk === 'MEDIUM') {
       isOptimal = false;
     }
   }
