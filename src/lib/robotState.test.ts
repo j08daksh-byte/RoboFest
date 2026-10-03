@@ -118,3 +118,80 @@ describe('Safety Interlocks in robotState', () => {
     assert.strictEqual(useRobotStore.getState().torch.enabled, true);
   });
 });
+
+describe('Phase 4 Runtime Regression Evidence', () => {
+  beforeEach(() => {
+    useRobotStore.getState().reset();
+    usePlatformStore.setState({
+      safety: {
+        ...usePlatformStore.getState().safety,
+        movementPermission: true,
+        torchPermission: true
+      }
+    });
+    usePlannerStore.getState().clearPlanner();
+  });
+
+  it('Scenario A: Open path leaves trace but does not create a closed panel', () => {
+    const store = useRobotStore.getState();
+    // Simulate torch ON, move, torch OFF
+    store.setTorch(true);
+    store.addCutPoint(0, 0);
+    store.addCutPoint(1, 0);
+    store.addCutPoint(2, 0);
+    store.setTorch(false);
+    
+    // An open cut should be committed to completedCuts
+    const currentState = useRobotStore.getState();
+    assert.strictEqual(currentState.completedCuts.length, 1);
+    assert.strictEqual(currentState.completedCuts[0].isClosed, false);
+    assert.strictEqual(currentState.activeCutPath.length, 0);
+  });
+
+  it('Scenario B: Closed loop creates a closed cut metadata', () => {
+    const store = useRobotStore.getState();
+    store.commitClosedCuts([{ id: 'C1', points: [{x:0, y:0}, {x:1, y:0}, {x:0, y:1}] }]);
+    
+    const currentState = useRobotStore.getState();
+    assert.strictEqual(currentState.completedCuts.length, 1);
+    assert.strictEqual(currentState.completedCuts[0].id, 'C1');
+    assert.strictEqual(currentState.completedCuts[0].isClosed, true);
+  });
+
+  it('Scenario C: Multiple independent cuts', () => {
+    const store = useRobotStore.getState();
+    store.commitClosedCuts([{ id: 'C1', points: [{x:0, y:0}] }]);
+    store.commitClosedCuts([{ id: 'C2', points: [{x:2, y:2}] }]);
+    
+    const currentState = useRobotStore.getState();
+    assert.strictEqual(currentState.completedCuts.length, 2);
+    assert.strictEqual(currentState.completedCuts[0].id, 'C1');
+    assert.strictEqual(currentState.completedCuts[1].id, 'C2');
+  });
+
+  it('Scenario E: Reset clears cut state', () => {
+    const store = useRobotStore.getState();
+    store.addCutPoint(0, 0);
+    store.commitClosedCuts([{ id: 'C1', points: [{x:0, y:0}] }]);
+    
+    store.reset();
+    const currentState = useRobotStore.getState();
+    assert.strictEqual(currentState.completedCuts.length, 0);
+    assert.strictEqual(currentState.activeCutPath.length, 0);
+  });
+
+  it('Scenario F: X-Ray toggle does not corrupt cutting state', () => {
+    const store = useRobotStore.getState();
+    store.commitClosedCuts([{ id: 'C1', points: [{x:0, y:0}] }]);
+    
+    store.setXRayMode(true);
+    let currentState = useRobotStore.getState();
+    assert.strictEqual(currentState.completedCuts.length, 1);
+    assert.strictEqual(currentState.xRayMode, true);
+    
+    store.setXRayMode(false);
+    currentState = useRobotStore.getState();
+    assert.strictEqual(currentState.completedCuts.length, 1);
+    assert.strictEqual(currentState.xRayMode, false);
+  });
+});
