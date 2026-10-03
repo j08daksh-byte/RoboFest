@@ -6,6 +6,46 @@ export enum SystemMode {
   OFFLINE = 'OFFLINE'
 }
 
+// USER & ROLE DOMAIN (PHASE 9 SCAFFOLD)
+export enum UserRole {
+  OPERATOR = 'OPERATOR',
+  ENGINEER = 'ENGINEER',
+  SUPERVISOR = 'SUPERVISOR',
+  ADMIN = 'ADMIN'
+}
+
+export enum UserPermission {
+  READ_TELEMETRY = 'READ_TELEMETRY',
+  MANAGE_MISSION = 'MANAGE_MISSION',
+  OPERATE_ROBOT = 'OPERATE_ROBOT',
+  OVERRIDE_SAFETY = 'OVERRIDE_SAFETY',
+  MANAGE_USERS = 'MANAGE_USERS'
+}
+
+export interface UserContext {
+  id: string;
+  username: string;
+  role: UserRole;
+  permissions: UserPermission[];
+  isAuthenticated: boolean;
+}
+
+// KNOWLEDGE BASE DOMAIN (PHASE 9 SCAFFOLD)
+export enum KnowledgeCategory {
+  SAFETY = 'SAFETY',
+  MAINTENANCE = 'MAINTENANCE',
+  OPERATIONS = 'OPERATIONS',
+  TROUBLESHOOTING = 'TROUBLESHOOTING'
+}
+
+export interface KnowledgeDocument {
+  id: string;
+  title: string;
+  category: KnowledgeCategory;
+  lastUpdated: string;
+  contentReference: string; // URL or static ID
+}
+
 // ROBOT DOMAIN
 export interface RobotDomainState {
   status: 'ONLINE' | 'OFFLINE' | 'FAULT' | 'MAINTENANCE';
@@ -35,6 +75,7 @@ export interface MissionState {
   id: string | null;
   shipName: string;
   hullSection: string;
+  shipImage?: string | null;
   objective: string;
   status: MissionStatus;
   progressPercentage: number;
