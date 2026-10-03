@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { robotConfig } from './robotConfig';
 import { usePlatformStore } from './platformStore';
 import { usePlannerStore } from './cutting/plannerStore';
+import { CutGeometry, CutMaterial } from './cutting/domain';
 
 export interface CutRecord {
   id: string;
@@ -9,6 +10,10 @@ export interface CutRecord {
   isClosed: boolean;
   timestamp: string;
   plannedCutId?: string;
+  missionId?: string;
+  geometry?: CutGeometry;
+  material?: CutMaterial;
+  estimatedDurationSeconds?: number;
 }
 
 export interface RobotState {
@@ -95,15 +100,17 @@ export const useRobotStore = create<RobotState>((set, get) => ({
 
     // 2. HUMAN APPROVAL INTERLOCK
     const planner = usePlannerStore.getState();
+    const plannedCut = planner.currentCutId ? planner.plannedCuts.find(c => c.id === planner.currentCutId) : null;
+    
     if (enabled && planner.currentCutId) {
-      const cutPlan = planner.plannedCuts.find(c => c.id === planner.currentCutId);
-      if (cutPlan && cutPlan.approvalState !== 'APPROVED') {
+      if (plannedCut && plannedCut.approvalState !== 'APPROVED') {
         console.warn(`Approval Interlock: Torch activation rejected. Cut ${planner.currentCutId} is not APPROVED.`);
         return state;
       }
     }
 
     if (!enabled && state.activeCutPath.length > 0) {
+      usePlatformStore.getState().recordCutsCompleted(1, 0); // Open cut
       return {
         torch: { enabled },
         completedCuts: [...state.completedCuts, {
@@ -111,7 +118,11 @@ export const useRobotStore = create<RobotState>((set, get) => ({
           path: [...state.activeCutPath],
           isClosed: false,
           timestamp: new Date().toISOString(),
-          plannedCutId: planner.currentCutId || undefined
+          plannedCutId: planner.currentCutId || undefined,
+          missionId: plannedCut?.missionId,
+          geometry: plannedCut?.geometry,
+          material: plannedCut?.material,
+          estimatedDurationSeconds: plannedCut?.estimate?.estimatedDurationSeconds
         }],
         activeCutPath: []
       };
@@ -127,13 +138,22 @@ export const useRobotStore = create<RobotState>((set, get) => ({
   completeCut: (isClosed = false) => set((state) => {
     if (state.activeCutPath.length === 0) return state;
     const planner = usePlannerStore.getState();
+    const plannedCut = planner.currentCutId ? planner.plannedCuts.find(c => c.id === planner.currentCutId) : null;
+    
     const newCut: CutRecord = {
       id: Math.random().toString(36).substring(2, 9),
       path: [...state.activeCutPath],
       isClosed,
       timestamp: new Date().toISOString(),
-      plannedCutId: planner.currentCutId || undefined
+      plannedCutId: planner.currentCutId || undefined,
+      missionId: plannedCut?.missionId,
+      geometry: plannedCut?.geometry,
+      material: plannedCut?.material,
+      estimatedDurationSeconds: plannedCut?.estimate?.estimatedDurationSeconds
     };
+    
+    usePlatformStore.getState().recordCutsCompleted(1, isClosed ? 1 : 0);
+    
     return {
       completedCuts: [...state.completedCuts, newCut],
       activeCutPath: [] // clear active path
@@ -141,6 +161,7 @@ export const useRobotStore = create<RobotState>((set, get) => ({
   }),
   commitClosedCuts: (newPolygons) => set((state) => {
     const planner = usePlannerStore.getState();
+    const plannedCut = planner.currentCutId ? planner.plannedCuts.find(c => c.id === planner.currentCutId) : null;
     const timestamp = new Date().toISOString();
     
     const newCuts: CutRecord[] = newPolygons.map(poly => ({
@@ -148,20 +169,32 @@ export const useRobotStore = create<RobotState>((set, get) => ({
       path: poly.points,
       isClosed: true,
       timestamp,
-      plannedCutId: planner.currentCutId || undefined
+      plannedCutId: planner.currentCutId || undefined,
+      missionId: plannedCut?.missionId,
+      geometry: plannedCut?.geometry,
+      material: plannedCut?.material,
+      estimatedDurationSeconds: plannedCut?.estimate?.estimatedDurationSeconds
     }));
     
     // Also commit the current active path prefix as an open cut if substantial
     const prefixPath = state.activeCutPath.slice(0, -1);
+    let extraOpenCut = 0;
     if (prefixPath.length > 2) {
+      extraOpenCut = 1;
       newCuts.push({
         id: Math.random().toString(36).substring(2, 9),
         path: prefixPath,
         isClosed: false,
         timestamp,
-        plannedCutId: planner.currentCutId || undefined
+        plannedCutId: planner.currentCutId || undefined,
+        missionId: plannedCut?.missionId,
+        geometry: plannedCut?.geometry,
+        material: plannedCut?.material,
+        estimatedDurationSeconds: plannedCut?.estimate?.estimatedDurationSeconds
       });
     }
+    
+    usePlatformStore.getState().recordCutsCompleted(newCuts.length, newPolygons.length);
     
     return {
       completedCuts: [...state.completedCuts, ...newCuts],

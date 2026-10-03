@@ -101,3 +101,99 @@ describe('Phase 4C: Mission Lifecycle + Telemetry History', () => {
     assert.strictEqual(usePlatformStore.getState().events.length, 100);
   });
 });
+
+describe('Phase 7A: Operational Analytics Foundation', () => {
+  beforeEach(() => {
+    usePlatformStore.setState({
+      missionHistory: [],
+      lifetimeCounters: {
+        missionsCompleted: 0,
+        cutsCompleted: 0,
+        panelsRemoved: 0,
+        emergencyStops: 0
+      },
+      events: [],
+      healthEvents: [],
+      maintenanceLog: [],
+      mission: {
+        id: null,
+        shipName: '',
+        hullSection: '',
+        objective: '',
+        status: MissionStatus.PLANNED,
+        progressPercentage: 0,
+        startTime: null,
+        estimatedCompletionTime: null,
+        currentCutReference: null,
+        createdAt: null,
+        updatedAt: null
+      }
+    });
+  });
+
+  it('completed mission increments lifetime counter and adds to history', () => {
+    const store = usePlatformStore.getState();
+    store.createMission({ id: 'MIS-1', shipName: 'Test' });
+    usePlatformStore.getState().startMission();
+    usePlatformStore.getState().completeMission();
+
+    const state = usePlatformStore.getState();
+    assert.strictEqual(state.lifetimeCounters.missionsCompleted, 1);
+    assert.strictEqual(state.missionHistory.length, 1);
+    assert.strictEqual(state.missionHistory[0].id, 'MIS-1');
+  });
+
+  it('emergency stop event increments lifetime counter', () => {
+    usePlatformStore.getState().addSystemEvent({
+      id: 'EV-1',
+      category: EventCategory.SAFETY,
+      message: 'EMERGENCY_STOP triggered',
+      severity: 'CRITICAL',
+      timestamp: '2026-10-01T00:00:00Z'
+    });
+
+    const state = usePlatformStore.getState();
+    assert.strictEqual(state.lifetimeCounters.emergencyStops, 1);
+  });
+
+  it('non-emergency safety event does not increment emergency counter', () => {
+    usePlatformStore.getState().addSystemEvent({
+      id: 'EV-2',
+      category: EventCategory.SAFETY,
+      message: 'Warning threshold reached',
+      severity: 'WARNING',
+      timestamp: '2026-10-01T00:00:00Z'
+    });
+
+    const state = usePlatformStore.getState();
+    assert.strictEqual(state.lifetimeCounters.emergencyStops, 0);
+  });
+
+  it('records health event and generates ID/Timestamp', () => {
+    usePlatformStore.getState().recordHealthEvent({
+      subsystem: 'Motors',
+      status: 'CRITICAL',
+      reason: 'Temperature exceeded 75C'
+    });
+
+    const state = usePlatformStore.getState();
+    assert.strictEqual(state.healthEvents.length, 1);
+    assert.ok(state.healthEvents[0].id);
+    assert.ok(state.healthEvents[0].timestamp);
+    assert.strictEqual(state.healthEvents[0].subsystem, 'Motors');
+  });
+
+  it('records maintenance log and generates ID/Timestamp', () => {
+    usePlatformStore.getState().recordMaintenance({
+      component: 'Torch',
+      description: 'Replaced nozzle',
+      status: 'COMPLETED'
+    });
+
+    const state = usePlatformStore.getState();
+    assert.strictEqual(state.maintenanceLog.length, 1);
+    assert.ok(state.maintenanceLog[0].id);
+    assert.ok(state.maintenanceLog[0].timestamp);
+    assert.strictEqual(state.maintenanceLog[0].status, 'COMPLETED');
+  });
+});

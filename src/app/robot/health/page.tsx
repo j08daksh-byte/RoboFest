@@ -91,9 +91,9 @@ export default function RobotHealthPage() {
               <h2 className="heading-technical">KEY TRENDS</h2>
             </div>
             <div className="ui-panel-body">
-              <div className="metric-row"><span className="metric-label">Operating Hrs</span><span className="metric-value">1,420 h</span></div>
-              <div className="metric-row"><span className="metric-label">Next Service</span><span className="metric-value">45 h</span></div>
-              <div className="metric-row"><span className="metric-label">Critical Faults (24h)</span><span className="metric-value">0</span></div>
+              <div className="metric-row"><span className="metric-label">Operating Hrs</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
+              <div className="metric-row"><span className="metric-label">Next Service</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
+              <div className="metric-row"><span className="metric-label">Critical Faults (24h)</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
             </div>
           </div>
         </div>

@@ -165,3 +165,29 @@ export interface SystemEvent {
   robotId?: string;
   source?: string;
 }
+
+// LIFETIME COUNTERS DOMAIN
+export interface LifetimeCounters {
+  missionsCompleted: number;
+  cutsCompleted: number;
+  panelsRemoved: number;
+  emergencyStops: number;
+}
+
+// MAINTENANCE DOMAIN
+export interface MaintenanceRecord {
+  id: string;
+  timestamp: string;
+  component: string;
+  description: string;
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+}
+
+// HEALTH EVENTS DOMAIN
+export interface HealthEvent {
+  id: string;
+  timestamp: string;
+  subsystem: string;
+  status: 'HEALTHY' | 'WARNING' | 'CRITICAL';
+  reason: string;
+}

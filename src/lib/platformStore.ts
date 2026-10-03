@@ -9,7 +9,10 @@ import {
   SensorState,
   EnvironmentState,
   SystemEvent,
-  TelemetrySample
+  TelemetrySample,
+  LifetimeCounters,
+  MaintenanceRecord,
+  HealthEvent
 } from './domain';
 
 export interface ActionResponse {
@@ -26,6 +29,12 @@ interface PlatformStoreState {
   environment: EnvironmentState;
   events: SystemEvent[];
   telemetryHistory: TelemetrySample[];
+  
+  // Phase 7A Analytics State
+  missionHistory: MissionState[];
+  lifetimeCounters: LifetimeCounters;
+  maintenanceLog: MaintenanceRecord[];
+  healthEvents: HealthEvent[];
 
   // Base Setters
   setSystemMode: (mode: SystemMode) => void;
@@ -44,6 +53,11 @@ interface PlatformStoreState {
   cancelMission: () => ActionResponse;
   interruptMission: () => ActionResponse;
   setMissionProgress: (progress: number) => ActionResponse;
+
+  // Phase 7A Analytics Actions
+  recordCutsCompleted: (count: number, closedPanels: number) => void;
+  recordHealthEvent: (event: Omit<HealthEvent, 'id' | 'timestamp'>) => void;
+  recordMaintenance: (record: Omit<MaintenanceRecord, 'id' | 'timestamp'>) => void;
 }
 
 // Initial deterministic SIMULATED/DEMO state
@@ -132,7 +146,16 @@ const initialPlatformState = {
   },
   
   events: [],
-  telemetryHistory: []
+  telemetryHistory: [],
+  missionHistory: [],
+  lifetimeCounters: {
+    missionsCompleted: 0,
+    cutsCompleted: 0,
+    panelsRemoved: 0,
+    emergencyStops: 0
+  },
+  maintenanceLog: [],
+  healthEvents: []
 };
 
 const MAX_HISTORY = 100;
@@ -162,9 +185,15 @@ export const usePlatformStore = create<PlatformStoreState>((set, get) => ({
     environment: { ...state.environment, ...newState } 
   })),
   
-  addSystemEvent: (event) => set((state) => ({ 
-    events: [event, ...state.events].slice(0, MAX_HISTORY)
-  })),
+  addSystemEvent: (event) => set((state) => {
+    const isEStop = event.category === 'SAFETY' && (event.message.includes('EVACUATION') || event.message.includes('EMERGENCY_STOP'));
+    return {
+      events: [event, ...state.events].slice(0, MAX_HISTORY),
+      lifetimeCounters: isEStop 
+        ? { ...state.lifetimeCounters, emergencyStops: state.lifetimeCounters.emergencyStops + 1 } 
+        : state.lifetimeCounters
+    };
+  }),
 
   addTelemetrySample: (sample) => set((state) => ({
     telemetryHistory: [sample, ...state.telemetryHistory].slice(0, MAX_HISTORY)
@@ -228,7 +257,17 @@ export const usePlatformStore = create<PlatformStoreState>((set, get) => ({
         progressPercentage: 100,
         updatedAt: new Date().toISOString()
       },
-      robot: { ...get().robot, activeMissionId: null }
+      robot: { ...get().robot, activeMissionId: null },
+      missionHistory: [...get().missionHistory, {
+        ...mission,
+        status: MissionStatus.COMPLETED,
+        progressPercentage: 100,
+        updatedAt: new Date().toISOString()
+      }],
+      lifetimeCounters: {
+        ...get().lifetimeCounters,
+        missionsCompleted: get().lifetimeCounters.missionsCompleted + 1
+      }
     });
     return { success: true };
   },
@@ -286,5 +325,21 @@ export const usePlatformStore = create<PlatformStoreState>((set, get) => ({
       }
     });
     return { success: true };
-  }
+  },
+
+  recordCutsCompleted: (count, closedPanels) => set((state) => ({
+    lifetimeCounters: {
+      ...state.lifetimeCounters,
+      cutsCompleted: state.lifetimeCounters.cutsCompleted + count,
+      panelsRemoved: state.lifetimeCounters.panelsRemoved + closedPanels
+    }
+  })),
+
+  recordHealthEvent: (event) => set((state) => ({
+    healthEvents: [...state.healthEvents, { ...event, id: 'HE-' + Date.now(), timestamp: new Date().toISOString() }]
+  })),
+
+  recordMaintenance: (record) => set((state) => ({
+    maintenanceLog: [...state.maintenanceLog, { ...record, id: 'MR-' + Date.now(), timestamp: new Date().toISOString() }]
+  }))
 }));

@@ -53,3 +53,37 @@ There is absolutely no Predictive Maintenance, Machine Learning, or AI logic in 
 
 ## 5. Conclusion
 Phase 7 is entirely **SCAFFOLDED**. The architectural foundation for deriving these metrics (telemetry generation, event logs, cut geometry) exists in Phase 4/5, but the long-term aggregation, persistence, and AI/predictive calculation layers do not exist. Implementing them requires Backend Persistence (Postgres/Supabase) to be established first.
+
+## 6. Phase 7A Data Foundation Update
+
+**Authoritative Models Created (`src/lib/domain/index.ts`):**
+- `LifetimeCounters`: missionsCompleted, cutsCompleted, panelsRemoved, emergencyStops
+- `MaintenanceRecord`: id, timestamp, component, description, status
+- `HealthEvent`: id, timestamp, subsystem, status, reason
+
+**State Authority Updates (`src/lib/platformStore.ts`):**
+- `platformStore` now owns `lifetimeCounters`, `maintenanceLog`, `healthEvents`, and `missionHistory`.
+- `completeMission` natively increments `lifetimeCounters.missionsCompleted` and archives to `missionHistory`.
+- E-Stop events natively increment `lifetimeCounters.emergencyStops`.
+- `recordCutsCompleted` securely interfaces `robotState` (which tracks actual cut semantics) to `platformStore` (which tracks lifetime counts).
+
+**Cut Analytics Preservation (`src/lib/robotState.ts`):**
+- `CutRecord` was enriched to capture planning metadata upon completion.
+- Added `missionId`, `geometry`, `material`, `estimatedDurationSeconds` fields directly inherited from the `plannerStore` when a `plannedCutId` exists. This prevents loss of analytics data after a cut closes.
+
+**Derived Metrics Now Available in UI:**
+- **Missions Completed:** Derived from `lifetimeCounters`.
+- **Emergency Stops:** Derived from `lifetimeCounters`.
+- **Total Cuts Completed:** Derived from `lifetimeCounters`.
+- **Total Panels Removed:** Derived from `lifetimeCounters`.
+
+**Metrics Still Unavailable (Marked as UNAVAILABLE in UI):**
+- Operating Hours
+- Next Service
+- Critical Faults (24h)
+- Component Replacements
+- Safety Overrides
+- Steel Weight Removed (Est)
+
+**Status:**
+The in-memory data foundation accurately reflects current subsystem behavior, replacing previously hardcoded values with rigorously derived, state-backed equivalents. Backend persistence remains the core blocker for survival across sessions. Phase 4 Runtime Closure remains blocked by browser infrastructure.

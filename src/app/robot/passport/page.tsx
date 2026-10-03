@@ -5,10 +5,12 @@ import { usePlatformStore } from '@/lib/platformStore';
 import { MissionStatus } from '@/lib/domain';
 
 export default function RobotPassportPage() {
-  const { systemMode, events } = usePlatformStore();
+  const { systemMode, lifetimeCounters } = usePlatformStore();
 
-  const completedMissionsCount = events.filter(e => e.message.includes(MissionStatus.COMPLETED)).length;
-  const emergencyStopsCount = events.filter(e => e.category === 'SAFETY' && (e.message.includes('EVACUATION') || e.message.includes('EMERGENCY_STOP'))).length;
+  const completedMissionsCount = lifetimeCounters.missionsCompleted;
+  const emergencyStopsCount = lifetimeCounters.emergencyStops;
+  const panelsRemovedCount = lifetimeCounters.panelsRemoved;
+  const cutsCompletedCount = lifetimeCounters.cutsCompleted;
 
   return (
     <div className="page-container">
@@ -50,11 +52,12 @@ export default function RobotPassportPage() {
               <h2 className="heading-technical">OPERATIONAL STATISTICS</h2>
             </div>
             <div className="ui-panel-body">
-              <div className="metric-row"><span className="metric-label">Total Missions Started</span><span className="metric-value">0</span></div>
+              <div className="metric-row"><span className="metric-label">Total Missions Started</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
               <div className="metric-row"><span className="metric-label">Missions Completed</span><span className="metric-value" style={{color: completedMissionsCount > 0 ? 'var(--good)' : 'var(--text-main)'}}>{completedMissionsCount}</span></div>
-              <div className="metric-row"><span className="metric-label">Total Panels Removed</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>N/A</span></div>
-              <div className="metric-row"><span className="metric-label">Steel Weight Removed (Est)</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>N/A</span></div>
-              <div className="metric-row"><span className="metric-label">Operating Hours</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>N/A</span></div>
+              <div className="metric-row"><span className="metric-label">Total Cuts Completed</span><span className="metric-value" style={{color: cutsCompletedCount > 0 ? 'var(--good)' : 'var(--text-main)'}}>{cutsCompletedCount}</span></div>
+              <div className="metric-row"><span className="metric-label">Total Panels Removed</span><span className="metric-value" style={{color: panelsRemovedCount > 0 ? 'var(--good)' : 'var(--text-main)'}}>{panelsRemovedCount}</span></div>
+              <div className="metric-row"><span className="metric-label">Steel Weight Removed (Est)</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
+              <div className="metric-row"><span className="metric-label">Operating Hours</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
             </div>
           </div>
 
@@ -68,10 +71,10 @@ export default function RobotPassportPage() {
                 <span className="metric-label">Emergency Stops</span>
                 <span className="metric-value" style={{color: emergencyStopsCount > 0 ? 'var(--critical)' : 'var(--good)'}}>{emergencyStopsCount}</span>
               </div>
-              <div className="metric-row"><span className="metric-label">Safety Overrides</span><span className="metric-value">0</span></div>
-              <div className="metric-row"><span className="metric-label">Component Replacements</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>N/A</span></div>
-              <div className="metric-row"><span className="metric-label">Scheduled Maintenance</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>N/A</span></div>
-              <div className="metric-row"><span className="metric-label">Last Firmware Update</span><span className="metric-value">v6.0.0-rc1</span></div>
+              <div className="metric-row"><span className="metric-label">Safety Overrides</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
+              <div className="metric-row"><span className="metric-label">Component Replacements</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
+              <div className="metric-row"><span className="metric-label">Scheduled Maintenance</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
+              <div className="metric-row"><span className="metric-label">Last Firmware Update</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
             </div>
           </div>
         </div>
