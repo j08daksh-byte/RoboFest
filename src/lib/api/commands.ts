@@ -53,27 +53,28 @@ export interface CommandResult {
   timestamp: string;
 }
 
-export function validateCommand(cmd: any): { isValid: boolean; error?: string } {
+export function validateCommand(cmd: unknown): { isValid: boolean; error?: string } {
   if (!cmd || typeof cmd !== 'object') return { isValid: false, error: 'Command must be an object' };
-  if (typeof cmd.id !== 'string') return { isValid: false, error: 'Missing or invalid command id' };
-  if (typeof cmd.timestamp !== 'string') return { isValid: false, error: 'Missing or invalid timestamp' };
-  if (typeof cmd.source !== 'string') return { isValid: false, error: 'Missing or invalid source' };
+  const cmdObj = cmd as Record<string, unknown>;
+  if (typeof cmdObj.id !== 'string') return { isValid: false, error: 'Missing or invalid command id' };
+  if (typeof cmdObj.timestamp !== 'string') return { isValid: false, error: 'Missing or invalid timestamp' };
+  if (typeof cmdObj.source !== 'string') return { isValid: false, error: 'Missing or invalid source' };
   
-  switch (cmd.type) {
+  switch (cmdObj.type) {
     case 'UPDATE_LOCOMOTION':
-      if (!cmd.payload || typeof cmd.payload.x !== 'number' || typeof cmd.payload.y !== 'number' || typeof cmd.payload.trackOffsetDelta !== 'number') {
+      if (!cmdObj.payload || typeof (cmdObj.payload as any).x !== 'number' || typeof (cmdObj.payload as any).y !== 'number' || typeof (cmdObj.payload as any).trackOffsetDelta !== 'number') {
         return { isValid: false, error: 'Invalid payload for UPDATE_LOCOMOTION' };
       }
       break;
     case 'SET_ARM_POSITION':
-      if (!cmd.payload || typeof cmd.payload.xExtension !== 'number' || typeof cmd.payload.yPosition !== 'number') {
+      if (!cmdObj.payload || typeof (cmdObj.payload as any).xExtension !== 'number' || typeof (cmdObj.payload as any).yPosition !== 'number') {
         return { isValid: false, error: 'Invalid payload for SET_ARM_POSITION' };
       }
       break;
     case 'SET_TORCH':
     case 'SET_ELECTROMAGNET':
-      if (!cmd.payload || typeof cmd.payload.enabled !== 'boolean') {
-        return { isValid: false, error: `Invalid payload for ${cmd.type}` };
+      if (!cmdObj.payload || typeof (cmdObj.payload as any).enabled !== 'boolean') {
+        return { isValid: false, error: `Invalid payload for ${cmdObj.type}` };
       }
       break;
     case 'TRIGGER_EMERGENCY_STOP':
@@ -84,3 +85,4 @@ export function validateCommand(cmd: any): { isValid: boolean; error?: string } 
   
   return { isValid: true };
 }
+
