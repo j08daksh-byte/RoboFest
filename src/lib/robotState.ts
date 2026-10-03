@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 import { robotConfig } from './robotConfig';
 import { usePlatformStore } from './platformStore';
+import { usePlannerStore } from './cutting/plannerStore';
 
 export interface CutRecord {
   id: string;
   path: Array<{x: number, y: number}>;
   isClosed: boolean;
+  timestamp: string;
+  plannedCutId?: string;
 }
 
 export interface RobotState {
@@ -90,13 +93,25 @@ export const useRobotStore = create<RobotState>((set, get) => ({
       return state;
     }
 
+    // 2. HUMAN APPROVAL INTERLOCK
+    const planner = usePlannerStore.getState();
+    if (enabled && planner.currentCutId) {
+      const cutPlan = planner.plannedCuts.find(c => c.id === planner.currentCutId);
+      if (cutPlan && cutPlan.approvalState !== 'APPROVED') {
+        console.warn(`Approval Interlock: Torch activation rejected. Cut ${planner.currentCutId} is not APPROVED.`);
+        return state;
+      }
+    }
+
     if (!enabled && state.activeCutPath.length > 0) {
       return {
         torch: { enabled },
         completedCuts: [...state.completedCuts, {
           id: Math.random().toString(36).substring(2, 9),
           path: [...state.activeCutPath],
-          isClosed: false
+          isClosed: false,
+          timestamp: new Date().toISOString(),
+          plannedCutId: planner.currentCutId || undefined
         }],
         activeCutPath: []
       };
@@ -111,10 +126,13 @@ export const useRobotStore = create<RobotState>((set, get) => ({
   addCutPoint: (x, y) => set((state) => ({ activeCutPath: [...state.activeCutPath, {x, y}] })),
   completeCut: (isClosed = false) => set((state) => {
     if (state.activeCutPath.length === 0) return state;
+    const planner = usePlannerStore.getState();
     const newCut: CutRecord = {
       id: Math.random().toString(36).substring(2, 9),
       path: [...state.activeCutPath],
-      isClosed
+      isClosed,
+      timestamp: new Date().toISOString(),
+      plannedCutId: planner.currentCutId || undefined
     };
     return {
       completedCuts: [...state.completedCuts, newCut],
@@ -122,10 +140,15 @@ export const useRobotStore = create<RobotState>((set, get) => ({
     };
   }),
   commitClosedCuts: (newPolygons) => set((state) => {
+    const planner = usePlannerStore.getState();
+    const timestamp = new Date().toISOString();
+    
     const newCuts: CutRecord[] = newPolygons.map(poly => ({
       id: poly.id,
       path: poly.points,
-      isClosed: true
+      isClosed: true,
+      timestamp,
+      plannedCutId: planner.currentCutId || undefined
     }));
     
     // Also commit the current active path prefix as an open cut if substantial
@@ -134,7 +157,9 @@ export const useRobotStore = create<RobotState>((set, get) => ({
       newCuts.push({
         id: Math.random().toString(36).substring(2, 9),
         path: prefixPath,
-        isClosed: false
+        isClosed: false,
+        timestamp,
+        plannedCutId: planner.currentCutId || undefined
       });
     }
     

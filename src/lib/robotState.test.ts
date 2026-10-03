@@ -2,6 +2,7 @@ import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
 import { useRobotStore } from './robotState';
 import { usePlatformStore } from './platformStore';
+import { usePlannerStore } from './cutting/plannerStore';
 
 describe('Safety Interlocks in robotState', () => {
   beforeEach(() => {
@@ -94,5 +95,26 @@ describe('Safety Interlocks in robotState', () => {
     const arm = useRobotStore.getState().arm;
     assert.strictEqual(arm.yPosition, 0.25);
     assert.strictEqual(arm.xExtension, 0.6);
+  });
+
+  it('TEST 10: torch cannot activate if current cut plan is not APPROVED', () => {
+    usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, torchPermission: true } });
+    const planner = usePlannerStore.getState();
+    planner.clearPlanner();
+    const id = planner.createCut({ type: 'CUSTOM_POLYGON', vertices: [{x:0,y:0}, {x:1,y:0}, {x:1,y:1}, {x:0,y:1}], thicknessScale: 1 }, { type: 'STEEL', thickness: 10, yieldStrength: 1 }, 'test');
+    planner.setCurrentCut(id);
+    
+    // Attempt activation (should be blocked by DRAFT approval state)
+    useRobotStore.getState().setTorch(true);
+    assert.strictEqual(useRobotStore.getState().torch.enabled, false);
+    
+    // Now force approval
+    usePlannerStore.setState({ 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      plannedCuts: [{...usePlannerStore.getState().plannedCuts[0], approvalState: 'APPROVED', validation: {} as any}] 
+    });
+    
+    useRobotStore.getState().setTorch(true);
+    assert.strictEqual(useRobotStore.getState().torch.enabled, true);
   });
 });
