@@ -101,7 +101,7 @@ describe('Safety Interlocks in robotState', () => {
     usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, torchPermission: true } });
     const planner = usePlannerStore.getState();
     planner.clearPlanner();
-    const id = planner.createCut({ type: 'CUSTOM_POLYGON', vertices: [{x:0,y:0}, {x:1,y:0}, {x:1,y:1}, {x:0,y:1}], thicknessScale: 1 }, { type: 'STEEL', thickness: 10, yieldStrength: 1 }, 'test');
+    const id = planner.createCut({ type: 'CUSTOM_POLYGON', vertices: [{x:0,y:0}, {x:1,y:0}, {x:1,y:1}, {x:0,y:1}] }, { type: 'STEEL', thickness: 10, yieldStrength: 1 }, 'test');
     planner.setCurrentCut(id);
     
     // Attempt activation (should be blocked by DRAFT approval state)
