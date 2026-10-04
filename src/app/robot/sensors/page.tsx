@@ -12,7 +12,35 @@ export default function RobotSensorsPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-  }, []);
+
+    if (systemMode !== 'SIMULATED') {
+      const interval = setInterval(async () => {
+        try {
+          const token = localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : '';
+          const res = await fetch(`/api/telemetry?mode=${systemMode}&limit=40`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.data && data.data.length > 0) {
+              const mapped = data.data.map((r: any) => ({
+                timestamp: r.timestamp,
+                sourceMode: r.mode,
+                robot: { powerVoltage: r.powerVoltage, powerCurrent: r.powerCurrent },
+                motors: { currentLeft: r.motorCurrentLeft, currentRight: r.motorCurrentRight, tempLeft: r.motorTempLeft, tempRight: r.motorTempRight },
+                imu: { acceleration: { x: r.imuAccelX, y: r.imuAccelY, z: r.imuAccelZ }, gyro: { x: r.imuGyroX, y: r.imuGyroY, z: r.imuGyroZ }, tiltAngle: r.imuTiltAngle },
+                hardware: { electromagnetCurrent: r.electromagnetCurrent, electromagnetEnabled: r.electromagnetEnabled, armExtensionX: r.armExtensionX, armExtensionY: r.armExtensionY, vibrationLevel: r.vibrationLevel },
+                gas: { torchStatus: r.torchStatus, oxyPressurePsi: r.oxyPressurePsi, oxyFlowRate: r.oxyFlowRate, acePressurePsi: r.acePressurePsi, aceFlowRate: r.aceFlowRate },
+                environment: { temperatureC: r.envTemperatureC, humidityPercentage: r.envHumidity, atmosphericPressureHpa: r.envAtmosphericPressure, windSpeedKmh: r.envWindSpeed, rain: r.envRain, visibilityStatus: r.envVisibility, o2Percentage: r.envO2Percentage, coPpm: r.envCoPpm, co2Ppm: r.envCo2Ppm, combustibleGasLel: r.envCombustibleGasLel }
+              }));
+              usePlatformStore.setState({ telemetryHistory: mapped });
+            }
+          }
+        } catch (e) {}
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [systemMode]);
   
   // Use last 40 ticks for sparklines
   const history = [...telemetryHistory].reverse().slice(-40);

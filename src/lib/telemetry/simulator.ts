@@ -129,6 +129,34 @@ class TelemetrySimulator {
       telemetrySample: sample,
       events: generatedEvents
     });
+
+    // POST to backend occasionally (e.g. every 1 second / ~10 ticks)
+    if (Math.random() < 0.1) {
+      try {
+        const token = typeof window !== 'undefined' && localStorage.getItem('auth-storage') 
+          ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token 
+          : '';
+        if (token) {
+          fetch('/api/telemetry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({
+              source: 'SIMULATOR',
+              mode: SystemMode.SIMULATED,
+              timestamp: sample.timestamp,
+              robot: sample.robot,
+              imu: sample.imu,
+              motors: sample.motors,
+              hardware: sample.hardware,
+              gas: sample.gas,
+              environment: sample.environment
+            })
+          }).catch(() => {});
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
   }
 
   private createEvent(state: ReturnType<SimulatorStateGetter>, category: EventCategory, message: string, severity: SystemEvent['severity']): SystemEvent {

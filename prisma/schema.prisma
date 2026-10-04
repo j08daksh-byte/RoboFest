@@ -8,10 +8,10 @@ datasource db {
 }
 
 model User {
-  id           String      @id @default(uuid())
-  username     String      @unique
-  passwordHash String
-  role         String      // OPERATOR, ENGINEER, SUPERVISOR, ADMIN
+  id             String          @id @default(uuid())
+  username       String          @unique
+  passwordHash   String
+  role           String // OPERATOR, ENGINEER, SUPERVISOR, ADMIN
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   eventLogs      EventLog[]
@@ -19,24 +19,42 @@ model User {
 }
 
 model Mission {
-  id                      String       @id @default(uuid())
-  shipName                String
-  objective               String
-  hullSection             String
-  status                  String
-  createdAt               DateTime     @default(now())
-  updatedAt               DateTime     @updatedAt
-  cutRecords              CutRecord[]
-  eventLogs               EventLog[]
+  id                 String      @id @default(uuid())
+  shipName           String
+  objective          String
+  hullSection        String
+  status             String // DRAFT, READY, RUNNING, PAUSED, COMPLETED, ABORTED
+  progressPercentage Int         @default(0)
+  startedAt          DateTime?
+  pausedAt           DateTime?
+  completedAt        DateTime?
+  abortedAt          DateTime?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  stateVersion       Int         @default(0)
+  cutRecords         CutRecord[]
+  eventLogs          EventLog[]
 }
 
 model CutRecord {
-  id           String   @id @default(uuid())
-  missionId    String
-  geometryJson String
-  status       String   // PLANNED, APPROVED, CUTTING, COMPLETED
-  createdAt    DateTime @default(now())
-  mission      Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  id             String    @id @default(uuid())
+  missionId      String
+  name           String?
+  type           String    // OPEN_PATH, CLOSED_LOOP
+  status         String    // PLANNED, READY, RUNNING, PENDING, COMPLETED, ABORTED, FAILED
+  photoPlanJson  String?   // JSON of photo-plan coordinates
+  normalizedJson String?   // JSON of normalized coordinates
+  worldJson      String?   // JSON of world/digital-twin coordinates
+  panelId        String?
+  commandId      String?
+  plannedAt      DateTime?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  abortedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  stateVersion   Int       @default(0)
+  mission        Mission   @relation(fields: [missionId], references: [id], onDelete: Cascade)
 }
 
 model EventLog {
@@ -52,18 +70,18 @@ model EventLog {
 }
 
 model CommandRecord {
-  id          String   @id @default(uuid())
-  commandId   String   @unique
-  type        String
-  status      String   // PENDING, ACKNOWLEDGED, REJECTED, FAILED, TIMED_OUT
-  operatorId  String
-  missionId   String?
-  source      String
-  payload     String
-  reason      String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [operatorId], references: [id])
+  id         String   @id @default(uuid())
+  commandId  String   @unique
+  type       String
+  status     String // PENDING, ACKNOWLEDGED, REJECTED, FAILED, TIMED_OUT
+  operatorId String
+  missionId  String?
+  source     String
+  payload    String
+  reason     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [operatorId], references: [id])
 }
 
 model RuntimeState {
@@ -77,8 +95,74 @@ model RuntimeState {
   torchEnabled         Boolean  @default(false)
   electromagnetEnabled Boolean  @default(false)
   emergencyActive      Boolean  @default(false)
-  activeMissionId      String?  
-  lastCommandId        String?  
+  activeMissionId      String?
+  lastCommandId        String?
   stateVersion         Int      @default(0)
   updatedAt            DateTime @updatedAt
+}
+
+model TelemetryRecord {
+  id                  String   @id @default(uuid())
+  timestamp           DateTime @default(now())
+  robotId             String   @default("ROBO-1")
+  source              String
+  mode                String   // LIVE, SIMULATED, HISTORICAL
+
+  // Robot Power
+  powerVoltage        Float
+  powerCurrent        Float
+
+  // IMU
+  imuAccelX           Float
+  imuAccelY           Float
+  imuAccelZ           Float
+  imuGyroX            Float
+  imuGyroY            Float
+  imuGyroZ            Float
+  imuTiltAngle        Float
+
+  // Motors
+  motorCurrentLeft    Float
+  motorCurrentRight   Float
+  motorTempLeft       Float
+  motorTempRight      Float
+
+  // Hardware / Actuators
+  electromagnetCurrent Float
+  electromagnetEnabled Boolean @default(false)
+  armExtensionY       Float
+  armExtensionX       Float
+  vibrationLevel      Float
+  torchStatus         String
+
+  // Gas
+  oxyPressurePsi      Float
+  oxyFlowRate         Float
+  acePressurePsi      Float
+  aceFlowRate         Float
+
+  // Environment
+  envTemperatureC     Float
+  envHumidity         Float
+  envAtmosphericPressure Float
+  envWindSpeed        Float
+  envRain             Boolean
+  envVisibility       String
+  envO2Percentage     Float
+  envCoPpm            Float
+  envCo2Ppm           Float
+  envCombustibleGasLel Float
+
+  // Position
+  positionX           Float @default(0)
+  positionY           Float @default(0)
+  positionZ           Float @default(0)
+  
+  // Health/Faults
+  overallHealth       String @default("GOOD")
+
+  createdAt           DateTime @default(now())
+  
+  @@index([timestamp])
+  @@index([mode])
 }
