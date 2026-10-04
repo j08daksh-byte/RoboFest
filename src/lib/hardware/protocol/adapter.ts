@@ -24,6 +24,7 @@ export interface HardwareTransport {
   disconnect(): Promise<void>;
   send(payload: string): void;
   onMessage(handler: (payload: string) => void): void;
+  onConnectionStateChange(handler: (state: HardwareConnectionState) => void): void;
   getConnectionState(): HardwareConnectionState;
 }
 
