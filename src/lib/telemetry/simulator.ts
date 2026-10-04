@@ -1,7 +1,17 @@
-import { usePlatformStore } from '../platformStore';
 import { SimulationScenario, SCENARIO_DEFINITIONS } from './scenarios';
 import { evaluateSafetyState } from '../safety';
-import { EventCategory, SystemEvent } from '../domain';
+import { EventCategory, SystemEvent, SensorState, EnvironmentState, SafetyState, TelemetrySample, SystemMode } from '../domain';
+import { PlatformTelemetry } from '../transport/domain';
+
+export type SimulatorStateGetter = () => {
+  sensor: SensorState;
+  environment: EnvironmentState;
+  safety: SafetyState;
+  missionId?: string;
+  systemMode: SystemMode;
+  powerVoltage: number;
+  powerCurrent: number;
+};
 
 class TelemetrySimulator {
   private timer: NodeJS.Timeout | null = null;
@@ -10,7 +20,6 @@ class TelemetrySimulator {
   public setScenario(scenario: SimulationScenario) {
     if (this.activeScenario !== scenario) {
       this.activeScenario = scenario;
-      this.logEvent(EventCategory.OPERATION, `Simulation scenario changed to ${scenario}`, 'INFO');
     }
   }
   
@@ -18,7 +27,12 @@ class TelemetrySimulator {
       return this.activeScenario;
   }
 
-  public start() {
+  private onTick?: (telemetry: PlatformTelemetry) => void;
+  private getState?: SimulatorStateGetter;
+
+  public start(getState: SimulatorStateGetter, onTick: (telemetry: PlatformTelemetry) => void) {
+    this.getState = getState;
+    this.onTick = onTick;
     if (this.timer) return;
     this.timer = setInterval(() => this.tick(), 1000); // 1Hz telemetry tick
   }
@@ -31,10 +45,11 @@ class TelemetrySimulator {
   }
 
   private tick() {
-    const store = usePlatformStore.getState();
-    const currentSensor = store.sensor;
-    const currentEnv = store.environment;
-    const currentSafety = store.safety;
+    if (!this.getState || !this.onTick) return;
+    const currentState = this.getState();
+    const currentSensor = currentState.sensor;
+    const currentEnv = currentState.environment;
+    const currentSafety = currentState.safety;
     
     // 1. Generate Telemetry (blend base state with scenario overrides)
     const baseDef = SCENARIO_DEFINITIONS[SimulationScenario.NORMAL_OPERATION];
@@ -45,7 +60,6 @@ class TelemetrySimulator {
       metadata: { ...currentSensor.metadata, lastUpdated: new Date().toISOString() },
       motors: { ...baseDef.sensor!.motors!, ...(scenarioDef.sensor?.motors || {}) },
       imu: { ...baseDef.sensor!.imu!, ...(scenarioDef.sensor?.imu || {}) },
-      // Other fields left as they are for now
     };
 
     const newEnv = {
@@ -56,17 +70,13 @@ class TelemetrySimulator {
     
     const forceEStop = scenarioDef.forceEStop || false;
 
-    // 2. Update platform sensor/env state
-    store.updateSensor(newSensor);
-    store.updateEnvironment(newEnv);
-
-    // 3. Append Telemetry Sample
-    store.addTelemetrySample({
+    // 2. Append Telemetry Sample
+    const sample: TelemetrySample = {
       timestamp: new Date().toISOString(),
-      sourceMode: store.systemMode,
+      sourceMode: currentState.systemMode,
       robot: {
-        powerVoltage: store.robot.powerVoltage,
-        powerCurrent: store.robot.powerCurrent
+        powerVoltage: currentState.powerVoltage,
+        powerCurrent: currentState.powerCurrent
       },
       motors: newSensor.motors,
       imu: newSensor.imu,
@@ -84,49 +94,53 @@ class TelemetrySimulator {
         rain: newEnv.rain,
         visibilityStatus: newEnv.visibilityStatus
       }
-    });
+    };
 
     // 3. Evaluate safety engine
     const { state: newSafetyState, newEvents } = evaluateSafetyState(newSensor, newEnv, forceEStop);
 
-    // 4. Update safety state
-    store.setSafetyState(newSafetyState);
-
-    // 5. Generate relevant SystemEvent entries
-    // Log state transition
+    // 4. Generate relevant SystemEvent entries
+    const generatedEvents: SystemEvent[] = [];
     if (newSafetyState.level !== currentSafety.level) {
-      this.logEvent(
+      generatedEvents.push(this.createEvent(
+        currentState,
         EventCategory.SAFETY, 
         `Safety level transitioned from ${currentSafety.level} to ${newSafetyState.level}`,
         newSafetyState.level === 'NORMAL' ? 'INFO' : 'WARNING'
-      );
+      ));
     }
     
-    // Log new hazards appearing (simple check by ID)
     const currentHazardIds = currentSafety.activeHazards.map(h => h.id);
     newEvents.forEach(ev => {
       if (!currentHazardIds.includes(ev.hazardId)) {
-        this.logEvent(
+        generatedEvents.push(this.createEvent(
+          currentState,
           EventCategory.SAFETY,
           `Hazard Detected: ${ev.description}`,
           ev.severity === 'HIGH' ? 'CRITICAL' : (ev.severity === 'MEDIUM' ? 'WARNING' : 'INFO')
-        );
+        ));
       }
+    });
+
+    this.onTick({
+      sensor: newSensor,
+      environment: newEnv,
+      safety: newSafetyState,
+      telemetrySample: sample,
+      events: generatedEvents
     });
   }
 
-  private logEvent(category: EventCategory, message: string, severity: SystemEvent['severity']) {
-    const store = usePlatformStore.getState();
-    const event: SystemEvent = {
+  private createEvent(state: ReturnType<SimulatorStateGetter>, category: EventCategory, message: string, severity: SystemEvent['severity']): SystemEvent {
+    return {
       id: Math.random().toString(36).substring(2, 9),
       timestamp: new Date().toISOString(),
       category,
       message,
       severity,
-      missionId: store.mission.id || undefined,
+      missionId: state.missionId,
       robotId: 'ROBOT-01'
     };
-    store.addSystemEvent(event);
   }
 }
 

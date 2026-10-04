@@ -59,11 +59,17 @@ test('Transport Architecture Tests', async (t) => {
   });
 
   await t.test('F/G. Rejected/Failed command (simulating disconnected transport)', async () => {
-    // Hack to simulate disconnected transport temporarily
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const originalStatus = (activeCommandTransport as any).status;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (activeCommandTransport as any).status = 'DISCONNECTED';
+    const originalSend = activeCommandTransport.sendCommand;
+    activeCommandTransport.sendCommand = (cmd) => {
+      setTimeout(() => {
+        useRobotStore.getState().handleCommandAcknowledgement({
+          commandId: cmd.id,
+          status: 'FAILED',
+          reason: 'Transport disconnected',
+          timestamp: new Date().toISOString()
+        });
+      }, 10);
+    };
     
     useRobotStore.getState().setTorch(false);
     const pendingIds = Object.keys(useRobotStore.getState().pendingCommands);
@@ -77,8 +83,7 @@ test('Transport Architecture Tests', async (t) => {
     assert.strictEqual(useRobotStore.getState().torch.enabled, true); // Authoritative state remains unchanged
     
     // Restore
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (activeCommandTransport as any).status = originalStatus;
+    activeCommandTransport.sendCommand = originalSend;
   });
 
   await t.test('I/J/K. Safety-blocked commands never reach transport', async () => {
