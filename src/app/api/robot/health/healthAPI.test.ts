@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { PrismaClient } from '@prisma/client';
 import { POST } from './[componentId]/maintenance/route';
 import { GET as GET_HEALTH } from './route';
-import { GET as GET_PASSPORT } from '../passport/route';
+import { GET as GET_ANALYTICS } from '../../analytics/route';
 import { signToken } from '@/lib/auth';
 import { UserRole } from '@/lib/domain';
 import { initializeComponentHealth } from '@/lib/health/healthEngine';
@@ -72,13 +72,15 @@ describe('Robot Health & Maintenance APIs', () => {
     assert.ok(comp?.lastMaintenanceAt);
   });
 
-  it('4. Passport API returns singleton', async () => {
-    const req = new Request('http://localhost/api/robot/passport', {
+  it('4. Analytics API returns valid structure', async () => {
+    const req = new Request('http://localhost/api/analytics?timeRange=all', {
       headers: { 'Authorization': `Bearer ${operatorToken}` }
     });
-    const res = await GET_PASSPORT(req);
+    const res = await GET_ANALYTICS(req);
     assert.strictEqual(res.status, 200);
     const body = await res.json();
-    assert.strictEqual(body.id, 'singleton');
+    assert.ok(body.data);
+    assert.ok(body.data.missions);
+    assert.ok(body.data.cuts);
   });
 });

@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert';
 import { PrismaClient } from '@prisma/client';
-import { evaluateSystemHealth, initializeComponentHealth, recordLifetimeEvent } from './healthEngine';
+import { evaluateSystemHealth, initializeComponentHealth } from './healthEngine';
 
 const prisma = new PrismaClient();
 
@@ -19,7 +19,6 @@ describe('Robot Health & Predictive Maintenance', () => {
   before(async () => {
     await prisma.maintenanceRecord.deleteMany({});
     await prisma.componentHealth.deleteMany({});
-    await prisma.lifetimeStatistic.deleteMany({});
     await prisma.telemetryRecord.deleteMany({ where: { source: 'TEST' } });
     await initializeComponentHealth();
   });
@@ -27,7 +26,6 @@ describe('Robot Health & Predictive Maintenance', () => {
   after(async () => {
     await prisma.maintenanceRecord.deleteMany({});
     await prisma.componentHealth.deleteMany({});
-    await prisma.lifetimeStatistic.deleteMany({});
     await prisma.telemetryRecord.deleteMany({ where: { source: 'TEST' } });
   });
 
@@ -90,15 +88,4 @@ describe('Robot Health & Predictive Maintenance', () => {
     assert.strictEqual(comp?.status, 'FAULT');
   });
 
-  it('5. Lifetime counter increments exactly once (no double counting)', async () => {
-    await recordLifetimeEvent('MISSION_COMPLETED', 100);
-    const stat1 = await prisma.lifetimeStatistic.findUnique({ where: { id: 'singleton' } });
-    assert.strictEqual(stat1?.completedMissions, 1);
-    assert.strictEqual(stat1?.totalRuntimeSeconds, 100);
-
-    await recordLifetimeEvent('MISSION_COMPLETED', 50);
-    const stat2 = await prisma.lifetimeStatistic.findUnique({ where: { id: 'singleton' } });
-    assert.strictEqual(stat2?.completedMissions, 2);
-    assert.strictEqual(stat2?.totalRuntimeSeconds, 150);
-  });
 });

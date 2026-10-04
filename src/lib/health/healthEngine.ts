@@ -25,12 +25,6 @@ export async function initializeComponentHealth() {
       }
     });
   }
-
-  await prisma.lifetimeStatistic.upsert({
-    where: { id: 'singleton' },
-    update: {},
-    create: { id: 'singleton' }
-  });
 }
 
 export async function evaluateSystemHealth(telemetry: TelemetryRecord | null) {
@@ -163,39 +157,3 @@ async function updateComponent(id: string, status: string, faultState: string | 
   }
 }
 
-export async function recordLifetimeEvent(event: 'MISSION_COMPLETED' | 'MISSION_ABORTED' | 'CUT_COMPLETED' | 'SAFETY_EVENT' | 'MAINTENANCE_EVENT', incrementRuntime: number = 0, tx: any = prisma) {
-  const data: any = {
-    totalRuntimeSeconds: { increment: incrementRuntime }
-  };
-  
-  if (event === 'MISSION_COMPLETED') {
-    data.totalMissions = { increment: 1 };
-    data.completedMissions = { increment: 1 };
-  } else if (event === 'MISSION_ABORTED') {
-    data.totalMissions = { increment: 1 };
-    data.abortedMissions = { increment: 1 };
-  } else if (event === 'CUT_COMPLETED') {
-    data.totalCuts = { increment: 1 };
-    data.completedCuts = { increment: 1 };
-  } else if (event === 'SAFETY_EVENT') {
-    data.safetyEvents = { increment: 1 };
-  } else if (event === 'MAINTENANCE_EVENT') {
-    data.maintenanceEvents = { increment: 1 };
-  }
-
-  await tx.lifetimeStatistic.upsert({
-    where: { id: 'singleton' },
-    update: data,
-    create: { 
-      id: 'singleton', 
-      totalRuntimeSeconds: incrementRuntime,
-      totalMissions: event === 'MISSION_COMPLETED' || event === 'MISSION_ABORTED' ? 1 : 0,
-      completedMissions: event === 'MISSION_COMPLETED' ? 1 : 0,
-      abortedMissions: event === 'MISSION_ABORTED' ? 1 : 0,
-      totalCuts: event === 'CUT_COMPLETED' ? 1 : 0,
-      completedCuts: event === 'CUT_COMPLETED' ? 1 : 0,
-      safetyEvents: event === 'SAFETY_EVENT' ? 1 : 0,
-      maintenanceEvents: event === 'MAINTENANCE_EVENT' ? 1 : 0
-    }
-  });
-}

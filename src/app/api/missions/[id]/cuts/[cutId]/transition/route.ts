@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole } from '@/lib/domain';
 import { evaluateServerSafety } from '@/lib/safety/serverSafety';
-import { recordLifetimeEvent } from '@/lib/health/healthEngine';
+
 
 const prisma = new PrismaClient();
 
@@ -102,9 +102,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           }
         });
 
-        if (targetStatus === 'COMPLETED') {
-          await recordLifetimeEvent('CUT_COMPLETED', 0, tx); // specific cut runtimes not strictly tracked here, but counted
-        }
+
 
         return NextResponse.json({ data: updatedCut }, { status: 200 });
       });

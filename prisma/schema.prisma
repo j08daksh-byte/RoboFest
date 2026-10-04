@@ -209,15 +209,3 @@ model MaintenanceRecord {
   component               ComponentHealth @relation(fields: [componentId], references: [componentId], onDelete: Cascade)
 }
 
-model LifetimeStatistic {
-  id                      String   @id @default("singleton")
-  totalMissions           Int      @default(0)
-  completedMissions       Int      @default(0)
-  abortedMissions         Int      @default(0)
-  totalCuts               Int      @default(0)
-  completedCuts           Int      @default(0)
-  totalRuntimeSeconds     Int      @default(0)
-  safetyEvents            Int      @default(0)
-  maintenanceEvents       Int      @default(0)
-  updatedAt               DateTime @updatedAt
-}

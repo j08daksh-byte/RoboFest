@@ -2,30 +2,30 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePlatformStore } from '@/lib/platformStore';
+import { getAnalytics } from '@/lib/api/analytics';
 
 export default function RobotPassportPage() {
   const { systemMode } = usePlatformStore();
   const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
-    fetch('/api/robot/passport')
-      .then(res => res.json())
-      .then(data => setStats(data))
+    getAnalytics('all')
+      .then(res => setStats(res.data))
       .catch(console.error);
   }, []);
 
-  const completedMissionsCount = stats?.completedMissions || 0;
-  const emergencyStopsCount = stats?.safetyEvents || 0;
-  const panelsRemovedCount = stats?.completedCuts || 0; // Using completed cuts as proxy for panels removed in this context
-  const cutsCompletedCount = stats?.completedCuts || 0;
-  const operatingHours = stats?.totalRuntimeSeconds ? (stats.totalRuntimeSeconds / 3600).toFixed(2) : '0.00';
+  const completedMissionsCount = stats?.missions?.completed || 0;
+  const emergencyStopsCount = stats?.safety?.estops || 0;
+  const panelsRemovedCount = stats?.cuts?.completed || 0; // Using completed cuts as proxy for panels removed in this context
+  const cutsCompletedCount = stats?.cuts?.completed || 0;
+  const operatingHours = stats?.robot?.totalRuntimeSeconds ? (stats.robot.totalRuntimeSeconds / 3600).toFixed(2) : '0.00';
 
   return (
     <div className="page-container">
       <header className="page-header">
         <div className="page-header-top">
           <h1 className="page-title">ROBOT PASSPORT</h1>
-          <span className="status-badge simulated">[{systemMode}]</span>
+          <span className={`status-badge ${systemMode.toLowerCase()}`}>[{systemMode}]</span>
         </div>
         <p className="page-subtitle">Operational lifecycle and historical metrics.</p>
       </header>
@@ -44,11 +44,11 @@ export default function RobotPassportPage() {
             </div>
             <div className="metric-group">
               <span className="metric-label">Commissioned</span>
-              <span className="metric-value">2026-10-01</span>
+              <span className="metric-value">{stats?.robot?.firstOperationalTimestamp ? new Date(stats.robot.firstOperationalTimestamp).toLocaleDateString() : 'N/A'}</span>
             </div>
             <div className="metric-group">
               <span className="metric-label">Operating Time</span>
-              <span className="metric-value" style={{ color: 'var(--text-muted)' }}>N/A (SIMULATION)</span>
+              <span className="metric-value" style={{ color: 'var(--text-muted)' }}>{operatingHours} hrs ({systemMode})</span>
             </div>
           </div>
         </div>
@@ -60,7 +60,7 @@ export default function RobotPassportPage() {
               <h2 className="heading-technical">OPERATIONAL STATISTICS</h2>
             </div>
             <div className="ui-panel-body">
-              <div className="metric-row"><span className="metric-label">Total Missions Started</span><span className="metric-value">{stats?.totalMissions || 0}</span></div>
+              <div className="metric-row"><span className="metric-label">Total Missions Started</span><span className="metric-value">{stats?.missions?.total || 0}</span></div>
               <div className="metric-row"><span className="metric-label">Missions Completed</span><span className="metric-value" style={{color: completedMissionsCount > 0 ? 'var(--good)' : 'var(--text-main)'}}>{completedMissionsCount}</span></div>
               <div className="metric-row"><span className="metric-label">Total Cuts Completed</span><span className="metric-value" style={{color: cutsCompletedCount > 0 ? 'var(--good)' : 'var(--text-main)'}}>{cutsCompletedCount}</span></div>
               <div className="metric-row"><span className="metric-label">Total Panels Removed</span><span className="metric-value" style={{color: panelsRemovedCount > 0 ? 'var(--good)' : 'var(--text-main)'}}>{panelsRemovedCount}</span></div>
@@ -78,7 +78,8 @@ export default function RobotPassportPage() {
                 <span className="metric-label">Safety Events (e.g. E-Stops)</span>
                 <span className="metric-value" style={{color: emergencyStopsCount > 0 ? 'var(--critical)' : 'var(--good)'}}>{emergencyStopsCount}</span>
               </div>
-              <div className="metric-row"><span className="metric-label">Maintenance Events</span><span className="metric-value">{stats?.maintenanceEvents || 0}</span></div>
+              <div className="metric-row"><span className="metric-label">Maintenance Events</span><span className="metric-value">{stats?.robot?.maintenanceEvents || 0}</span></div>
+              <div className="metric-row"><span className="metric-label">Hardware Faults</span><span className="metric-value" style={{color: stats?.robot?.faultCount > 0 ? 'var(--critical)' : 'var(--good)'}}>{stats?.robot?.faultCount || 0}</span></div>
             </div>
           </div>
         </div>
