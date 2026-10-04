@@ -17,16 +17,11 @@ import {
   CloudLightning,
   Power,
   BellRing,
-  Ship,
-  Scan,
-  Anchor,
   MessageSquare,
   BarChart4,
   Gauge,
   LineChart,
   History,
-  Wrench,
-  BookOpen,
   Users,
   PlaySquare
 } from 'lucide-react';
@@ -61,14 +56,6 @@ const navGroups = [
     ]
   },
   {
-    title: 'Ship',
-    items: [
-      { name: 'Ship / Hull', path: '/ship/map', icon: Ship },
-      { name: 'Internal Structure', path: '/ship/internal-structure', icon: Scan },
-      { name: 'Digital Shipyard', path: '/ship/shipyard', icon: Anchor },
-    ]
-  },
-  {
     title: 'Intelligence',
     items: [
       { name: 'ROBO-ASSIST', path: '/intelligence/robo-assist', icon: MessageSquare },
@@ -81,8 +68,6 @@ const navGroups = [
     title: 'Records',
     items: [
       { name: 'Event History', path: '/records/history', icon: History },
-      { name: 'Maintenance', path: '/records/maintenance', icon: Wrench },
-      { name: 'Knowledge Base', path: '/records/knowledge-base', icon: BookOpen },
     ]
   },
   {
