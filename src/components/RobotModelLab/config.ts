@@ -42,6 +42,18 @@ export const labRobotConfig = {
   crawlerWidthY: 0.1, // width of the crawler belt/tracks
   beltThickness: 0.015, // thickness of the continuous belt
 
+  // --- TREAD (CRAWLER LINKS) ESTIMATES ---
+  treadWidthY: 0.1,
+  treadThicknessZ: 0.015,
+  treadLengthX: 0.03, // length of an individual link
+  treadGapX: 0.005, // gap between links
+  
+  // --- ELECTROMAGNET ESTIMATES ---
+  electromagnetOuterRadius: 0.1,
+  electromagnetThickness: 0.04,
+  electromagnetBoreRadius: 0.03,
+  electromagnetZOffset: 0.02, // how far below chassis it hangs
+
   // --- MAGNETS (Preserved placeholder) ---
 
   magnetRadius: 0.03,

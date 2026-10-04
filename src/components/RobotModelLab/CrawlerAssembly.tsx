@@ -8,24 +8,75 @@ export function CrawlerAssembly({ isLeft }: { isLeft: boolean }) {
     frontRearSpacingX,
     transmissionOuterRadius,
     crawlerWidthY,
-    beltThickness,
+    treadWidthY,
+    treadThicknessZ,
+    treadLengthX,
+    treadGapX
   } = labRobotConfig;
 
   // The 3 transmissions: Front, Center, Rear
+  // Center is aligned vertically with front/rear.
   const transmissions = [
     { id: 'front', x: frontRearSpacingX },
     { id: 'center', x: 0 },
     { id: 'rear', x: -frontRearSpacingX },
   ];
 
-  // Belt geometry wrapper
-  // Length is 2 * frontRearSpacingX (distance from front to rear axis)
-  // Height is 2 * transmissionOuterRadius
-  const beltLength = 2 * frontRearSpacingX;
-  const beltHeight = 2 * transmissionOuterRadius;
+  // Path dimensions
+  const R = transmissionOuterRadius;
+  const straightLen = 2 * frontRearSpacingX;
+  const curveLen = Math.PI * R;
+  const totalLen = 2 * straightLen + 2 * curveLen;
   
-  // Belt width is slightly wider than crawlerWidthY? Or matches it.
-  const beltW = crawlerWidthY;
+  const treadStep = treadLengthX + treadGapX;
+  const numTreads = Math.floor(totalLen / treadStep);
+  const actualStep = totalLen / numTreads; // Adjust slightly to close the loop
+
+  const treads = [];
+  for (let i = 0; i < numTreads; i++) {
+    const t = i * actualStep;
+    let x = 0;
+    let z = 0;
+    let angle = 0;
+
+    if (t < straightLen) {
+      // Top straight (moving back to front)
+      x = -frontRearSpacingX + t;
+      z = R;
+      angle = 0;
+    } else if (t < straightLen + curveLen) {
+      // Front curve (top to bottom)
+      const ct = t - straightLen;
+      const theta = Math.PI / 2 - (ct / curveLen) * Math.PI; // from PI/2 down to -PI/2
+      x = frontRearSpacingX + R * Math.cos(theta);
+      z = R * Math.sin(theta);
+      angle = -(Math.PI / 2 - theta);
+    } else if (t < 2 * straightLen + curveLen) {
+      // Bottom straight (moving front to back)
+      const ct = t - (straightLen + curveLen);
+      x = frontRearSpacingX - ct;
+      z = -R;
+      angle = Math.PI;
+    } else {
+      // Rear curve (bottom to top)
+      const ct = t - (2 * straightLen + curveLen);
+      const theta = -Math.PI / 2 - (ct / curveLen) * Math.PI; // from -PI/2 down to -3PI/2 (or PI/2)
+      x = -frontRearSpacingX + R * Math.cos(theta);
+      z = R * Math.sin(theta);
+      angle = -(Math.PI / 2 - theta);
+    }
+
+    // Offset the link center outward by half its thickness so it sits ON the transmission, not IN it
+    const offsetX = Math.sin(-angle) * (treadThicknessZ / 2);
+    const offsetZ = Math.cos(-angle) * (treadThicknessZ / 2);
+
+    treads.push(
+      <mesh key={`tread-${i}`} position={[x + offsetX, 0, z + offsetZ]} rotation={[0, angle, 0]} castShadow receiveShadow>
+        <boxGeometry args={[treadLengthX, treadWidthY, treadThicknessZ]} />
+        <meshStandardMaterial color="#1a1a1a" roughness={0.8} />
+      </mesh>
+    );
+  }
   
   return (
     <group>
@@ -34,31 +85,9 @@ export function CrawlerAssembly({ isLeft }: { isLeft: boolean }) {
         <TransmissionUnit key={t.id} position={[t.x, 0, 0]} />
       ))}
 
-      {/* Continuous Crawler Belt */}
+      {/* Individual Tread Links following the envelope */}
       <group>
-        {/* Top Run */}
-        <mesh position={[0, 0, transmissionOuterRadius + beltThickness / 2]} castShadow receiveShadow>
-          <boxGeometry args={[beltLength, beltW, beltThickness]} />
-          <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
-        </mesh>
-        {/* Bottom Run */}
-        <mesh position={[0, 0, -transmissionOuterRadius - beltThickness / 2]} castShadow receiveShadow>
-          <boxGeometry args={[beltLength, beltW, beltThickness]} />
-          <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
-        </mesh>
-        
-        {/* Front Curved Transition */}
-        {/* A half-cylinder wrapper */}
-        <mesh position={[frontRearSpacingX, 0, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[transmissionOuterRadius + beltThickness, transmissionOuterRadius + beltThickness, beltW, 32, 1, false, 0, Math.PI]} />
-          <meshStandardMaterial color="#1a1a1a" roughness={0.9} side={2} /> {/* side=DoubleSide equivalent if 2 */}
-        </mesh>
-
-        {/* Rear Curved Transition */}
-        <mesh position={[-frontRearSpacingX, 0, 0]} rotation={[Math.PI / 2, 0, Math.PI]} castShadow receiveShadow>
-          <cylinderGeometry args={[transmissionOuterRadius + beltThickness, transmissionOuterRadius + beltThickness, beltW, 32, 1, false, 0, Math.PI]} />
-          <meshStandardMaterial color="#1a1a1a" roughness={0.9} side={2} />
-        </mesh>
+        {treads}
       </group>
     </group>
   );

@@ -2,9 +2,10 @@
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid, Environment } from '@react-three/drei';
-import { RobotModelLab } from '@/components/RobotModelLab';
+import { RobotModelLab, LabUI } from '@/components/RobotModelLab';
 
 export default function RobotLabPage() {
+  const [preset, setPreset] = React.useState('3/4');
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#111' }}>
       <div style={{
@@ -35,17 +36,18 @@ export default function RobotLabPage() {
 
         {/* 
           Coordinate Axes: 
-          Red: X (Lateral in old config, intended as Longitudinal)
-          Green: Y (Vertical / Up) in Three.js, but our system uses Z=Vertical. Wait. Three.js uses Y=Up.
-          We need to rotate our assembly if Z=Up.
+          Red: X (Longitudinal in our new system)
+          Green: Y (Lateral)
+          Blue: Z (Vertical)
         */}
         <group rotation={[-Math.PI / 2, 0, 0]}>
-          <RobotModelLab />
+          <RobotModelLab preset={preset} />
         </group>
 
         <OrbitControls makeDefault />
         <Environment preset="city" />
       </Canvas>
+      <LabUI setPreset={setPreset} />
     </div>
   );
 }
