@@ -35,8 +35,7 @@ function CameraUpdater({ preset }: { preset: string }) {
 
 export function RobotModelLab({ preset = '3/4' }: { preset?: string }) {
   return (
-    <>
-      <group>
+    <group>
       {/* Original Baseline Reference */}
       <group position={[0, -1, 0]}>
         {/* We wrap original in a group. Original moves based on robotStore. 
@@ -65,7 +64,7 @@ export function RobotModelLab({ preset = '3/4' }: { preset?: string }) {
         </Text>
       </group>
       <CameraUpdater preset={preset} />
-    </>
+    </group>
   );
 }
 

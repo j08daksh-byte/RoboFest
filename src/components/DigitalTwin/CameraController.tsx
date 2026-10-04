@@ -43,8 +43,10 @@ export function CameraController() {
       
       switch (cameraTarget) {
         case 'robot':
-          desiredTarget.current.copy(worldPos);
-          camPos.set(worldPos.x + 2.5, worldPos.y - 1.5, worldPos.z + 1.5);
+          // Focus target slightly towards the right side where the arm is
+          desiredTarget.current.set(worldPos.x + 0.2, worldPos.y + 0.3, worldPos.z);
+          // Camera looking from the right side (+Y), close up
+          camPos.set(worldPos.x + 0.6, worldPos.y + 1.8, worldPos.z + 0.6);
           if (isInitial) {
             camera.position.copy(camPos);
           } else {
@@ -64,8 +66,8 @@ export function CameraController() {
             desiredTarget.current.copy(cutWorld);
             camPos.set(cutWorld.x + 1.5, cutWorld.y - 1, cutWorld.z + 1);
           } else {
-            desiredTarget.current.copy(worldPos); 
-            camPos.set(worldPos.x + 2.5, worldPos.y - 1.5, worldPos.z + 1.5);
+            desiredTarget.current.set(worldPos.x + 0.2, worldPos.y + 0.3, worldPos.z);
+            camPos.set(worldPos.x + 0.6, worldPos.y + 1.8, worldPos.z + 0.6);
           }
           camera.position.lerp(camPos, 0.5);
           break;

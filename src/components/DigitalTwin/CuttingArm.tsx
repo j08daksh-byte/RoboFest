@@ -2,6 +2,7 @@ import React from 'react';
 import { robotConfig } from '@/lib/robotConfig';
 import { useRobotStore } from '@/lib/robotState';
 import { Torch } from './Torch';
+import { IndustrialMaterial } from './IndustrialMaterial';
 
 export function CuttingArm() {
   const { 
@@ -31,26 +32,26 @@ export function CuttingArm() {
       {/* Y-Axis Linear Carriage (moves up and down) */}
       <mesh position={[structureWidthX / 2 - 0.08, 0, 0.06]} castShadow receiveShadow>
         <boxGeometry args={[0.16, 0.25, 0.12]} />
-        <meshStandardMaterial color="#3a3a3a" metalness={0.8} roughness={0.4} />
+        <IndustrialMaterial color="#707070" metalness={0.6} roughness={0.4} />
       </mesh>
       
       {/* Carriage detailing */}
       <mesh position={[structureWidthX / 2 - 0.08, 0, 0.12]} receiveShadow>
          <boxGeometry args={[0.18, 0.15, 0.02]} />
-         <meshStandardMaterial color="#666" metalness={0.9} roughness={0.2} />
+         <IndustrialMaterial color="#999999" metalness={0.7} roughness={0.3} />
       </mesh>
 
       {/* X-Axis Extension Arm */}
       <group position={[structureWidthX / 2 + xExtension / 2, 0, 0.06]}>
         <mesh castShadow receiveShadow>
           <boxGeometry args={[xExtension + 0.2, armThickness, armThickness]} />
-          <meshStandardMaterial color="#444" metalness={0.8} roughness={0.3} />
+          <IndustrialMaterial color="#ffcc00" metalness={0.3} roughness={0.3} bumpScale={0.002} />
         </mesh>
         
         {/* Rack and pinion or linear rail visual on the arm */}
         <mesh position={[0, armThickness / 2 + 0.005, 0]} receiveShadow>
            <boxGeometry args={[xExtension + 0.15, 0.01, armThickness * 0.4]} />
-           <meshStandardMaterial color="#222" metalness={0.9} roughness={0.5} />
+           <IndustrialMaterial color="#444444" metalness={0.8} roughness={0.5} />
         </mesh>
       </group>
 
@@ -58,7 +59,7 @@ export function CuttingArm() {
       <group position={[structureWidthX / 2 + xExtension, 0, 0.06]}>
         <mesh position={[0, 0, -dynamicTorchOffset / 2]} castShadow receiveShadow>
            <boxGeometry args={[0.1, 0.15, dynamicTorchOffset]} />
-           <meshStandardMaterial color="#333" metalness={0.7} roughness={0.4} />
+           <IndustrialMaterial color="#ffcc00" metalness={0.3} roughness={0.3} bumpScale={0.002} />
         </mesh>
         
         <Torch position={[0, 0, -dynamicTorchOffset]} />

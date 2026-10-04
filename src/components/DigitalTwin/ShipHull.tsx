@@ -96,7 +96,7 @@ function curveGeometry(geom: THREE.BufferGeometry) {
     // Update UVs to exactly match the surrounding ShipAssembly
     const uvAttr = geom.attributes.uv;
     if (uvAttr) {
-      uvAttr.setXY(i, u, (bestV + 1) / 2);
+      // uvAttr.setXY(i, u, (bestV + 1) / 2); // Commented out so alphaTexture matches local CutPanel UVs
     }
     
     // Convert back to local space. Apply localZ as an offset along the normal.
@@ -113,7 +113,7 @@ import { Line } from '@react-three/drei';
 
 import type { CutRecord } from '@/lib/robotState';
 
-function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, previousCuts: CutRecord[] }) {
+const DetachedPanel = React.memo(function DetachedPanel({ cutRecord, allCuts, idx }: { cutRecord: CutRecord, allCuts: CutRecord[], idx: number }) {
   const groupRef = useRef<THREE.Group>(null);
   
   const { fallingGeo, cutLinePoints, startPos } = useMemo(() => {
@@ -127,6 +127,7 @@ function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, prev
     });
     
     // Add holes for any previous overlapping cuts
+    const previousCuts = allCuts.slice(0, idx);
     previousCuts.forEach(prev => {
       if (!prev.isClosed || prev.id === cutRecord.id) return;
       const hole = new THREE.Path();
@@ -156,15 +157,22 @@ function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, prev
     });
     
     return { fallingGeo, cutLinePoints: linePts, startPos };
-  }, [cutRecord, previousCuts]);
+  }, [cutRecord, allCuts, idx]);
 
   const [initialAngularVelocity] = useState(() => new THREE.Vector3((Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.5));
   
   const physicsRef = useRef({
     velocity: new THREE.Vector3(0, 0, 0.3), // Outward push (local Z is outward)
     angularVelocity: initialAngularVelocity,
+    position: new THREE.Vector3(),
+    initialized: false,
     landed: false
   });
+
+  if (!physicsRef.current.initialized && fallingGeo) {
+    physicsRef.current.position.copy(startPos);
+    physicsRef.current.initialized = true;
+  }
 
   useFrame((state, delta) => {
     if (!groupRef.current || !fallingGeo || physicsRef.current.landed) return;
@@ -173,7 +181,8 @@ function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, prev
     const gravity = new THREE.Vector3(0, -9.81 / 5, 0); 
     physicsRef.current.velocity.addScaledVector(gravity, delta);
     
-    groupRef.current.position.addScaledVector(physicsRef.current.velocity, delta);
+    physicsRef.current.position.addScaledVector(physicsRef.current.velocity, delta);
+    groupRef.current.position.copy(physicsRef.current.position);
     
     groupRef.current.rotation.x += physicsRef.current.angularVelocity.x * delta;
     groupRef.current.rotation.y += physicsRef.current.angularVelocity.y * delta;
@@ -186,7 +195,8 @@ function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, prev
     const worldBottom = groupRef.current.position.y - radius;
 
     if (worldBottom <= GROUND_Y) {
-      groupRef.current.position.y = GROUND_Y + radius;
+      physicsRef.current.position.y = GROUND_Y + radius;
+      groupRef.current.position.copy(physicsRef.current.position);
       
       physicsRef.current.velocity.y *= -0.4;
       physicsRef.current.velocity.x *= 0.5;
@@ -204,7 +214,7 @@ function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, prev
   if (!fallingGeo) return null;
 
   return (
-    <group ref={groupRef} position={[startPos.x, startPos.y, startPos.z]}>
+    <group ref={groupRef}>
       {/* Outer face */}
       <mesh geometry={fallingGeo} receiveShadow castShadow>
         <meshStandardMaterial 
@@ -222,7 +232,7 @@ function DetachedPanel({ cutRecord, previousCuts }: { cutRecord: CutRecord, prev
       <Line points={cutLinePoints} color="#ff4400" lineWidth={2} />
     </group>
   );
-}
+});
 
 function CutPanel() {
   const rawActiveCutPath = useRobotStore(state => state.activeCutPath);
@@ -364,7 +374,7 @@ function CutPanel() {
       
       {/* 3. Render all detached panels */}
       {completedCuts.map((cut, idx) => (
-        <DetachedPanel key={cut.id} cutRecord={cut} previousCuts={completedCuts.slice(0, idx)} />
+        <DetachedPanel key={cut.id} cutRecord={cut} allCuts={completedCuts} idx={idx} />
       ))}
       
       {/* 4. Glowing edges on the remaining holes */}

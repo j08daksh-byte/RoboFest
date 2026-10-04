@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import * as THREE from 'three';
 import { robotConfig } from '@/lib/robotConfig';
 import { useRobotStore } from '@/lib/robotState';
+import { IndustrialMaterial } from './IndustrialMaterial';
 
 function CrawlerTrack({ side, offsetX }: { side: 'left' | 'right'; offsetX: number }) {
   const { trackWidthX, trackLengthY, trackHeightZ } = robotConfig;
@@ -56,7 +57,7 @@ function CrawlerTrack({ side, offsetX }: { side: 'left' | 'right'; offsetX: numb
     return arr;
   }, [circumference, straightLength, halfStraight, wheelRadius, trackOffset]);
 
-  const magnetRowsCount = 14; 
+  const magnetRowsCount = 36; // Increased to match tread count so they cover the entire belt
   const magnets = useMemo(() => {
     const arr = [];
     for (let i = 0; i < magnetRowsCount; i++) {
@@ -92,36 +93,78 @@ function CrawlerTrack({ side, offsetX }: { side: 'left' | 'right'; offsetX: numb
       }
       
       // Two magnets per row (Left and Right relative to the track width)
-      const xOffsetMag = trackWidthX * 0.25;
-
       arr.push({
-        positionLeft: new THREE.Vector3(-xOffsetMag, y, z),
-        positionRight: new THREE.Vector3(xOffsetMag, y, z),
+        position: new THREE.Vector3(0, y, z),
         rotation: new THREE.Euler(angle, 0, 0)
       });
     }
     return arr;
-  }, [circumference, straightLength, halfStraight, wheelRadius, trackWidthX, trackOffset]);
+  }, [circumference, straightLength, halfStraight, wheelRadius, trackOffset]);
+
+  // Shiny Circular Magnet with countersunk center
+  const CircularMagnet = () => (
+    <group position={[0, 0, -0.022]}>
+      {/* Main metallic disc */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.022, 0.022, 0.008, 32]} />
+        <IndustrialMaterial color="#f0f0f0" metalness={1.0} roughness={0.2} bumpScale={0.001} />
+      </mesh>
+      
+      {/* Countersink bevel (slightly darker/tilted) */}
+      <mesh position={[0, 0, -0.003]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.005, 0.012, 0.003, 32]} />
+        <IndustrialMaterial color="#999999" metalness={0.8} roughness={0.4} />
+      </mesh>
+
+      {/* Central hole */}
+      <mesh position={[0, 0, -0.005]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.006, 0.006, 0.009, 16]} />
+        <meshBasicMaterial color="#000000" />
+      </mesh>
+    </group>
+  );
+
+  // Aluminum Wheel component matching physical reference
+  const renderWheel = (posY: number) => (
+    <group position={[0, posY, 0]} rotation={[0, 0, Math.PI / 2]}>
+      {/* Main aluminum body */}
+      <mesh castShadow>
+        <cylinderGeometry args={[wheelRadius * 0.9, wheelRadius * 0.9, trackWidthX * 0.8, 32]} />
+        <IndustrialMaterial color="#cccccc" metalness={0.9} roughness={0.3} bumpScale={0.002} />
+      </mesh>
+      
+      {/* Outer face inscribed circle (Outer) */}
+      <mesh position={[0, (trackWidthX * 0.8) / 2 + 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[wheelRadius * 0.55, wheelRadius * 0.58, 32]} />
+        <IndustrialMaterial color="#999999" metalness={0.8} roughness={0.5} />
+      </mesh>
+      
+      {/* Inner face inscribed circle (Inside) */}
+      <mesh position={[0, -(trackWidthX * 0.8) / 2 - 0.001, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[wheelRadius * 0.55, wheelRadius * 0.58, 32]} />
+        <IndustrialMaterial color="#999999" metalness={0.8} roughness={0.5} />
+      </mesh>
+
+      {/* Central bore hole (simulated) */}
+      <mesh>
+        <cylinderGeometry args={[wheelRadius * 0.15, wheelRadius * 0.15, trackWidthX * 0.81, 16]} />
+        <meshBasicMaterial color="#000" />
+      </mesh>
+    </group>
+  );
 
   return (
     <group position={[offsetX, 0, trackHeightZ / 2]}>
       
-      {/* Drive Wheel (Front / +Y) */}
-      <mesh position={[0, halfStraight, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-        <cylinderGeometry args={[wheelRadius * 0.9, wheelRadius * 0.9, trackWidthX * 0.8, 24]} />
-        <meshStandardMaterial color="#222" metalness={0.8} roughness={0.4} />
-      </mesh>
-      
-      {/* Idler Wheel (Rear / -Y) */}
-      <mesh position={[0, -halfStraight, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-        <cylinderGeometry args={[wheelRadius * 0.9, wheelRadius * 0.9, trackWidthX * 0.8, 24]} />
-        <meshStandardMaterial color="#222" metalness={0.8} roughness={0.4} />
-      </mesh>
+      {/* 3 Wheels: Front, Center, Rear */}
+      {renderWheel(halfStraight)}
+      {renderWheel(0)}
+      {renderWheel(-halfStraight)}
 
-      {/* Internal Support Frame */}
+      {/* Internal Support Frame (adjusted to sit behind the wheels) */}
       <mesh position={[0, 0, 0]} castShadow>
-        <boxGeometry args={[trackWidthX * 0.7, straightLength, wheelRadius * 1.5]} />
-        <meshStandardMaterial color="#333" metalness={0.7} roughness={0.5} />
+        <boxGeometry args={[trackWidthX * 0.4, straightLength, wheelRadius * 1.5]} />
+        <IndustrialMaterial color="#222222" metalness={0.7} roughness={0.5} bumpScale={0.004} />
       </mesh>
 
       {/* Track Treads */}
@@ -130,42 +173,21 @@ function CrawlerTrack({ side, offsetX }: { side: 'left' | 'right'; offsetX: numb
           <mesh position={[0, 0, -0.01]} castShadow>
             {/* Belt link */}
             <boxGeometry args={[trackWidthX, 0.04, 0.015]} />
-            <meshStandardMaterial color="#111" roughness={0.9} />
-          </mesh>
-          <mesh position={[0, 0, -0.02]} castShadow>
-            {/* Outer grip ridge */}
-            <boxGeometry args={[trackWidthX * 0.9, 0.015, 0.01]} />
-            <meshStandardMaterial color="#050505" roughness={1.0} />
+            <IndustrialMaterial color="#1a1a1a" metalness={0.3} roughness={0.9} bumpScale={0.005} />
           </mesh>
         </group>
       ))}
 
       {/* Magnets */}
       {magnets.map((m, idx) => (
-        <group key={`magrow-${idx}`} rotation={m.rotation}>
-          {/* Left Magnet in this row */}
-          <group position={m.positionLeft}>
-             <mesh position={[0, 0, -0.025]} castShadow>
-                {/* Rectangular metallic base */}
-                <boxGeometry args={[0.04, 0.05, 0.015]} />
-                <meshStandardMaterial color="#555" metalness={0.9} roughness={0.4} />
-             </mesh>
-             <mesh position={[0, 0, -0.035]} castShadow>
-                {/* Dark magnetic core block */}
-                <boxGeometry args={[0.03, 0.04, 0.005]} />
-                <meshStandardMaterial color="#1a1a1a" metalness={0.5} roughness={0.8} />
-             </mesh>
+        <group key={`magrow-${idx}`} position={m.position} rotation={m.rotation}>
+          {/* Left Circular Magnet */}
+          <group position={[-trackWidthX * 0.25, 0, 0]}>
+             <CircularMagnet />
           </group>
-          {/* Right Magnet in this row */}
-          <group position={m.positionRight}>
-             <mesh position={[0, 0, -0.025]} castShadow>
-                <boxGeometry args={[0.04, 0.05, 0.015]} />
-                <meshStandardMaterial color="#555" metalness={0.9} roughness={0.4} />
-             </mesh>
-             <mesh position={[0, 0, -0.035]} castShadow>
-                <boxGeometry args={[0.03, 0.04, 0.005]} />
-                <meshStandardMaterial color="#1a1a1a" metalness={0.5} roughness={0.8} />
-             </mesh>
+          {/* Right Circular Magnet */}
+          <group position={[trackWidthX * 0.25, 0, 0]}>
+             <CircularMagnet />
           </group>
         </group>
       ))}

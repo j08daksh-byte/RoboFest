@@ -69,7 +69,7 @@ export interface RobotState {
 const initialState = {
   position: { x: 0, y: 0, z: 0 },
   orientation: { roll: 0, pitch: 0, yaw: 0 },
-  arm: { yPosition: 0, xExtension: 0.3 }, 
+  arm: { yPosition: 0, xExtension: 0.4 }, 
   tracks: { leftSpeed: 0, rightSpeed: 0 },
   electromagnet: { enabled: false },
   torch: { enabled: false },
@@ -108,7 +108,12 @@ export const useRobotStore = create<RobotState>((set, get) => ({
       if (pending.command.type === 'SET_TORCH') {
         const enabled = pending.command.payload.enabled;
         if (!enabled && state.activeCutPath.length > 0) {
-          usePlatformStore.getState().recordCutsCompleted(1, 0);
+          const start = state.activeCutPath[0];
+          const end = state.activeCutPath[state.activeCutPath.length - 1];
+          const isClosed = state.activeCutPath.length > 5 && 
+                           Math.hypot(start.x - end.x, start.y - end.y) < 0.2; // 20cm threshold
+
+          usePlatformStore.getState().recordCutsCompleted(1, isClosed ? 1 : 0);
           
           const planner = usePlannerStore.getState();
           const plannedCut = planner.currentCutId ? planner.plannedCuts.find(c => c.id === planner.currentCutId) : null;
@@ -119,7 +124,7 @@ export const useRobotStore = create<RobotState>((set, get) => ({
             completedCuts: [...state.completedCuts, {
               id: Math.random().toString(36).substring(2, 9),
               path: [...state.activeCutPath],
-              isClosed: false,
+              isClosed: isClosed,
               timestamp: new Date().toISOString(),
               plannedCutId: planner.currentCutId || undefined,
               missionId: plannedCut?.missionId,

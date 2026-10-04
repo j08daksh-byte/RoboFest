@@ -29,7 +29,7 @@ export const robotConfig = {
 
   // Cutting Arm
   armMaxExtensionX: 1.0,
-  armMinExtensionX: 0.2,
+  armMinExtensionX: 0.4,
   armMaxPositionY: 0.3, // relative to upper structure center
   armMinPositionY: -0.3,
   armThickness: 0.05,

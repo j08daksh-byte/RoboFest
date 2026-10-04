@@ -58,7 +58,8 @@ export function SafetyCables() {
   const mastHeight = mastZTop - mastZBase;
   const mastY = 0; // Mast is completely stationary
 
-  const boomEndX = mastX - 45.0; // Reach out over the ship towards 50.25
+  // The visual boom extends 6.8 units from the mast center at -3, so its tip is at mastX - 6.4
+  const boomEndX = mastX - 6.4; 
   const boomEndZ = mastZTop - 0.8;
   
   const boomPoint1 = new THREE.Vector3(boomEndX, mastY - 0.2, boomEndZ);
