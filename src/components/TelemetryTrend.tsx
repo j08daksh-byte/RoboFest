@@ -16,13 +16,15 @@ export function TelemetryTrend() {
   
   const tempPoints = history.map((h, i) => {
     const x = (i / 49) * width;
-    const y = height - (Math.min(100, Math.max(20, h.motors.tempLeft)) - 20) / 80 * height;
+    const temp = h?.motors?.tempLeft ?? 20;
+    const y = height - (Math.min(100, Math.max(20, temp)) - 20) / 80 * height;
     return `${x},${y}`;
   }).join(' ');
 
   const tiltPoints = history.map((h, i) => {
     const x = (i / 49) * width;
-    const y = height - (Math.min(90, Math.max(0, Math.abs(h.imu.tiltAngle)))) / 90 * height;
+    const tilt = h?.imu?.tiltAngle ?? 0;
+    const y = height - (Math.min(90, Math.max(0, Math.abs(tilt)))) / 90 * height;
     return `${x},${y}`;
   }).join(' ');
 
