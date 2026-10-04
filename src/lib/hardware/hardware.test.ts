@@ -67,35 +67,78 @@ describe('Hardware Gateway Contract', () => {
     assert.strictEqual(rejectedCount, 1);
   });
 
-  it('4. Follows ACK lifecycle (RECEIVED -> ACKNOWLEDGED)', async () => {
+  it('4. Follows normal command lifecycle (RECEIVED -> ACCEPTED -> EXECUTING -> ACKNOWLEDGED)', async () => {
     await gateway.connect();
     const acks: string[] = [];
     gateway.onAckReceived(ack => {
-      if (ack.commandId === 'cmd-lifecycle') {
+      if (ack.commandId === 'cmd-normal') {
         acks.push(ack.status);
       }
     });
 
     gateway.sendCommand({
-      commandId: 'cmd-lifecycle',
+      commandId: 'cmd-normal',
       timestamp: new Date().toISOString(),
       robotId: 'ROBO-1',
-      type: 'TORCH',
-      parameters: { enable: true },
+      type: 'LOCOMOTION',
+      parameters: { x: 1 },
       protocolVersion: '1.0.0'
     });
 
-    // wait for async timeout inside simulator
-    await new Promise(r => setTimeout(r, 50));
-    assert.deepStrictEqual(acks, ['RECEIVED', 'ACKNOWLEDGED']);
+    await new Promise(r => setTimeout(r, 500));
+    assert.deepStrictEqual(acks, ['RECEIVED', 'ACCEPTED', 'EXECUTING', 'ACKNOWLEDGED']);
   });
 
-  it('5. Transitions to TIMED_OUT when hardware execution hangs', async () => {
+  it('5. Follows hardware rejection lifecycle (RECEIVED -> REJECTED)', async () => {
     await gateway.connect();
-    let timedOut = false;
+    const acks: string[] = [];
     gateway.onAckReceived(ack => {
-      if (ack.commandId === 'cmd-timeout' && ack.status === 'TIMED_OUT') {
-        timedOut = true;
+      if (ack.commandId === 'cmd-reject') {
+        acks.push(ack.status);
+      }
+    });
+
+    gateway.sendCommand({
+      commandId: 'cmd-reject',
+      timestamp: new Date().toISOString(),
+      robotId: 'ROBO-1',
+      type: 'REJECTION_TEST',
+      parameters: {},
+      protocolVersion: '1.0.0'
+    });
+
+    await new Promise(r => setTimeout(r, 500));
+    assert.deepStrictEqual(acks, ['RECEIVED', 'REJECTED']);
+  });
+
+  it('6. Follows execution failure lifecycle (RECEIVED -> ACCEPTED -> EXECUTING -> FAILED)', async () => {
+    await gateway.connect();
+    const acks: string[] = [];
+    gateway.onAckReceived(ack => {
+      if (ack.commandId === 'cmd-fail') {
+        acks.push(ack.status);
+      }
+    });
+
+    gateway.sendCommand({
+      commandId: 'cmd-fail',
+      timestamp: new Date().toISOString(),
+      robotId: 'ROBO-1',
+      type: 'FAILURE_TEST',
+      parameters: {},
+      protocolVersion: '1.0.0'
+    });
+
+    await new Promise(r => setTimeout(r, 500));
+    assert.deepStrictEqual(acks, ['RECEIVED', 'ACCEPTED', 'EXECUTING', 'FAILED']);
+  });
+
+  it('7. Follows timeout lifecycle (RECEIVED -> ACCEPTED -> EXECUTING -> TIMED_OUT)', async () => {
+    await gateway.connect();
+    const acks: string[] = [];
+    gateway.onAckReceived(ack => {
+      if (ack.commandId === 'cmd-timeout') {
+        acks.push(ack.status);
       }
     });
 
@@ -108,11 +151,11 @@ describe('Hardware Gateway Contract', () => {
       protocolVersion: '1.0.0'
     });
 
-    await new Promise(r => setTimeout(r, 50));
-    assert.ok(timedOut);
+    await new Promise(r => setTimeout(r, 500));
+    assert.deepStrictEqual(acks, ['RECEIVED', 'ACCEPTED', 'EXECUTING', 'TIMED_OUT']);
   });
 
-  it('6. Supports physical hardware E-Stop reporting distinct from software', async () => {
+  it('8. Supports physical hardware E-Stop reporting distinct from software', async () => {
     await gateway.connect();
     let estopReason = '';
     gateway.onHardwareEmergencyStop(reason => {

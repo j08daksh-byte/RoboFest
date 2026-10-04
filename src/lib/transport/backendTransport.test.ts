@@ -17,7 +17,7 @@ describe('BackendCommandTransport', () => {
     originalFetch = global.fetch;
     transport = new BackendCommandTransport();
     transport.subscribeToAcknowledgements(ack => sentAcks.push(ack));
-    useAuthStore.setState({ token: 'fake-jwt-token' });
+    useAuthStore.setState({ status: 'AUTHENTICATED', user: { id: 'test', username: 'test', role: 'ADMIN' } });
   });
 
   after(() => {

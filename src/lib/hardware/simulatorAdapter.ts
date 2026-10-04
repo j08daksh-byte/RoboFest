@@ -64,28 +64,73 @@ export class SimulationHardwareGateway implements HardwareGateway {
       protocolVersion: '1.0.0'
     });
 
-    // Timeout vs Success simulation
+    // Rejection Simulation
+    if (command.type === 'REJECTION_TEST') {
+      setTimeout(() => {
+        this.notifyAck({
+          commandId: command.commandId,
+          timestamp: new Date().toISOString(),
+          robotId: command.robotId,
+          status: 'REJECTED',
+          reason: 'Hardware rejection test',
+          protocolVersion: '1.0.0'
+        });
+      }, 5);
+      return;
+    }
+
+    // ACCEPTED phase
     setTimeout(() => {
-      // For simulation, command with type 'TIMEOUT_TEST' will time out
-      if (command.type === 'TIMEOUT_TEST') {
+      this.notifyAck({
+        commandId: command.commandId,
+        timestamp: new Date().toISOString(),
+        robotId: command.robotId,
+        status: 'ACCEPTED',
+        protocolVersion: '1.0.0'
+      });
+      
+      // EXECUTING phase
+      setTimeout(() => {
         this.notifyAck({
           commandId: command.commandId,
           timestamp: new Date().toISOString(),
           robotId: command.robotId,
-          status: 'TIMED_OUT',
-          reason: 'Hardware execution took too long',
+          status: 'EXECUTING',
           protocolVersion: '1.0.0'
         });
-      } else {
-        this.notifyAck({
-          commandId: command.commandId,
-          timestamp: new Date().toISOString(),
-          robotId: command.robotId,
-          status: 'ACKNOWLEDGED',
-          protocolVersion: '1.0.0'
-        });
-      }
-    }, 20);
+
+        // Final Terminal Phase (ACKNOWLEDGED, TIMED_OUT, or FAILED)
+        setTimeout(() => {
+          if (command.type === 'TIMEOUT_TEST') {
+            this.notifyAck({
+              commandId: command.commandId,
+              timestamp: new Date().toISOString(),
+              robotId: command.robotId,
+              status: 'TIMED_OUT',
+              reason: 'Hardware execution took too long',
+              protocolVersion: '1.0.0'
+            });
+          } else if (command.type === 'FAILURE_TEST') {
+            this.notifyAck({
+              commandId: command.commandId,
+              timestamp: new Date().toISOString(),
+              robotId: command.robotId,
+              status: 'FAILED',
+              reason: 'Hardware execution failed',
+              protocolVersion: '1.0.0'
+            });
+          } else {
+            this.notifyAck({
+              commandId: command.commandId,
+              timestamp: new Date().toISOString(),
+              robotId: command.robotId,
+              status: 'ACKNOWLEDGED',
+              protocolVersion: '1.0.0'
+            });
+          }
+        }, 15);
+      }, 10);
+    }, 5);
   }
 
   public emergencyStop(): void {
