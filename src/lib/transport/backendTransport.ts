@@ -21,36 +21,26 @@ export class BackendCommandTransport implements CommandTransport {
       return;
     }
 
-    const token = useAuthStore.getState().token;
-    
-    // Automatically try to login as admin if no token exists for ease of use in edge Command Center
-    // In production, user would be redirected to login screen.
-    if (!token) {
-      useAuthStore.getState().login('admin', 'admin').then((success) => {
-        if (success) {
-          this.executeFetch(command);
-        } else {
-          this.notifyAck({
-            commandId: command.id,
-            status: 'FAILED',
-            reason: 'Authentication required',
-            timestamp: new Date().toISOString()
-          });
-        }
+    const status = useAuthStore.getState().status;
+    if (status !== 'AUTHENTICATED') {
+      this.notifyAck({
+        commandId: command.id,
+        status: 'FAILED',
+        reason: 'Authentication required',
+        timestamp: new Date().toISOString()
       });
-    } else {
-      this.executeFetch(command);
+      return;
     }
+    
+    this.executeFetch(command);
   }
 
   private async executeFetch(command: RobotCommand) {
-    const token = useAuthStore.getState().token;
     try {
       const response = await fetch('/api/robot/command', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(command)
       });

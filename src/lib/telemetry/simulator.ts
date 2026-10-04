@@ -133,13 +133,9 @@ class TelemetrySimulator {
     // POST to backend occasionally (e.g. every 1 second / ~10 ticks)
     if (Math.random() < 0.1) {
       try {
-        const token = typeof window !== 'undefined' && localStorage.getItem('auth-storage') 
-          ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token 
-          : '';
-        if (token) {
-          fetch('/api/telemetry', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        fetch('/api/telemetry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               source: 'SIMULATOR',
               mode: SystemMode.SIMULATED,
@@ -152,7 +148,6 @@ class TelemetrySimulator {
               environment: sample.environment
             })
           }).catch(() => {});
-        }
       } catch (e) {
         // ignore
       }

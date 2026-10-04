@@ -16,10 +16,7 @@ export default function RobotSensorsPage() {
     if (systemMode !== 'SIMULATED') {
       const interval = setInterval(async () => {
         try {
-          const token = localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : '';
-          const res = await fetch(`/api/telemetry?mode=${systemMode}&limit=40`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const res = await fetch(`/api/telemetry?mode=${systemMode}&limit=40`);
           if (res.ok) {
             const data = await res.json();
             if (data.data && data.data.length > 0) {

@@ -34,11 +34,10 @@ export function MissionControls() {
           onClick={async () => {
             const res = await createMission({ shipName: shipName.trim() || 'Unnamed Vessel', hullSection: `${rects.length} marked panel${rects.length === 1 ? '' : 's'}`, objective: 'Cut only the marked rectangles: straight-line cuts, torch off while turning', shipImage: imageUrl });
             if (res.success && res.missionId) {
-              const token = localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : '';
               for (const rect of rects) {
                 await fetch(`/api/missions/${res.missionId}/cuts`, {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                  headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     name: rect.id,
                     type: 'CLOSED_LOOP',

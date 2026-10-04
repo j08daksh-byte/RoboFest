@@ -9,13 +9,16 @@ export interface AuthUser {
 interface AuthStore {
   token: string | null;
   user: AuthUser | null;
+  status: 'LOADING' | 'AUTHENTICATED' | 'UNAUTHENTICATED' | 'AUTH_ERROR';
   login: (username: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  initialize: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
-  token: typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null,
-  user: null, // Would normally persist user info or decode JWT, but simplified here
+  token: null, // Tokens are now HttpOnly cookies, this is just for legacy code references
+  user: null,
+  status: 'LOADING',
 
   login: async (username, password) => {
     try {
@@ -26,23 +29,41 @@ export const useAuthStore = create<AuthStore>((set) => ({
       });
       if (res.ok) {
         const data = await res.json();
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('auth_token', data.token);
-        }
-        set({ token: data.token, user: data.user });
+        set({ user: data.user, status: 'AUTHENTICATED' });
         return true;
       }
+      set({ status: 'AUTH_ERROR' });
       return false;
     } catch (err) {
       console.error('Login failed', err);
+      set({ status: 'AUTH_ERROR' });
       return false;
     }
   },
 
-  logout: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
+  logout: async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (err) {
+      console.error('Logout failed', err);
     }
-    set({ token: null, user: null });
+    set({ token: null, user: null, status: 'UNAUTHENTICATED' });
+  },
+
+  initialize: async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          set({ user: data.user, status: 'AUTHENTICATED' });
+          return;
+        }
+      }
+      set({ user: null, status: 'UNAUTHENTICATED' });
+    } catch (err) {
+      console.error('Auth initialization failed', err);
+      set({ user: null, status: 'AUTH_ERROR' });
+    }
   }
 }));

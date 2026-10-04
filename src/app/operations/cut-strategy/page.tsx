@@ -1,14 +1,45 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePlatformStore } from '@/lib/platformStore';
 import { usePlannerStore } from '@/lib/cutting/plannerStore';
-import { generateDeterministicStrategy } from '@/lib/cutting/strategy';
-import { BrainCircuit, Cpu, AlertTriangle, Info } from 'lucide-react';
+import { BrainCircuit, Cpu, AlertTriangle, Info, Check } from 'lucide-react';
+import { StrategyRecommendation } from '@/lib/cutting/strategy';
 
 export default function OperationsCutStrategyPage() {
   const { systemMode } = usePlatformStore();
   const { plannedCuts } = usePlannerStore();
+  
+  const [strategies, setStrategies] = useState<Record<string, StrategyRecommendation>>({});
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchStrategies = async () => {
+      if (plannedCuts.length === 0) return;
+      setLoading(true);
+      
+      const results: Record<string, StrategyRecommendation> = {};
+      for (const cut of plannedCuts) {
+        try {
+          const res = await fetch('/api/ai/strategy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cut })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            results[cut.id] = data.data;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+      setStrategies(results);
+      setLoading(false);
+    };
+
+    fetchStrategies();
+  }, [plannedCuts]);
 
   return (
     <div className="page-container">
@@ -33,8 +64,11 @@ export default function OperationsCutStrategyPage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-16)' }}>
-            {plannedCuts.map((cut) => {
-              const strategy = generateDeterministicStrategy(cut);
+            {loading && <div style={{ color: 'var(--text-muted)' }}>Generating strategies...</div>}
+            {!loading && plannedCuts.map((cut) => {
+              const strategy = strategies[cut.id];
+              if (!strategy) return null;
+              
               return (
                 <div key={cut.id} className="ui-panel">
                   <div className="ui-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -69,8 +103,28 @@ export default function OperationsCutStrategyPage() {
                       </div>
                     )}
                     
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'right', marginTop: '8px' }}>
-                      AI Confidence: {strategy.confidence} (Deterministic Validation)
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'right', marginTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--warning)' }}>
+                        <AlertTriangle size={12} /> ADVISORY ONLY
+                      </div>
+                      <div>
+                        AI Confidence: {strategy.confidence} (Deterministic Validation)
+                      </div>
+                    </div>
+                    
+                    <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '4px' }}>
+                      <button style={{ padding: '10px 16px', background: 'var(--bg-dark)', border: '1px solid var(--border-color)', color: 'var(--text-main)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => {
+                        usePlatformStore.getState().addSystemEvent({
+                          id: 'EVT-' + Date.now(),
+                          category: 'OPERATION' as any,
+                          severity: 'INFO',
+                          message: `Operator accepted AI Strategy for cut ${cut.id}`,
+                          timestamp: new Date().toISOString()
+                        });
+                        alert('Strategy accepted deterministically.');
+                      }}>
+                        <Check size={14} /> ACCEPT AS PLAN
+                      </button>
                     </div>
                   </div>
                 </div>

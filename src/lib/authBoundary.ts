@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { verifyToken } from './auth';
 import { UserRole } from './domain';
 
@@ -8,11 +9,22 @@ export async function withAuth(
   handler: (req: Request, user: Record<string, unknown>) => Promise<NextResponse>
 ) {
   const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'Unauthorized: Missing or invalid Authorization header' }, { status: 401 });
+  let token = null;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else {
+    try {
+      const cookieStore = await cookies();
+      token = cookieStore.get('auth_token')?.value;
+    } catch (e) {
+      // In tests, cookies() might throw if not in Next context
+    }
   }
-  
-  const token = authHeader.split(' ')[1];
+
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthorized: Missing or invalid token' }, { status: 401 });
+  }
   const user = await verifyToken(token);
   
   if (!user || !user.id || !user.role) {

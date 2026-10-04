@@ -1,5 +1,10 @@
 import { jwtVerify, SignJWT } from 'jose';
 
+if (!process.env.JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('FATAL: JWT_SECRET must be set in production');
+  }
+}
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret-do-not-use-in-prod-robo-fest-6');
 
 export async function signToken(payload: Record<string, unknown>) {

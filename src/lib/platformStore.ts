@@ -246,7 +246,7 @@ export const usePlatformStore = create<PlatformStoreState>((set, get) => ({
     try {
       const res = await fetch('/api/missions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : ''}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       if (!res.ok) return { success: false, reason: 'Backend error' };
@@ -273,14 +273,14 @@ export const usePlatformStore = create<PlatformStoreState>((set, get) => ({
       if (isDraft) {
         await fetch(`/api/missions/${mission.id}/transition`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : ''}` },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'READY' })
         });
       }
       const action = mission.status === MissionStatus.PAUSED ? 'RESUME' : 'START';
       const res = await fetch(`/api/missions/${mission.id}/transition`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : ''}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action })
       });
       if (!res.ok) {
@@ -301,7 +301,7 @@ export const usePlatformStore = create<PlatformStoreState>((set, get) => ({
     try {
       const res = await fetch(`/api/missions/${mission.id}/transition`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : ''}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'COMPLETE' })
       });
       if (!res.ok) return { success: false, reason: 'Failed to complete' };
@@ -324,7 +324,7 @@ export const usePlatformStore = create<PlatformStoreState>((set, get) => ({
     try {
       const res = await fetch(`/api/missions/${mission.id}/transition`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : ''}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'ABORT' })
       });
       if (!res.ok) return { success: false, reason: 'Failed to abort' };
@@ -345,7 +345,7 @@ export const usePlatformStore = create<PlatformStoreState>((set, get) => ({
     try {
       const res = await fetch(`/api/missions/${mission.id}/transition`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : ''}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'PAUSE' })
       });
       if (!res.ok) return { success: false, reason: 'Failed to pause' };

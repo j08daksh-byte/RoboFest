@@ -22,8 +22,7 @@ export function ShipCutPanel() {
 
   useEffect(() => {
     if (!!mission.id) {
-      const token = localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : '';
-      fetch(`/api/missions/${mission.id}/cuts`, { headers: { 'Authorization': `Bearer ${token}` } })
+      fetch(`/api/missions/${mission.id}/cuts`)
         .then(res => res.json())
         .then(data => {
           if (data.data && data.data.length > 0) {
