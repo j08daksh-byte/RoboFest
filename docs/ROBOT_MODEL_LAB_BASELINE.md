@@ -45,13 +45,21 @@ The current robot model in the Digital Twin is composed of the following React c
 - Arm Extension: 0.2m to 1.0m
 - Torch Radius: 0.02m
 
-**Unknown/Placeholder Dimensions (To be refined in Lab):**
-- Exact track link dimensions (ESTIMATE)
-- Drive wheel/Idler wheel radius and spacing (ESTIMATE)
-- Track roller positions (ESTIMATE)
-- Fasteners and bracket dimensions (PLACEHOLDER)
-- Electronics housing geometry (ESTIMATE)
-- Sensor assembly mounting points (ESTIMATE)
+**CONFIRMED (Based on physical reference):**
+- 3 transmissions per side
+- front/center/rear arrangement
+- 6 total transmission units
+- continuous crawler belt
+- physical transmission reference supplied (metallic cylindrical unit with outer flange, recessed face, and central bore)
+
+**ESTIMATED (To be refined with actual measurements):**
+- exact transmission diameters
+- exact transmission thickness
+- exact transmission spacing
+- exact belt dimensions
+- Fasteners and bracket dimensions
+- Electronics housing geometry
+- Sensor assembly mounting points
 
 ## 4. Robot Model Lab Architecture
 A new, isolated route `/robot-lab` has been created.

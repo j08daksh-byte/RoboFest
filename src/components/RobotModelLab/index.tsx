@@ -28,10 +28,16 @@ export function RobotModelLab() {
       </group>
 
       {/* New Component Architecture Assembly */}
-      <group position={[0, 1, 0]}>
+      <group position={[0, 1.5, 0]}>
         <NewRobotAssembly />
         <Text position={[0, -0.6, 0.5]} rotation={[Math.PI/2, Math.PI, 0]} fontSize={0.1} color="#44ffaa">
           ROBOT MODEL LAB (NEW ARCHITECTURE)
+        </Text>
+        <Text position={[0, -0.8, 0.5]} rotation={[Math.PI/2, Math.PI, 0]} fontSize={0.06} color="#cccccc">
+          6 TRANSMISSION CRAWLER
+        </Text>
+        <Text position={[0, -0.9, 0.5]} rotation={[Math.PI/2, Math.PI, 0]} fontSize={0.05} color="#cccccc">
+          3 LEFT / 3 RIGHT
         </Text>
       </group>
     </group>

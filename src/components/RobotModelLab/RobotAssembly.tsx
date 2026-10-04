@@ -1,12 +1,14 @@
 'use client';
 import React from 'react';
 import { labRobotConfig } from './config';
+import { CrawlerAssembly } from './CrawlerAssembly';
 
 export function RobotAssembly() {
   const {
     chassisLengthX, chassisWidthY, chassisHeightZ, chassisZOffset,
     trackLengthX, trackWidthY, trackHeightZ, trackSpacingY,
-    structureLengthX, structureWidthY, structureHeightZ
+    structureLengthX, structureWidthY, structureHeightZ,
+    transmissionOuterRadius, crawlerWidthY
   } = labRobotConfig;
 
   return (
@@ -16,23 +18,21 @@ export function RobotAssembly() {
         Uses X = Longitudinal, Y = Lateral, Z = Vertical
       */}
 
-      {/* Chassis placeholder */}
+      {/* Chassis placeholder - updated to sit between/above tracks */}
       <mesh position={[0, 0, chassisZOffset + chassisHeightZ / 2]} castShadow receiveShadow>
-        <boxGeometry args={[chassisLengthX, chassisWidthY, chassisHeightZ]} />
+        <boxGeometry args={[chassisLengthX, trackSpacingY - crawlerWidthY, chassisHeightZ]} />
         <meshStandardMaterial color="#3a4048" metalness={0.7} roughness={0.4} />
       </mesh>
 
-      {/* Left Track Assembly placeholder */}
-      <mesh position={[0, trackSpacingY / 2, trackHeightZ / 2]} castShadow receiveShadow>
-        <boxGeometry args={[trackLengthX, trackWidthY, trackHeightZ]} />
-        <meshStandardMaterial color="#222" roughness={0.8} />
-      </mesh>
+      {/* Left Crawler Assembly */}
+      <group position={[0, trackSpacingY / 2, transmissionOuterRadius]}>
+        <CrawlerAssembly isLeft={true} />
+      </group>
 
-      {/* Right Track Assembly placeholder */}
-      <mesh position={[0, -trackSpacingY / 2, trackHeightZ / 2]} castShadow receiveShadow>
-        <boxGeometry args={[trackLengthX, trackWidthY, trackHeightZ]} />
-        <meshStandardMaterial color="#222" roughness={0.8} />
-      </mesh>
+      {/* Right Crawler Assembly */}
+      <group position={[0, -trackSpacingY / 2, transmissionOuterRadius]}>
+        <CrawlerAssembly isLeft={false} />
+      </group>
 
       {/* Upper Deck placeholder */}
       <mesh position={[0, 0, chassisZOffset + chassisHeightZ + structureHeightZ / 2]} castShadow receiveShadow>

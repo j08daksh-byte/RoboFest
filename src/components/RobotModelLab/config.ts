@@ -24,15 +24,25 @@ export const labRobotConfig = {
   trackWidthY: 0.12,
   trackLengthX: 0.9,
   trackHeightZ: 0.18,
-  trackSpacingY: 0.5, // Distance between track centers
+  // --- NEW 6-TRANSMISSION CRAWLER STRUCTURE ---
+  // CONFIRMED: 3 units per side (front, center, rear). 6 total.
 
-  // --- ESTIMATES & PLACEHOLDERS ---
-  trackLinkLength: 0.05, // ESTIMATE
-  trackLinkThickness: 0.02, // ESTIMATE
+  // ESTIMATE: Transmission Unit geometry
+  transmissionOuterRadius: 0.08,
+  transmissionThickness: 0.06,
+  outerFlangeThickness: 0.015,
+  recessDepth: 0.01,
+  centralBoreRadius: 0.015,
 
-  driveWheelRadius: 0.07, // ESTIMATE
-  idlerWheelRadius: 0.07, // ESTIMATE
-  wheelSpacingX: 0.7, // ESTIMATE
+  // ESTIMATE: Crawler Assembly positioning
+  trackSpacingY: 0.45, // distance between left and right crawler centers
+  crawlerLengthX: 0.8, // total length envelope
+  frontRearSpacingX: 0.35, // distance from center to front/rear transmissions
+  centerOffsetX: 0.0, // center transmission offset from center
+  crawlerWidthY: 0.1, // width of the crawler belt/tracks
+  beltThickness: 0.015, // thickness of the continuous belt
+
+  // --- MAGNETS (Preserved placeholder) ---
 
   magnetRadius: 0.03,
   magnetThickness: 0.01,
