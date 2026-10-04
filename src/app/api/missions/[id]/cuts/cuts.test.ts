@@ -19,7 +19,13 @@ test('Cut API Tests', async (t) => {
   validToken = await signToken({ id: testUser.id, role: testUser.role });
 
   const mission = await prisma.mission.create({
-    data: { shipName: 'Test Ship', objective: 'Test Obj', hullSection: 'A1', status: 'DRAFT' }
+    data: { shipName: 'Test Ship', objective: 'Test Obj', hullSection: 'A1', status: 'RUNNING' }
+  });
+
+  await prisma.runtimeState.upsert({
+    where: { id: 'singleton' },
+    update: { activeMissionId: mission.id, emergencyActive: false },
+    create: { id: 'singleton', activeMissionId: mission.id, emergencyActive: false }
   });
 
   let cutId1: string;
