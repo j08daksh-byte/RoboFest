@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { PlatformTelemetry } from './transport/domain';
 import {
   SystemMode,
   RobotDomainState,
@@ -45,6 +46,7 @@ interface PlatformStoreState {
   updateEnvironment: (environmentState: Partial<EnvironmentState>) => void;
   addSystemEvent: (event: SystemEvent) => void;
   addTelemetrySample: (sample: TelemetrySample) => void;
+  applyTelemetry: (telemetry: PlatformTelemetry) => void;
 
   // Mission Actions
   createMission: (missionPayload: Partial<MissionState>) => ActionResponse;
@@ -199,6 +201,27 @@ export const usePlatformStore = create<PlatformStoreState>((set, get) => ({
   addTelemetrySample: (sample) => set((state) => ({
     telemetryHistory: [sample, ...state.telemetryHistory].slice(0, MAX_HISTORY)
   })),
+
+  applyTelemetry: (telemetry) => set((state) => {
+    let newStops = state.lifetimeCounters.emergencyStops;
+    telemetry.events.forEach(e => {
+      if (e.category === 'SAFETY' && (e.message.includes('EVACUATION') || e.message.includes('EMERGENCY_STOP'))) {
+        newStops++;
+      }
+    });
+
+    return {
+      sensor: telemetry.sensor,
+      environment: telemetry.environment,
+      safety: telemetry.safety,
+      telemetryHistory: [telemetry.telemetrySample, ...state.telemetryHistory].slice(0, MAX_HISTORY),
+      events: [...telemetry.events, ...state.events].slice(0, MAX_HISTORY),
+      lifetimeCounters: {
+        ...state.lifetimeCounters,
+        emergencyStops: newStops
+      }
+    };
+  }),
 
   // Mission Actions
   createMission: (payload) => {

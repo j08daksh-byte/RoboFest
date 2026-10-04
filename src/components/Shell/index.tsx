@@ -3,13 +3,12 @@
 import React, { useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
-import { telemetrySimulator } from '@/lib/telemetry';
+import { initTransport } from '@/lib/transport/provider';
 import './shell.css';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    telemetrySimulator.start();
-    return () => telemetrySimulator.stop();
+    initTransport();
   }, []);
 
   return (

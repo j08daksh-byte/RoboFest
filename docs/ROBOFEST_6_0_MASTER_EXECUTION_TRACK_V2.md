@@ -59,14 +59,17 @@
 ## PHASE 11 — Live Telemetry Transport
 **Objective:** Replace `telemetrySimulator` with real-time WebSocket/MQTT.
 **Owner:** Our Repo.
-**Status:** NEXT.
+**Status:** COMPLETE (Architecture decoupled).
 **Dependencies:** ESP32 firmware spec.
 
 ## PHASE 12 — Senior Backend API Bridge
 **Objective:** Connect our Command Center to Senior MongoDB Backend (Sync Ships, Parts, Maintenance).
 **Owner:** Shared.
-**Status:** PENDING.
-**Acceptance Criteria:** A completed Cut Record in our DB successfully issues a `POST /api/parts` to Senior backend.
+**Status:** NEXT.
+**Acceptance Criteria:** 
+1. Redundant UI scaffolds (Ship CRUD, Records) are removed.
+2. Integration adapters are built.
+3. Completed Cut Record safely exports to Senior `POST /api/parts`.
 
 ## PHASE 13 — Real Robot Integration (ESP32)
 **Objective:** Command pipeline connected to metal.

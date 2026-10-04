@@ -3,6 +3,9 @@ import { robotConfig } from './robotConfig';
 import { usePlatformStore } from './platformStore';
 import { usePlannerStore } from './cutting/plannerStore';
 import { CutGeometry, CutMaterial } from './cutting/domain';
+import { RobotCommand } from './api/commands';
+import { CommandStatus, CommandAcknowledgement } from './transport/domain';
+import { activeCommandTransport } from './transport/provider';
 
 export interface CutRecord {
   id: string;
@@ -39,7 +42,11 @@ export interface RobotState {
   trackOffset: number; // for animating the crawler belts
   fifthCableLength: number;
   
+  // Command tracking
+  pendingCommands: Record<string, { status: CommandStatus; command: RobotCommand; timestamp: string }>;
+  
   // Actions
+  handleCommandAcknowledgement: (ack: CommandAcknowledgement) => void;
   setArmPosition: (y: number, x: number) => void;
   setElectromagnet: (enabled: boolean) => void;
   setTorch: (enabled: boolean) => void;
@@ -76,20 +83,114 @@ const initialState = {
   locomotionIntent: { x: 0, y: 0 },
   trackOffset: 0,
   fifthCableLength: 4.2, // Dist from winch to robot
+  pendingCommands: {},
 };
 
 export const useRobotStore = create<RobotState>((set, get) => ({
   ...initialState,
   
+  handleCommandAcknowledgement: (ack) => set((state) => {
+    const pending = state.pendingCommands[ack.commandId];
+    if (!pending) return state;
+
+    const newState = {
+      pendingCommands: { ...state.pendingCommands, [ack.commandId]: { ...pending, status: ack.status } }
+    };
+
+    if (ack.status === 'ACKNOWLEDGED') {
+      if (pending.command.type === 'SET_ARM_POSITION') {
+        return { ...newState, arm: { yPosition: pending.command.payload.yPosition, xExtension: pending.command.payload.xExtension } };
+      }
+      if (pending.command.type === 'SET_ELECTROMAGNET') {
+        return { ...newState, electromagnet: { enabled: pending.command.payload.enabled } };
+      }
+      if (pending.command.type === 'SET_TORCH') {
+        const enabled = pending.command.payload.enabled;
+        if (!enabled && state.activeCutPath.length > 0) {
+          usePlatformStore.getState().recordCutsCompleted(1, 0);
+          
+          const planner = usePlannerStore.getState();
+          const plannedCut = planner.currentCutId ? planner.plannedCuts.find(c => c.id === planner.currentCutId) : null;
+          
+          return {
+            ...newState,
+            torch: { enabled },
+            completedCuts: [...state.completedCuts, {
+              id: Math.random().toString(36).substring(2, 9),
+              path: [...state.activeCutPath],
+              isClosed: false,
+              timestamp: new Date().toISOString(),
+              plannedCutId: planner.currentCutId || undefined,
+              missionId: plannedCut?.missionId,
+              geometry: plannedCut?.geometry,
+              material: plannedCut?.material,
+              estimatedDurationSeconds: plannedCut?.estimate?.estimatedDurationSeconds
+            }],
+            activeCutPath: []
+          };
+        }
+        return { ...newState, torch: { enabled } };
+      }
+      if (pending.command.type === 'UPDATE_LOCOMOTION') {
+        const { x, y, trackOffsetDelta } = pending.command.payload;
+        const { hullRadius, hullCenterZ, hullSurfaceOffsetZ } = robotConfig;
+        const theta = Math.asin(x / hullRadius);
+        const z = hullCenterZ + hullRadius * Math.cos(theta) + hullSurfaceOffsetZ;
+        const cableLen = Math.sqrt(Math.pow(x - x, 2) + Math.pow(y - 4.2, 2) + Math.pow(z - 0, 2));
+
+        return { 
+          ...newState,
+          position: { x, y, z },
+          trackOffset: state.trackOffset + trackOffsetDelta,
+          fifthCableLength: cableLen
+        };
+      }
+    }
+    return newState;
+  }),
+
   setArmPosition: (y, x) => set((state) => {
     const safety = usePlatformStore.getState().safety;
     if (!safety.movementPermission) {
       console.warn("Safety Interlock: Arm movement rejected due to safety permission.");
       return state;
     }
-    return { arm: { yPosition: y, xExtension: x } };
+    
+    const cmdId = 'CMD-' + Math.random().toString(36).substring(2, 9);
+    const command: RobotCommand = {
+      type: 'SET_ARM_POSITION',
+      id: cmdId,
+      timestamp: new Date().toISOString(),
+      source: 'UI',
+      payload: { yPosition: y, xExtension: x }
+    };
+    
+    activeCommandTransport.sendCommand(command);
+    return {
+      pendingCommands: {
+        ...state.pendingCommands,
+        [cmdId]: { status: 'PENDING', command, timestamp: new Date().toISOString() }
+      }
+    };
   }),
-  setElectromagnet: (enabled) => set((state) => ({ electromagnet: { enabled } })),
+  setElectromagnet: (enabled) => set((state) => {
+    const cmdId = 'CMD-' + Math.random().toString(36).substring(2, 9);
+    const command: RobotCommand = {
+      type: 'SET_ELECTROMAGNET',
+      id: cmdId,
+      timestamp: new Date().toISOString(),
+      source: 'UI',
+      payload: { enabled }
+    };
+    
+    activeCommandTransport.sendCommand(command);
+    return {
+      pendingCommands: {
+        ...state.pendingCommands,
+        [cmdId]: { status: 'PENDING', command, timestamp: new Date().toISOString() }
+      }
+    };
+  }),
   setTorch: (enabled) => set((state) => {
     // 1. SAFETY INTERLOCK
     const safety = usePlatformStore.getState().safety;
@@ -109,25 +210,23 @@ export const useRobotStore = create<RobotState>((set, get) => ({
       }
     }
 
-    if (!enabled && state.activeCutPath.length > 0) {
-      usePlatformStore.getState().recordCutsCompleted(1, 0); // Open cut
-      return {
-        torch: { enabled },
-        completedCuts: [...state.completedCuts, {
-          id: Math.random().toString(36).substring(2, 9),
-          path: [...state.activeCutPath],
-          isClosed: false,
-          timestamp: new Date().toISOString(),
-          plannedCutId: planner.currentCutId || undefined,
-          missionId: plannedCut?.missionId,
-          geometry: plannedCut?.geometry,
-          material: plannedCut?.material,
-          estimatedDurationSeconds: plannedCut?.estimate?.estimatedDurationSeconds
-        }],
-        activeCutPath: []
-      };
-    }
-    return { torch: { enabled } };
+    // 3. Command Dispatch
+    const cmdId = 'CMD-' + Math.random().toString(36).substring(2, 9);
+    const command: RobotCommand = {
+      type: 'SET_TORCH',
+      id: cmdId,
+      timestamp: new Date().toISOString(),
+      source: 'UI',
+      payload: { enabled }
+    };
+    
+    activeCommandTransport.sendCommand(command);
+    return {
+      pendingCommands: {
+        ...state.pendingCommands,
+        [cmdId]: { status: 'PENDING', command, timestamp: new Date().toISOString() }
+      }
+    };
   }),
   setSimulationState: (simState) => set({ simulationState: simState }),
   setUiMode: (mode) => set({ uiMode: mode }),
@@ -212,19 +311,21 @@ export const useRobotStore = create<RobotState>((set, get) => ({
       return state;
     }
 
-    // Keep robot Z locked to the hull based on X curvature
-    const { hullRadius, hullCenterZ, hullSurfaceOffsetZ } = robotConfig;
-    const theta = Math.asin(x / hullRadius);
-    const z = hullCenterZ + hullRadius * Math.cos(theta) + hullSurfaceOffsetZ;
+    const cmdId = 'CMD-' + Math.random().toString(36).substring(2, 9);
+    const command: RobotCommand = {
+      type: 'UPDATE_LOCOMOTION',
+      id: cmdId,
+      timestamp: new Date().toISOString(),
+      source: 'UI',
+      payload: { x, y, trackOffsetDelta }
+    };
     
-    // Calculate 5th cable length (distance from winch [x, 4.2, 0] to robot center [x, y, z])
-    // The winch now moves left/right WITH the robot. So its x is the robot's x!
-    const cableLen = Math.sqrt(Math.pow(x - x, 2) + Math.pow(y - 4.2, 2) + Math.pow(z - 0, 2));
-
-    return { 
-      position: { x, y, z },
-      trackOffset: state.trackOffset + trackOffsetDelta,
-      fifthCableLength: cableLen
+    activeCommandTransport.sendCommand(command);
+    return {
+      pendingCommands: {
+        ...state.pendingCommands,
+        [cmdId]: { status: 'PENDING', command, timestamp: new Date().toISOString() }
+      }
     };
   }),
   reset: () => set({ ...initialState, uiMode: 'presentation' }), 

@@ -4,6 +4,8 @@ import { useRobotStore } from './robotState';
 import { usePlatformStore } from './platformStore';
 import { usePlannerStore } from './cutting/plannerStore';
 
+const tick = () => new Promise(r => setTimeout(r, 25));
+
 describe('Safety Interlocks in robotState', () => {
   beforeEach(() => {
     useRobotStore.getState().reset();
@@ -16,88 +18,101 @@ describe('Safety Interlocks in robotState', () => {
     });
   });
 
-  it('TEST 1: movementPermission = true -> locomotion command can move robot', () => {
+  it('TEST 1: movementPermission = true -> locomotion command can move robot', async () => {
     usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, movementPermission: true } });
     useRobotStore.getState().updateLocomotion(1.0, 1.0, 0);
+    await tick();
     const newPos = useRobotStore.getState().position;
     assert.strictEqual(newPos.x, 1.0);
     assert.strictEqual(newPos.y, 1.0);
   });
 
-  it('TEST 2: movementPermission = false -> same locomotion command does NOT move robot', () => {
+  it('TEST 2: movementPermission = false -> same locomotion command does NOT move robot', async () => {
     usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, movementPermission: false } });
     useRobotStore.getState().updateLocomotion(1.0, 1.0, 0);
+    await tick();
     const newPos = useRobotStore.getState().position;
     assert.strictEqual(newPos.x, 0.0);
     assert.strictEqual(newPos.y, 0.0);
   });
 
-  it('TEST 3: torchPermission = true -> setTorch(true) can enable torch', () => {
+  it('TEST 3: torchPermission = true -> setTorch(true) can enable torch', async () => {
     usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, torchPermission: true } });
     useRobotStore.getState().setTorch(true);
+    await tick();
     assert.strictEqual(useRobotStore.getState().torch.enabled, true);
   });
 
-  it('TEST 4: torchPermission = false -> setTorch(true) cannot enable torch', () => {
+  it('TEST 4: torchPermission = false -> setTorch(true) cannot enable torch', async () => {
     usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, torchPermission: false } });
     useRobotStore.getState().setTorch(true);
+    await tick();
     assert.strictEqual(useRobotStore.getState().torch.enabled, false);
   });
 
-  it('TEST 5: torchPermission = false -> setTorch(false) still disables torch', () => {
+  it('TEST 5: torchPermission = false -> setTorch(false) still disables torch', async () => {
     usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, torchPermission: true } });
     useRobotStore.getState().setTorch(true);
+    await tick();
     assert.strictEqual(useRobotStore.getState().torch.enabled, true);
     
     usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, torchPermission: false } });
     useRobotStore.getState().setTorch(false);
+    await tick();
     assert.strictEqual(useRobotStore.getState().torch.enabled, false);
   });
 
-  it('TEST 6: movement blocked by safety -> no position mutation occurs', () => {
+  it('TEST 6: movement blocked by safety -> no position mutation occurs', async () => {
     usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, movementPermission: false } });
     const initialPos = { ...useRobotStore.getState().position };
     useRobotStore.getState().updateLocomotion(2.0, 3.0, 0);
+    await tick();
     const pos = useRobotStore.getState().position;
     assert.strictEqual(pos.x, initialPos.x);
     assert.strictEqual(pos.y, initialPos.y);
     assert.strictEqual(pos.z, initialPos.z);
   });
 
-  it('TEST 7: movementPermission = true -> setArmPosition changes arm position', () => {
+  it('TEST 7: movementPermission = true -> setArmPosition changes arm position', async () => {
     usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, movementPermission: true } });
     useRobotStore.getState().setArmPosition(0.2, 0.5);
+    await tick();
     const arm = useRobotStore.getState().arm;
     assert.strictEqual(arm.yPosition, 0.2);
     assert.strictEqual(arm.xExtension, 0.5);
   });
 
-  it('TEST 8: movementPermission = false -> setArmPosition does NOT change arm position', () => {
+  it('TEST 8: movementPermission = false -> setArmPosition does NOT change arm position', async () => {
     useRobotStore.getState().setArmPosition(0.0, 0.3); // Set initial state
+    await tick();
     usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, movementPermission: false } });
     
     useRobotStore.getState().setArmPosition(0.2, 0.5); // Attempt mutation
+    await tick();
     
     const arm = useRobotStore.getState().arm;
     assert.strictEqual(arm.yPosition, 0.0);
     assert.strictEqual(arm.xExtension, 0.3);
   });
 
-  it('TEST 9: restoring movementPermission -> setArmPosition changes arm position again', () => {
+  it('TEST 9: restoring movementPermission -> setArmPosition changes arm position again', async () => {
     useRobotStore.getState().setArmPosition(0.0, 0.3);
+    await tick();
     
     usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, movementPermission: false } });
     useRobotStore.getState().setArmPosition(0.2, 0.5); // Blocked
+    await tick();
     
     usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, movementPermission: true } });
     useRobotStore.getState().setArmPosition(0.25, 0.6); // Allowed
+    await tick();
     
     const arm = useRobotStore.getState().arm;
     assert.strictEqual(arm.yPosition, 0.25);
     assert.strictEqual(arm.xExtension, 0.6);
   });
 
-  it('TEST 10: torch cannot activate if current cut plan is not APPROVED', () => {
+  it('TEST 10: torch cannot activate if current cut plan is not APPROVED', async () => {
     usePlatformStore.setState({ safety: { ...usePlatformStore.getState().safety, torchPermission: true } });
     const planner = usePlannerStore.getState();
     planner.clearPlanner();
@@ -106,6 +121,7 @@ describe('Safety Interlocks in robotState', () => {
     
     // Attempt activation (should be blocked by DRAFT approval state)
     useRobotStore.getState().setTorch(true);
+    await tick();
     assert.strictEqual(useRobotStore.getState().torch.enabled, false);
     
     // Now force approval
@@ -115,6 +131,7 @@ describe('Safety Interlocks in robotState', () => {
     });
     
     useRobotStore.getState().setTorch(true);
+    await tick();
     assert.strictEqual(useRobotStore.getState().torch.enabled, true);
   });
 });
@@ -132,14 +149,16 @@ describe('Phase 4 Runtime Regression Evidence', () => {
     usePlannerStore.getState().clearPlanner();
   });
 
-  it('Scenario A: Open path leaves trace but does not create a closed panel', () => {
+  it('Scenario A: Open path leaves trace but does not create a closed panel', async () => {
     const store = useRobotStore.getState();
     // Simulate torch ON, move, torch OFF
     store.setTorch(true);
-    store.addCutPoint(0, 0);
-    store.addCutPoint(1, 0);
-    store.addCutPoint(2, 0);
-    store.setTorch(false);
+    await tick();
+    useRobotStore.getState().addCutPoint(0, 0);
+    useRobotStore.getState().addCutPoint(1, 0);
+    useRobotStore.getState().addCutPoint(2, 0);
+    useRobotStore.getState().setTorch(false);
+    await tick();
     
     // An open cut should be committed to completedCuts
     const currentState = useRobotStore.getState();
