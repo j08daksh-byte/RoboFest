@@ -15,6 +15,7 @@ import {
   MaintenanceRecord,
   HealthEvent
 } from './domain';
+import { SyncTask } from './integration/senior/types';
 
 export interface ActionResponse {
   success: boolean;
@@ -36,6 +37,9 @@ interface PlatformStoreState {
   lifetimeCounters: LifetimeCounters;
   maintenanceLog: MaintenanceRecord[];
   healthEvents: HealthEvent[];
+
+  // Phase 12B Integration Sync Queue
+  outboundSyncQueue: SyncTask[];
 
   // Base Setters
   setSystemMode: (mode: SystemMode) => void;
@@ -60,6 +64,10 @@ interface PlatformStoreState {
   recordCutsCompleted: (count: number, closedPanels: number) => void;
   recordHealthEvent: (event: Omit<HealthEvent, 'id' | 'timestamp'>) => void;
   recordMaintenance: (record: Omit<MaintenanceRecord, 'id' | 'timestamp'>) => void;
+
+  // Phase 12B Sync Actions
+  enqueueSyncTask: (task: Omit<SyncTask, 'id' | 'status' | 'retryCount' | 'createdAt'>) => void;
+  resolveSyncTask: (id: string, success: boolean) => void;
 }
 
 // Initial deterministic SIMULATED/DEMO state
@@ -158,7 +166,8 @@ const initialPlatformState = {
     emergencyStops: 0
   },
   maintenanceLog: [],
-  healthEvents: []
+  healthEvents: [],
+  outboundSyncQueue: []
 };
 
 const MAX_HISTORY = 100;
@@ -366,5 +375,23 @@ export const usePlatformStore = create<PlatformStoreState>((set, get) => ({
 
   recordMaintenance: (record) => set((state) => ({
     maintenanceLog: [...state.maintenanceLog, { ...record, id: 'MR-' + Date.now(), timestamp: new Date().toISOString() }]
+  })),
+
+  enqueueSyncTask: (task) => set((state) => ({
+    outboundSyncQueue: [...state.outboundSyncQueue, {
+      ...task,
+      id: 'SYNC-' + Date.now() + Math.floor(Math.random() * 1000),
+      status: 'PENDING',
+      retryCount: 0,
+      createdAt: new Date().toISOString()
+    }]
+  })),
+
+  resolveSyncTask: (id, success) => set((state) => ({
+    outboundSyncQueue: state.outboundSyncQueue.map(task => 
+      task.id === id 
+        ? { ...task, status: success ? 'SYNCED' : 'FAILED', retryCount: success ? task.retryCount : task.retryCount + 1 }
+        : task
+    )
   }))
 }));
