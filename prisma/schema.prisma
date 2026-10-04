@@ -12,9 +12,10 @@ model User {
   username     String      @unique
   passwordHash String
   role         String      // OPERATOR, ENGINEER, SUPERVISOR, ADMIN
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  eventLogs    EventLog[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  eventLogs      EventLog[]
+  commandRecords CommandRecord[]
 }
 
 model Mission {
@@ -48,4 +49,19 @@ model EventLog {
   userId    String?
   mission   Mission? @relation(fields: [missionId], references: [id], onDelete: SetNull)
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model CommandRecord {
+  id          String   @id @default(uuid())
+  commandId   String   @unique
+  type        String
+  status      String   // PENDING, ACKNOWLEDGED, REJECTED, FAILED, TIMED_OUT
+  operatorId  String
+  missionId   String?
+  source      String
+  payload     String
+  reason      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [operatorId], references: [id])
 }
