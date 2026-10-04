@@ -3,6 +3,7 @@ import { RobotCommand, validateCommand, CommandResult } from '@/lib/api/commands
 import { PrismaClient } from '@prisma/client';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole } from '@/lib/domain';
+import { evaluateServerSafety } from '@/lib/safety/serverSafety';
 
 const prisma = new PrismaClient();
 
@@ -28,10 +29,34 @@ export async function POST(request: Request) {
       const command = body as RobotCommand;
       
       // 2. Authorization boundary checks
-      // Any authenticated operator can emergency stop.
-      // For movement/torch, we could restrict further if needed, but the prompt says 
-      // "implement the smallest explicit permission boundary needed". 
-      // Current ALLOWED_ROLES list handles the minimum requirement.
+      
+      // Determine operation type
+      let opType: 'ESTOP' | 'CLEAR_ESTOP' | 'DANGEROUS_COMMAND' | undefined;
+      
+      if (command.type === 'TRIGGER_EMERGENCY_STOP') opType = 'ESTOP';
+      else if (command.type === 'CLEAR_EMERGENCY_STOP') opType = 'CLEAR_ESTOP';
+      else opType = 'DANGEROUS_COMMAND'; // Any other robot command is potentially dangerous
+
+      const safetyEval = await evaluateServerSafety(opType, user.id as string, user.role as string);
+      
+      if (!safetyEval.allowed) {
+        // Record failure
+        await prisma.eventLog.create({
+          data: {
+            category: 'SAFETY',
+            severity: 'CRITICAL',
+            message: `Command ${command.type} rejected: ${safetyEval.reasons.join(', ')}`,
+            userId: user.id as string
+          }
+        });
+        
+        return NextResponse.json({
+          commandId: command.id,
+          status: 'REJECTED',
+          reason: safetyEval.reasons.join(', '),
+          timestamp: new Date().toISOString()
+        } as CommandResult, { status: 403 });
+      }
       
       // 3. Idempotency & Persistence
       try {
@@ -54,6 +79,15 @@ export async function POST(request: Request) {
         // E-stops are instantaneous deterministic overrides
         if (command.type === 'TRIGGER_EMERGENCY_STOP') {
           updateData.emergencyActive = true;
+          await prisma.eventLog.create({
+            data: { category: 'SAFETY', severity: 'CRITICAL', message: 'SAFETY_ESTOP_ASSERTED', userId: user.id as string }
+          });
+        }
+        if (command.type === 'CLEAR_EMERGENCY_STOP') {
+          updateData.emergencyActive = false;
+          await prisma.eventLog.create({
+            data: { category: 'SAFETY', severity: 'INFO', message: 'SAFETY_ESTOP_CLEARED', userId: user.id as string }
+          });
         }
 
         await prisma.runtimeState.updateMany({
