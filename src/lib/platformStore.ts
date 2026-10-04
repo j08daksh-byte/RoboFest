@@ -68,6 +68,9 @@ interface PlatformStoreState {
   // Phase 12B Sync Actions
   enqueueSyncTask: (task: Omit<SyncTask, 'id' | 'status' | 'retryCount' | 'createdAt'>) => void;
   resolveSyncTask: (id: string, success: boolean) => void;
+
+  // Phase 13D Hydration
+  hydrateRuntimeState: (state: any) => void;
 }
 
 // Initial deterministic SIMULATED/DEMO state
@@ -393,5 +396,17 @@ export const usePlatformStore = create<PlatformStoreState>((set, get) => ({
         ? { ...task, status: success ? 'SYNCED' : 'FAILED', retryCount: success ? task.retryCount : task.retryCount + 1 }
         : task
     )
+  })),
+
+  hydrateRuntimeState: (statePayload) => set((state) => ({
+    systemMode: statePayload.systemMode,
+    robot: { 
+      ...state.robot, 
+      activeMissionId: statePayload.activeMissionId 
+    },
+    safety: { 
+      ...state.safety, 
+      emergencyStateActive: statePayload.emergencyActive 
+    }
   }))
 }));

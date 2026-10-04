@@ -47,6 +47,20 @@ export async function POST(request: Request) {
             payload: payloadStr,
           }
         });
+
+        // Update runtime state linkages
+        const updateData: any = { lastCommandId: command.id };
+        
+        // E-stops are instantaneous deterministic overrides
+        if (command.type === 'TRIGGER_EMERGENCY_STOP') {
+          updateData.emergencyActive = true;
+        }
+
+        await prisma.runtimeState.updateMany({
+          where: { id: 'singleton' },
+          data: updateData
+        });
+
       } catch (dbError: any) {
         // Unique constraint violation (duplicate command ID)
         if (dbError.code === 'P2002') {

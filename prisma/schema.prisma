@@ -65,3 +65,20 @@ model CommandRecord {
   updatedAt   DateTime @updatedAt
   user        User     @relation(fields: [operatorId], references: [id])
 }
+
+model RuntimeState {
+  id                   String   @id @default("singleton")
+  systemMode           String   @default("SIMULATED")
+  positionX            Float    @default(0)
+  positionY            Float    @default(0)
+  positionZ            Float    @default(0)
+  armY                 Float    @default(0)
+  armX                 Float    @default(0)
+  torchEnabled         Boolean  @default(false)
+  electromagnetEnabled Boolean  @default(false)
+  emergencyActive      Boolean  @default(false)
+  activeMissionId      String?  
+  lastCommandId        String?  
+  stateVersion         Int      @default(0)
+  updatedAt            DateTime @updatedAt
+}

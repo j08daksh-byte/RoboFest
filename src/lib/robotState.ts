@@ -62,6 +62,7 @@ export interface RobotState {
   clearAllCuts: () => void;
   setLocomotionIntent: (x: number, y: number) => void;
   updateLocomotion: (x: number, y: number, trackOffsetDelta: number) => void;
+  hydrateRuntimeState: (state: any) => void;
   reset: () => void;
 }
 
@@ -328,5 +329,11 @@ export const useRobotStore = create<RobotState>((set, get) => ({
       }
     };
   }),
+  hydrateRuntimeState: (statePayload) => set((state) => ({
+    position: { x: statePayload.positionX, y: statePayload.positionY, z: statePayload.positionZ },
+    arm: { yPosition: statePayload.armY, xExtension: statePayload.armX },
+    torch: { enabled: statePayload.torchEnabled },
+    electromagnet: { enabled: statePayload.electromagnetEnabled }
+  })),
   reset: () => set({ ...initialState, uiMode: 'presentation' }), 
 }));
