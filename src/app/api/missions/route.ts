@@ -3,6 +3,7 @@ import { validateMissionPayload } from '@/lib/api/persistence';
 import { PrismaClient } from '@prisma/client';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole, MissionStatus } from '@/lib/domain';
+import { realtimeBroker } from '@/lib/realtime/broker';
 
 const prisma = new PrismaClient();
 
@@ -23,6 +24,13 @@ export async function POST(request: Request) {
           hullSection: validation.data.hullSection as string,
           status: MissionStatus.DRAFT,
         }
+      });
+      
+      realtimeBroker.publish({
+        type: 'MISSION_UPDATED',
+        source: 'API',
+        timestamp: new Date().toISOString(),
+        payload: mission
       });
       
       return NextResponse.json({

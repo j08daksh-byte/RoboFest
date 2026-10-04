@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { realtimeBroker } from '@/lib/realtime/broker';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole } from '@/lib/domain';
 import { evaluateSystemHealth } from '@/lib/health/healthEngine';
@@ -117,6 +118,13 @@ export async function POST(request: Request) {
           }
         });
       }
+
+      realtimeBroker.publish({
+        type: 'TELEMETRY_UPDATED',
+        source: 'API',
+        timestamp: new Date().toISOString(),
+        payload: [record]
+      });
 
       return NextResponse.json({ success: true, id: record.id }, { status: 201 });
     } catch (e: any) {

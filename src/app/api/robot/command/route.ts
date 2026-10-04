@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole } from '@/lib/domain';
 import { evaluateServerSafety } from '@/lib/safety/serverSafety';
+import { realtimeBroker } from '@/lib/realtime/broker';
 
 const prisma = new PrismaClient();
 
@@ -106,9 +107,16 @@ export async function POST(request: Request) {
           });
         }
 
-        await prisma.runtimeState.updateMany({
+        const newState = await prisma.runtimeState.update({
           where: { id: 'singleton' },
           data: updateData
+        });
+        
+        realtimeBroker.publish({
+          type: 'RUNTIME_STATE_UPDATED',
+          source: 'API',
+          timestamp: new Date().toISOString(),
+          payload: newState
         });
 
       } catch (dbError: any) {
@@ -144,6 +152,12 @@ export async function POST(request: Request) {
         status: 'ACCEPTED', // The frontend contract uses ACCEPTED interchangeably with PENDING for initial response
         timestamp: new Date().toISOString()
       };
+      realtimeBroker.publish({
+        type: 'COMMAND_STATUS_CHANGED',
+        source: 'API',
+        timestamp: new Date().toISOString(),
+        payload: { commandId: command.id, status: 'PENDING' }
+      });
       
       return NextResponse.json(result, { status: 200 });
       

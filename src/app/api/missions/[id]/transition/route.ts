@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole, MissionStatus } from '@/lib/domain';
 import { evaluateServerSafety } from '@/lib/safety/serverSafety';
+import { realtimeBroker } from '@/lib/realtime/broker';
 
 const prisma = new PrismaClient();
 
@@ -125,6 +126,20 @@ export async function POST(req: Request, context: any) {
             runtime = Math.floor((new Date().getTime() - new Date(mission.startedAt).getTime()) / 1000);
           }
         }
+
+        realtimeBroker.publish({
+          type: 'MISSION_UPDATED',
+          source: 'API',
+          timestamp: new Date().toISOString(),
+          payload: updatedMission
+        });
+
+        realtimeBroker.publish({
+          type: 'MISSION_UPDATED',
+          source: 'API',
+          timestamp: new Date().toISOString(),
+          payload: updatedMission
+        });
 
         return NextResponse.json({ data: updatedMission }, { status: 200 });
       });

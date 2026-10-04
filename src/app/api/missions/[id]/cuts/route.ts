@@ -3,6 +3,7 @@ import { validateCutPayload } from '@/lib/api/persistence';
 import { PrismaClient } from '@prisma/client';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole } from '@/lib/domain';
+import { realtimeBroker } from '@/lib/realtime/broker';
 
 const prisma = new PrismaClient();
 
@@ -69,6 +70,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           cutId: cutRecord.id,
           userId: user.id as string
         }
+      });
+      realtimeBroker.publish({
+        type: 'CUT_UPDATED',
+        source: 'API',
+        timestamp: new Date().toISOString(),
+        payload: cutRecord
       });
 
       return NextResponse.json({

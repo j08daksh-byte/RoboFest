@@ -3,6 +3,8 @@
 import React, { useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { LoginModal } from '../LoginModal';
+import { RealtimeProvider } from '../RealtimeProvider';
 import { initTransport } from '@/lib/transport/provider';
 import { usePlatformStore } from '@/lib/platformStore';
 import { useRobotStore } from '@/lib/robotState';
@@ -14,16 +16,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function hydrate() {
       try {
-        let token = useAuthStore.getState().token;
-        if (!token) {
-          await useAuthStore.getState().login('admin', 'admin');
-          token = useAuthStore.getState().token;
-        }
-
-        if (token) {
-          const res = await fetch('/api/robot/state', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+        await useAuthStore.getState().initialize();
+        const status = useAuthStore.getState().status;
+        if (status === 'AUTHENTICATED') {
+          const res = await fetch('/api/robot/state');
           if (res.ok) {
             const data = await res.json();
             usePlatformStore.getState().hydrateRuntimeState(data);
@@ -48,14 +44,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="app-shell">
+    <>
+      <LoginModal />
+      <div className="app-shell">
       <Sidebar />
       <div className="main-area">
         <TopBar />
         <div className="content-area">
-          {children}
+          <RealtimeProvider>
+            {children}
+          </RealtimeProvider>
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { validateEventPayload } from '@/lib/api/persistence';
 import { PrismaClient } from '@prisma/client';
 import { withAuth } from '@/lib/authBoundary';
+import { realtimeBroker } from '@/lib/realtime/broker';
 
 const prisma = new PrismaClient();
 
@@ -39,6 +40,12 @@ export async function POST(request: Request) {
           metadata: validation.data.metadata as string | undefined,
           userId: user.id as string
         }
+      });
+      realtimeBroker.publish({
+        type: 'EVENT_CREATED',
+        source: 'API',
+        timestamp: new Date().toISOString(),
+        payload: eventLog
       });
       
       return NextResponse.json({
