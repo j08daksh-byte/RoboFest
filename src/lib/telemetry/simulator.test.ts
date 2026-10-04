@@ -11,7 +11,7 @@ describe('Phase 4C: Simulator Integration (Events + Mission Link)', () => {
     usePlatformStore.setState({
       events: [],
       safety: { level: SafetyLevel.NORMAL, activeHazards: [], torchPermission: true, movementPermission: true, emergencyStateActive: false, acknowledgementRequired: false },
-      mission: { id: 'TEST-MISSION', status: MissionStatus.IN_PROGRESS } as unknown as MissionState,
+      mission: { id: 'TEST-MISSION', status: MissionStatus.RUNNING } as unknown as MissionState,
       telemetryHistory: []
     });
     telemetrySimulator.setScenario(SimulationScenario.NORMAL_OPERATION);

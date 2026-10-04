@@ -18,12 +18,27 @@ const SPEEDS: SimSpeed[] = [1, 2, 4];
 export function ShipCutPanel() {
   const { mission, safety, setMissionProgress, completeMission, interruptMission, addSystemEvent, recordCutsCompleted } =
     usePlatformStore();
-  const { rects, board, imageUrl, speed, setSpeed } = useCutJobStore();
+  const { rects, board, imageUrl, speed, setSpeed, setRects } = useCutJobStore();
+
+  useEffect(() => {
+    if (!!mission.id) {
+      const token = localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : '';
+      fetch(`/api/missions/${mission.id}/cuts`, { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(res => res.json())
+        .then(data => {
+          if (data.data && data.data.length > 0) {
+             const loadedRects = data.data.map((cut: any) => JSON.parse(cut.normalizedJson));
+             setRects(loadedRects);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [mission.id]);
 
   const plan = useMemo(() => planCutJob(rects, board), [rects, board]);
   const lastStep = useRef<number>(-1);
   const releasedPieces = useRef<Set<string>>(new Set());
-  const running = mission.status === MissionStatus.IN_PROGRESS;
+  const running = mission.status === MissionStatus.RUNNING;
   const finished = mission.status === MissionStatus.COMPLETED;
   const hasMission = !!mission.id;
   const progress = mission.progressPercentage;
@@ -73,7 +88,7 @@ export function ShipCutPanel() {
 
     const timer = setInterval(() => {
       const state = usePlatformStore.getState();
-      if (state.mission.status !== MissionStatus.IN_PROGRESS) return;
+      if (state.mission.status !== MissionStatus.RUNNING) return;
 
       // Safety gate: never keep cutting without permission.
       if (!state.safety.torchPermission || !state.safety.movementPermission || state.safety.emergencyStateActive) {
@@ -118,7 +133,7 @@ export function ShipCutPanel() {
   }, [running, plan]);
 
   useEffect(() => {
-    if (mission.status === MissionStatus.PLANNED || mission.status === MissionStatus.CANCELLED) {
+    if (mission.status === MissionStatus.DRAFT || mission.status === MissionStatus.READY || mission.status === MissionStatus.ABORTED) {
       lastStep.current = -1;
       releasedPieces.current = new Set();
     }
@@ -127,8 +142,8 @@ export function ShipCutPanel() {
   let statusLabel = 'Ready. Create a mission and press Start.';
   if (!hasMission) statusLabel = 'Previewing cut path. Create a mission when ready.';
   else if (finished) statusLabel = 'Cutting complete.';
-  else if (mission.status === MissionStatus.PLANNED && progress === 0) statusLabel = 'Mission planned. Press Start to execute on real robot.';
-  else if (mission.status === MissionStatus.INTERRUPTED) statusLabel = 'Paused.';
+  else if ((mission.status === MissionStatus.DRAFT || mission.status === MissionStatus.READY) && progress === 0) statusLabel = 'Mission planned. Press Start to execute on real robot.';
+  else if (mission.status === MissionStatus.PAUSED) statusLabel = 'Paused.';
   
   if (!running && !finished && previewProgress <= 100) {
     if (pose.kind === 'cut') statusLabel = `[PREVIEW] Cutting ${pose.pieceId} in a straight line`;
@@ -153,7 +168,7 @@ export function ShipCutPanel() {
   return (
     <div className="ui-panel">
       <div className="ui-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 className="heading-technical" style={{ margin: 0, border: 'none' }}>3D CUTTING SIMULATION</h2>
+        <h2 className="heading-technical" style={{ margin: 0, border: 'none' }}>3D CUTTING DIGITAL TWIN</h2>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Speed</span>
           {SPEEDS.map((s) => (

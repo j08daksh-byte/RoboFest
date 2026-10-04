@@ -20,6 +20,7 @@ import { SyncTask } from './integration/senior/types';
 export interface ActionResponse {
   success: boolean;
   reason?: string;
+  missionId?: string;
 }
 
 interface PlatformStoreState {
@@ -53,11 +54,11 @@ interface PlatformStoreState {
   applyTelemetry: (telemetry: PlatformTelemetry) => void;
 
   // Mission Actions
-  createMission: (missionPayload: Partial<MissionState>) => ActionResponse;
-  startMission: () => ActionResponse;
-  completeMission: () => ActionResponse;
-  cancelMission: () => ActionResponse;
-  interruptMission: () => ActionResponse;
+  createMission: (missionPayload: Partial<MissionState>) => Promise<ActionResponse>;
+  startMission: () => Promise<ActionResponse>;
+  completeMission: () => Promise<ActionResponse>;
+  cancelMission: () => Promise<ActionResponse>;
+  interruptMission: () => Promise<ActionResponse>;
   setMissionProgress: (progress: number) => ActionResponse;
 
   // Phase 7A Analytics Actions
@@ -95,7 +96,7 @@ const initialPlatformState = {
     hullSection: '',
     shipImage: null,
     objective: '',
-    status: MissionStatus.PLANNED,
+    status: MissionStatus.DRAFT,
     progressPercentage: 0,
     startTime: null,
     estimatedCompletionTime: null,
@@ -236,118 +237,130 @@ export const usePlatformStore = create<PlatformStoreState>((set, get) => ({
   }),
 
   // Mission Actions
-  createMission: (payload) => {
+  createMission: async (payload) => {
     const { mission } = get();
-    if (mission.id && ![MissionStatus.COMPLETED, MissionStatus.CANCELLED].includes(mission.status)) {
+    if (mission.id && ![MissionStatus.COMPLETED, MissionStatus.ABORTED].includes(mission.status)) {
       return { success: false, reason: 'Active mission already exists' };
     }
     
-    set({
-      mission: {
-        id: payload.id || 'MIS-' + Date.now(),
-        shipName: payload.shipName || 'Unknown',
-        hullSection: payload.hullSection || 'Unknown',
-        shipImage: payload.shipImage ?? null,
-        objective: payload.objective || '',
-        status: MissionStatus.PLANNED,
-        progressPercentage: 0,
-        startTime: null,
-        estimatedCompletionTime: null,
-        currentCutReference: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      robot: { ...get().robot, activeMissionId: payload.id || 'MIS-' + Date.now() }
-    });
-    return { success: true };
+    try {
+      const res = await fetch('/api/missions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : ''}` },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) return { success: false, reason: 'Backend error' };
+      const { data } = await res.json();
+      set({
+        mission: {
+          ...get().mission,
+          ...data
+        },
+        robot: { ...get().robot, activeMissionId: data.id }
+      });
+      return { success: true, missionId: data.id };
+    } catch (e) {
+      return { success: false, reason: 'Network error' };
+    }
   },
 
-  startMission: () => {
+  startMission: async () => {
     const { mission } = get();
     if (!mission.id) return { success: false, reason: 'No mission active' };
-    if (![MissionStatus.PLANNED, MissionStatus.INTERRUPTED].includes(mission.status)) {
-      return { success: false, reason: 'Cannot start mission from current status' };
-    }
     
-    set({
-      mission: {
-        ...mission,
-        status: MissionStatus.IN_PROGRESS,
-        startTime: mission.startTime || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+    try {
+      const isDraft = mission.status === MissionStatus.DRAFT;
+      if (isDraft) {
+        await fetch(`/api/missions/${mission.id}/transition`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : ''}` },
+          body: JSON.stringify({ action: 'READY' })
+        });
       }
-    });
-    return { success: true };
-  },
-
-  completeMission: () => {
-    const { mission } = get();
-    if (!mission.id) return { success: false, reason: 'No mission active' };
-    if (mission.status !== MissionStatus.IN_PROGRESS) {
-      return { success: false, reason: 'Only in-progress missions can be completed' };
-    }
-    
-    set({
-      mission: {
-        ...mission,
-        status: MissionStatus.COMPLETED,
-        progressPercentage: 100,
-        updatedAt: new Date().toISOString()
-      },
-      robot: { ...get().robot, activeMissionId: null },
-      missionHistory: [...get().missionHistory, {
-        ...mission,
-        status: MissionStatus.COMPLETED,
-        progressPercentage: 100,
-        updatedAt: new Date().toISOString()
-      }],
-      lifetimeCounters: {
-        ...get().lifetimeCounters,
-        missionsCompleted: get().lifetimeCounters.missionsCompleted + 1
+      const action = mission.status === MissionStatus.PAUSED ? 'RESUME' : 'START';
+      const res = await fetch(`/api/missions/${mission.id}/transition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : ''}` },
+        body: JSON.stringify({ action })
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        return { success: false, reason: error.error || 'Failed to start' };
       }
-    });
-    return { success: true };
+      const { data } = await res.json();
+      set({ mission: { ...get().mission, ...data } });
+      return { success: true };
+    } catch (e) {
+      return { success: false, reason: 'Network error' };
+    }
   },
 
-  cancelMission: () => {
+  completeMission: async () => {
     const { mission } = get();
     if (!mission.id) return { success: false, reason: 'No mission active' };
-    if ([MissionStatus.COMPLETED, MissionStatus.CANCELLED].includes(mission.status)) {
-      return { success: false, reason: 'Mission is already finished' };
+    try {
+      const res = await fetch(`/api/missions/${mission.id}/transition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : ''}` },
+        body: JSON.stringify({ action: 'COMPLETE' })
+      });
+      if (!res.ok) return { success: false, reason: 'Failed to complete' };
+      const { data } = await res.json();
+      set({
+        mission: { ...get().mission, ...data, progressPercentage: 100 },
+        robot: { ...get().robot, activeMissionId: null },
+        missionHistory: [...get().missionHistory, { ...get().mission, ...data, progressPercentage: 100 }],
+        lifetimeCounters: { ...get().lifetimeCounters, missionsCompleted: get().lifetimeCounters.missionsCompleted + 1 }
+      });
+      return { success: true };
+    } catch (e) {
+      return { success: false, reason: 'Network error' };
     }
-    
-    set({
-      mission: {
-        ...mission,
-        status: MissionStatus.CANCELLED,
-        updatedAt: new Date().toISOString()
-      },
-      robot: { ...get().robot, activeMissionId: null }
-    });
-    return { success: true };
   },
 
-  interruptMission: () => {
+  cancelMission: async () => {
     const { mission } = get();
     if (!mission.id) return { success: false, reason: 'No mission active' };
-    if (mission.status !== MissionStatus.IN_PROGRESS) {
-      return { success: false, reason: 'Only in-progress missions can be interrupted' };
+    try {
+      const res = await fetch(`/api/missions/${mission.id}/transition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : ''}` },
+        body: JSON.stringify({ action: 'ABORT' })
+      });
+      if (!res.ok) return { success: false, reason: 'Failed to abort' };
+      const { data } = await res.json();
+      set({
+        mission: { ...get().mission, ...data },
+        robot: { ...get().robot, activeMissionId: null }
+      });
+      return { success: true };
+    } catch (e) {
+      return { success: false, reason: 'Network error' };
     }
-    
-    set({
-      mission: {
-        ...mission,
-        status: MissionStatus.INTERRUPTED,
-        updatedAt: new Date().toISOString()
-      }
-    });
-    return { success: true };
+  },
+
+  interruptMission: async () => {
+    const { mission } = get();
+    if (!mission.id) return { success: false, reason: 'No mission active' };
+    try {
+      const res = await fetch(`/api/missions/${mission.id}/transition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token : ''}` },
+        body: JSON.stringify({ action: 'PAUSE' })
+      });
+      if (!res.ok) return { success: false, reason: 'Failed to pause' };
+      const { data } = await res.json();
+      set({ mission: { ...get().mission, ...data } });
+      return { success: true };
+    } catch (e) {
+      return { success: false, reason: 'Network error' };
+    }
   },
 
   setMissionProgress: (progress) => {
     const { mission } = get();
     if (!mission.id) return { success: false, reason: 'No mission active' };
-    if (mission.status !== MissionStatus.IN_PROGRESS) {
+    if (mission.status !== MissionStatus.RUNNING) {
       return { success: false, reason: 'Cannot update progress of inactive mission' };
     }
     if (progress < 0 || progress > 100) {

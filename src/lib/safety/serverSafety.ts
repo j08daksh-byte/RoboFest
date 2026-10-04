@@ -115,6 +115,20 @@ export async function evaluateServerSafety(
 
     const allEvals = [...gasEvals, ...botEvals, ...sysEvals];
     
+    // Component Health relationship
+    const faultyComponents = await prisma.componentHealth.findMany({
+      where: { status: { in: ['FAULT', 'CRITICAL'] } }
+    });
+    if (faultyComponents.length > 0) {
+      allEvals.push({
+        isTriggered: true,
+        level: SafetyLevel.CRITICAL,
+        hazardId: 'SYS-COMP-FAULT',
+        description: `Critical Component Faults: ${faultyComponents.map(c => c.name).join(', ')}`,
+        severity: 'HIGH'
+      });
+    }
+
     evaluation.hazards = allEvals;
     evaluation.severity = getHighestPriorityLevel(allEvals.map(e => e.level));
 

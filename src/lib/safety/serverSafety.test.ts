@@ -17,6 +17,10 @@ describe('Deterministic Safety Backend', () => {
   let opUserId = '';
 
   before(async () => {
+    await prisma.telemetryRecord.deleteMany({});
+    await prisma.eventLog.deleteMany({});
+    await prisma.componentHealth.deleteMany({});
+
     const engineer = await prisma.user.upsert({
       where: { id: 'safety-eng-1' },
       update: {},

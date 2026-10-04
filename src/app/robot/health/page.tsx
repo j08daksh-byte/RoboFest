@@ -1,47 +1,43 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePlatformStore } from '@/lib/platformStore';
 
 export default function RobotHealthPage() {
-  const { robot, sensor, systemMode } = usePlatformStore();
+  const { systemMode } = usePlatformStore();
+  const [healthData, setHealthData] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/robot/health')
+      .then(res => res.json())
+      .then(data => setHealthData(data))
+      .catch(console.error);
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch(status) {
       case 'HEALTHY': return 'var(--good)';
       case 'WARNING': return 'var(--warning)';
-      case 'CRITICAL': return 'var(--critical)';
+      case 'CRITICAL': 
+      case 'FAULT': return 'var(--critical)';
+      case 'UNKNOWN': return 'var(--text-muted)';
       default: return 'var(--text-muted)';
     }
   };
 
-  const evalPower = () => {
-    if (!robot.powerConnected) return 'CRITICAL';
-    if (robot.powerVoltage < 210) return 'WARNING';
-    return 'HEALTHY';
-  };
-
-  const evalMotors = () => {
-    const maxT = Math.max(sensor.motors.tempLeft, sensor.motors.tempRight);
-    if (maxT > 75) return 'CRITICAL';
-    if (maxT > 60) return 'WARNING';
-    return 'HEALTHY';
-  };
-
-  const evalGas = () => {
-    if (sensor.gas.torchStatus === 'FAULT') return 'CRITICAL';
-    if (sensor.gas.oxyPressurePsi < 100) return 'WARNING';
-    return 'HEALTHY';
-  };
-
-  const subsystems = [
-    { name: 'External Power', status: evalPower(), detail: robot.powerConnected ? `${robot.powerVoltage.toFixed(1)}V / ${robot.powerCurrent.toFixed(1)}A` : 'DISCONNECTED' },
-    { name: 'Drive Motors', status: evalMotors(), detail: `Max ${Math.max(sensor.motors.tempLeft, sensor.motors.tempRight)}°C` },
-    { name: 'Gas / Torch', status: evalGas(), detail: `Oxy: ${sensor.gas.oxyPressurePsi.toFixed(0)} PSI` },
-    { name: 'Sensors / IMU', status: sensor.metadata.isStale ? 'WARNING' : 'HEALTHY', detail: sensor.metadata.isStale ? 'Stale Data' : 'Active' },
-    { name: 'Electromagnet', status: 'HEALTHY', detail: `Current: ${sensor.hardware.electromagnetCurrent.toFixed(1)}A` },
-    { name: 'Vibration', status: sensor.hardware.vibrationLevel > 1.5 ? 'WARNING' : 'HEALTHY', detail: `${sensor.hardware.vibrationLevel.toFixed(2)} m/s²` }
-  ];
+  const components = healthData?.components || [];
+  
+  // Aggregate overall health
+  let overallHealth = 'UNKNOWN';
+  if (components.length > 0) {
+    if (components.some((c: any) => c.status === 'FAULT' || c.status === 'CRITICAL')) {
+      overallHealth = 'CRITICAL';
+    } else if (components.some((c: any) => c.status === 'WARNING' || c.status === 'DEGRADED')) {
+      overallHealth = 'WARNING';
+    } else if (components.every((c: any) => c.status === 'HEALTHY')) {
+      overallHealth = 'HEALTHY';
+    }
+  }
 
   return (
     <div className="page-container">
@@ -61,14 +57,19 @@ export default function RobotHealthPage() {
             <h2 className="heading-technical">SUBSYSTEM HEALTH MATRIX</h2>
           </div>
           <div className="ui-panel-body" style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-            {subsystems.map((sys, idx) => (
-              <div key={sys.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: idx !== subsystems.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
+            {components.length === 0 && (
+              <div style={{ padding: '12px 0', color: 'var(--text-muted)' }}>Loading health matrix...</div>
+            )}
+            {components.map((comp: any, idx: number) => (
+              <div key={comp.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: idx !== components.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
                 <div>
-                  <div style={{ color: 'var(--text-main)', fontSize: '13px', fontWeight: 600 }}>{sys.name}</div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>{sys.detail}</div>
+                  <div style={{ color: 'var(--text-main)', fontSize: '13px', fontWeight: 600 }}>{comp.name}</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
+                    {comp.faultState || `Last obs: ${new Date(comp.lastObservedAt).toLocaleTimeString()}`}
+                  </div>
                 </div>
-                <div className={`status-badge ${sys.status.toLowerCase()}`}>
-                  {sys.status}
+                <div className={`status-badge ${comp.status.toLowerCase()}`}>
+                  {comp.status}
                 </div>
               </div>
             ))}
@@ -80,8 +81,8 @@ export default function RobotHealthPage() {
           <div className="ui-panel">
             <div className="ui-panel-body" style={{ textAlign: 'center', padding: '32px 16px' }}>
               <div className="heading-technical" style={{ justifyContent: 'center', border: 'none', marginBottom: '8px' }}>OVERALL SYSTEM HEALTH</div>
-              <div style={{ color: getStatusColor(robot.overallHealth), fontSize: '32px', fontWeight: 800, letterSpacing: '1px' }}>
-                {robot.overallHealth}
+              <div style={{ color: getStatusColor(overallHealth), fontSize: '32px', fontWeight: 800, letterSpacing: '1px' }}>
+                {overallHealth}
               </div>
             </div>
           </div>
@@ -91,9 +92,19 @@ export default function RobotHealthPage() {
               <h2 className="heading-technical">KEY TRENDS</h2>
             </div>
             <div className="ui-panel-body">
-              <div className="metric-row"><span className="metric-label">Operating Hrs</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
-              <div className="metric-row"><span className="metric-label">Next Service</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
-              <div className="metric-row"><span className="metric-label">Critical Faults (24h)</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
+              {components.map((c: any) => {
+                if (!c.maintenanceRecords || c.maintenanceRecords.length === 0) return null;
+                const rec = c.maintenanceRecords[0];
+                return (
+                  <div className="metric-row" key={c.id}>
+                    <span className="metric-label">{c.name} Last Service</span>
+                    <span className="metric-value">{new Date(rec.performedAt).toLocaleDateString()}</span>
+                  </div>
+                );
+              })}
+              {components.length > 0 && components.every((c: any) => !c.maintenanceRecords?.length) && (
+                <div className="metric-row"><span className="metric-label" style={{ color: 'var(--text-muted)' }}>No maintenance records</span></div>
+              )}
             </div>
           </div>
         </div>

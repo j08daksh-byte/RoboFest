@@ -16,6 +16,9 @@ describe('Command API Integration Tests', () => {
   let duplicateCommandId = `test-dup-${Date.now()}`;
   
   before(async () => {
+    await prisma.componentHealth.deleteMany({});
+    await prisma.telemetryRecord.deleteMany({});
+    
     // Create test users
     const operator = await prisma.user.create({
       data: {

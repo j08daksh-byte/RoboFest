@@ -1,16 +1,24 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePlatformStore } from '@/lib/platformStore';
-import { MissionStatus } from '@/lib/domain';
 
 export default function RobotPassportPage() {
-  const { systemMode, lifetimeCounters } = usePlatformStore();
+  const { systemMode } = usePlatformStore();
+  const [stats, setStats] = useState<any>(null);
 
-  const completedMissionsCount = lifetimeCounters.missionsCompleted;
-  const emergencyStopsCount = lifetimeCounters.emergencyStops;
-  const panelsRemovedCount = lifetimeCounters.panelsRemoved;
-  const cutsCompletedCount = lifetimeCounters.cutsCompleted;
+  useEffect(() => {
+    fetch('/api/robot/passport')
+      .then(res => res.json())
+      .then(data => setStats(data))
+      .catch(console.error);
+  }, []);
+
+  const completedMissionsCount = stats?.completedMissions || 0;
+  const emergencyStopsCount = stats?.safetyEvents || 0;
+  const panelsRemovedCount = stats?.completedCuts || 0; // Using completed cuts as proxy for panels removed in this context
+  const cutsCompletedCount = stats?.completedCuts || 0;
+  const operatingHours = stats?.totalRuntimeSeconds ? (stats.totalRuntimeSeconds / 3600).toFixed(2) : '0.00';
 
   return (
     <div className="page-container">
@@ -52,12 +60,11 @@ export default function RobotPassportPage() {
               <h2 className="heading-technical">OPERATIONAL STATISTICS</h2>
             </div>
             <div className="ui-panel-body">
-              <div className="metric-row"><span className="metric-label">Total Missions Started</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
+              <div className="metric-row"><span className="metric-label">Total Missions Started</span><span className="metric-value">{stats?.totalMissions || 0}</span></div>
               <div className="metric-row"><span className="metric-label">Missions Completed</span><span className="metric-value" style={{color: completedMissionsCount > 0 ? 'var(--good)' : 'var(--text-main)'}}>{completedMissionsCount}</span></div>
               <div className="metric-row"><span className="metric-label">Total Cuts Completed</span><span className="metric-value" style={{color: cutsCompletedCount > 0 ? 'var(--good)' : 'var(--text-main)'}}>{cutsCompletedCount}</span></div>
               <div className="metric-row"><span className="metric-label">Total Panels Removed</span><span className="metric-value" style={{color: panelsRemovedCount > 0 ? 'var(--good)' : 'var(--text-main)'}}>{panelsRemovedCount}</span></div>
-              <div className="metric-row"><span className="metric-label">Steel Weight Removed (Est)</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
-              <div className="metric-row"><span className="metric-label">Operating Hours</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
+              <div className="metric-row"><span className="metric-label">Operating Hours</span><span className="metric-value">{operatingHours} h</span></div>
             </div>
           </div>
 
@@ -68,13 +75,10 @@ export default function RobotPassportPage() {
             </div>
             <div className="ui-panel-body">
               <div className="metric-row">
-                <span className="metric-label">Emergency Stops</span>
+                <span className="metric-label">Safety Events (e.g. E-Stops)</span>
                 <span className="metric-value" style={{color: emergencyStopsCount > 0 ? 'var(--critical)' : 'var(--good)'}}>{emergencyStopsCount}</span>
               </div>
-              <div className="metric-row"><span className="metric-label">Safety Overrides</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
-              <div className="metric-row"><span className="metric-label">Component Replacements</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
-              <div className="metric-row"><span className="metric-label">Scheduled Maintenance</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
-              <div className="metric-row"><span className="metric-label">Last Firmware Update</span><span className="metric-value" style={{ color: 'var(--text-muted)' }}>UNAVAILABLE</span></div>
+              <div className="metric-row"><span className="metric-label">Maintenance Events</span><span className="metric-value">{stats?.maintenanceEvents || 0}</span></div>
             </div>
           </div>
         </div>

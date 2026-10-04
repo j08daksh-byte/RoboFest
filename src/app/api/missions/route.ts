@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { validateMissionPayload } from '@/lib/api/persistence';
 import { PrismaClient } from '@prisma/client';
 import { withAuth } from '@/lib/authBoundary';
-import { UserRole } from '@/lib/domain';
+import { UserRole, MissionStatus } from '@/lib/domain';
 
 const prisma = new PrismaClient();
 
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
           shipName: validation.data.shipName as string,
           objective: validation.data.objective as string,
           hullSection: validation.data.hullSection as string,
-          status: validation.data.status as string,
+          status: MissionStatus.DRAFT,
         }
       });
       

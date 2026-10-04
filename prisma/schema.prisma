@@ -60,11 +60,20 @@ model CutRecord {
 model EventLog {
   id        String   @id @default(uuid())
   category  String
+  type      String?
   severity  String
+  source    String   @default("SYSTEM")
   message   String
+  metadata  String?  // JSON
   timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+  
+  robotId   String?
   missionId String?
+  cutId     String?
+  commandId String?
   userId    String?
+  
   mission   Mission? @relation(fields: [missionId], references: [id], onDelete: SetNull)
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
@@ -165,4 +174,50 @@ model TelemetryRecord {
   
   @@index([timestamp])
   @@index([mode])
+}
+
+model ComponentHealth {
+  id                      String   @id @default(uuid())
+  componentId             String   @unique
+  name                    String
+  status                  String   // HEALTHY, WARNING, DEGRADED, FAULT, UNKNOWN
+  score                   Float?
+  faultState              String?
+  lastObservedAt          DateTime @default(now())
+  runtimeSeconds          Int      @default(0)
+  serviceThresholdSeconds Int?
+  lastMaintenanceAt       DateTime?
+  nextServiceCondition    String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  maintenanceRecords      MaintenanceRecord[]
+}
+
+model MaintenanceRecord {
+  id                      String   @id @default(uuid())
+  componentId             String
+  maintenanceType         String
+  description             String
+  performedAt             DateTime @default(now())
+  performedBy             String
+  runtimeAtService        Int      @default(0)
+  notes                   String?
+  nextServiceCondition    String?
+  createdAt               DateTime @default(now())
+  
+  component               ComponentHealth @relation(fields: [componentId], references: [componentId], onDelete: Cascade)
+}
+
+model LifetimeStatistic {
+  id                      String   @id @default("singleton")
+  totalMissions           Int      @default(0)
+  completedMissions       Int      @default(0)
+  abortedMissions         Int      @default(0)
+  totalCuts               Int      @default(0)
+  completedCuts           Int      @default(0)
+  totalRuntimeSeconds     Int      @default(0)
+  safetyEvents            Int      @default(0)
+  maintenanceEvents       Int      @default(0)
+  updatedAt               DateTime @updatedAt
 }

@@ -1,4 +1,4 @@
-export type CommandType = 'UPDATE_LOCOMOTION' | 'SET_ARM_POSITION' | 'SET_TORCH' | 'SET_ELECTROMAGNET' | 'TRIGGER_EMERGENCY_STOP';
+export type CommandType = 'UPDATE_LOCOMOTION' | 'SET_ARM_POSITION' | 'SET_TORCH' | 'SET_ELECTROMAGNET' | 'TRIGGER_EMERGENCY_STOP' | 'CLEAR_EMERGENCY_STOP';
 
 export interface BaseCommand {
   type: CommandType;
@@ -42,7 +42,11 @@ export interface EmergencyStopCommand extends BaseCommand {
   type: 'TRIGGER_EMERGENCY_STOP';
 }
 
-export type RobotCommand = LocomotionCommand | ArmPositionCommand | TorchCommand | ElectromagnetCommand | EmergencyStopCommand;
+export interface ClearEmergencyStopCommand extends BaseCommand {
+  type: 'CLEAR_EMERGENCY_STOP';
+}
+
+export type RobotCommand = LocomotionCommand | ArmPositionCommand | TorchCommand | ElectromagnetCommand | EmergencyStopCommand | ClearEmergencyStopCommand;
 
 export type CommandResultStatus = 'ACCEPTED' | 'REJECTED' | 'FAILED' | 'EXECUTED' | 'EMERGENCY_STOPPED';
 
@@ -78,6 +82,7 @@ export function validateCommand(cmd: unknown): { isValid: boolean; error?: strin
       }
       break;
     case 'TRIGGER_EMERGENCY_STOP':
+    case 'CLEAR_EMERGENCY_STOP':
       break;
     default:
       return { isValid: false, error: 'Unknown command type' };

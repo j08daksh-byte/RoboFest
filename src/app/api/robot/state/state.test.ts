@@ -23,11 +23,19 @@ describe('Runtime State API Integration Tests', () => {
     validToken = await signToken({ id: operator.id, role: operator.role });
     
     // Ensure clean state
-    await prisma.runtimeState.deleteMany();
+    await prisma.runtimeState.upsert({
+      where: { id: 'singleton' },
+      update: { systemMode: 'SIMULATED', emergencyActive: false, activeMissionId: null, stateVersion: 0 },
+      create: { id: 'singleton', systemMode: 'SIMULATED', stateVersion: 0 }
+    });
   });
 
   after(async () => {
-    await prisma.runtimeState.deleteMany();
+    await prisma.runtimeState.upsert({
+      where: { id: 'singleton' },
+      update: { systemMode: 'SIMULATED', emergencyActive: false, activeMissionId: null, stateVersion: 0 },
+      create: { id: 'singleton', systemMode: 'SIMULATED', stateVersion: 0 }
+    });
     await prisma.user.deleteMany({
       where: { id: operatorId }
     });

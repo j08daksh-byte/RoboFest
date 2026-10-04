@@ -55,7 +55,7 @@ export function CutEditor() {
     setMarkerColor, setNotice, setRects, loadDemo,
   } = useCutJobStore();
 
-  const locked = mission.status === 'IN_PROGRESS' || mission.status === 'INTERRUPTED';
+  const locked = mission.status === 'RUNNING' || mission.status === 'PAUSED';
   const overlayRef = useRef<SVGSVGElement>(null);
   const pixelsRef = useRef<PixelSample | null>(null);
   const [drag, setDrag] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
@@ -184,7 +184,7 @@ export function CutEditor() {
   return (
     <div className="ui-panel" id="cut-editor">
       <div className="ui-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 className="heading-technical" style={{ margin: 0, border: 'none' }}>CUT PLAN FROM SHIP PHOTO</h2>
+        <h2 className="heading-technical" style={{ margin: 0, border: 'none' }}>CUT PLAN — SHIP PHOTO</h2>
         <span className="status-badge simulated">{rects.length} {rects.length === 1 ? 'PIECE' : 'PIECES'}</span>
       </div>
       <div className="ui-panel-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-12)' }}>

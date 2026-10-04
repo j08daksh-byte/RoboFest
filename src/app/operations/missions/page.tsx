@@ -26,7 +26,7 @@ export default function OperationsMissionsPage() {
           <div className="ui-panel">
             <div className="ui-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 className="heading-technical" style={{ margin: 0, border: 'none' }}>CURRENT MISSION STATE</h2>
-              <div className={`status-badge ${mission.status === 'IN_PROGRESS' ? 'good' : 'warning'}`}>
+              <div className={`status-badge ${mission.status === 'RUNNING' ? 'good' : 'warning'}`}>
                 {mission.status.replace(/_/g, ' ')}
               </div>
             </div>
@@ -67,9 +67,10 @@ export default function OperationsMissionsPage() {
             </div>
           </div>
 
-          <CutEditor />
-
-          <ShipCutPanel />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-16)', alignItems: 'start' }}>
+            <CutEditor />
+            <ShipCutPanel />
+          </div>
 
           <div className="ui-panel">
             <div className="ui-panel-header">

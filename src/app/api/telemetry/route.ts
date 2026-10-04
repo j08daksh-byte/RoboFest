@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole } from '@/lib/domain';
+import { evaluateSystemHealth } from '@/lib/health/healthEngine';
 import { SystemMode } from '@/lib/domain';
 
 const prisma = new PrismaClient();
@@ -81,6 +82,9 @@ export async function POST(request: Request) {
         }
       });
 
+      // Update component health models
+      await evaluateSystemHealth(record);
+
       // Data Retention: Bounded Strategy
       // Keep only last 1000 records for SIMULATED, to prevent DB bloat.
       const maxRecords = 1000;
@@ -104,9 +108,11 @@ export async function POST(request: Request) {
       if (data.gas?.torchStatus === 'ERROR' || data.robot?.overallHealth === 'CRITICAL' || data.robot?.overallHealth === 'FAULT') {
         await prisma.eventLog.create({
           data: {
-            category: 'SENSOR_FAULT',
+            category: 'TELEMETRY',
+            type: 'ANOMALY',
             severity: 'CRITICAL',
             message: `Telemetry anomaly detected: Health=${data.robot?.overallHealth}, Torch=${data.gas?.torchStatus}`,
+            robotId: data.robotId || 'ROBO-1',
             userId: user.id as string
           }
         });

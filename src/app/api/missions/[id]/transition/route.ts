@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole, MissionStatus } from '@/lib/domain';
 import { evaluateServerSafety } from '@/lib/safety/serverSafety';
-
+import { recordLifetimeEvent } from '@/lib/health/healthEngine';
 const prisma = new PrismaClient();
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -43,6 +43,7 @@ export async function POST(req: Request, context: any) {
           await tx.eventLog.create({
             data: {
               category: 'MISSION',
+              type: 'INVALID_TRANSITION',
               severity: 'WARNING',
               message: `Invalid transition: ${currentStatus} -> ${targetStatus}`,
               missionId: mission.id,
@@ -62,6 +63,7 @@ export async function POST(req: Request, context: any) {
             await tx.eventLog.create({
               data: {
                 category: 'SAFETY',
+                type: 'UNSAFE_MISSION',
                 severity: 'CRITICAL',
                 message: `SAFETY_MISSION_REJECTED: ${safetyEval.reasons.join(', ')}`,
                 missionId: mission.id,
@@ -109,12 +111,23 @@ export async function POST(req: Request, context: any) {
         await tx.eventLog.create({
           data: {
             category: 'MISSION',
+            type: targetStatus, // e.g. RUNNING, PAUSED, COMPLETED
             severity: 'INFO',
             message: `Mission transitioned to ${targetStatus}`,
             missionId: mission.id,
             userId: user.id as string
           }
         });
+
+        if (targetStatus === MissionStatus.COMPLETED) {
+          let runtime = 0;
+          if (mission.startedAt) {
+            runtime = Math.floor((new Date().getTime() - new Date(mission.startedAt).getTime()) / 1000);
+          }
+          await recordLifetimeEvent('MISSION_COMPLETED', runtime > 0 ? runtime : 0, tx);
+        } else if (targetStatus === MissionStatus.ABORTED) {
+          await recordLifetimeEvent('MISSION_ABORTED', 0, tx);
+        }
 
         return NextResponse.json({ data: updatedMission }, { status: 200 });
       });

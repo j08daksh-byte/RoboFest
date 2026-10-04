@@ -44,9 +44,11 @@ export async function POST(request: Request) {
         await prisma.eventLog.create({
           data: {
             category: 'SAFETY',
+            type: 'REJECTED_COMMAND',
             severity: 'CRITICAL',
             message: `Command ${command.type} rejected: ${safetyEval.reasons.join(', ')}`,
-            userId: user.id as string
+            userId: user.id as string,
+            commandId: command.id
           }
         });
         
@@ -73,6 +75,20 @@ export async function POST(request: Request) {
           }
         });
 
+        // Log the command creation
+        await prisma.eventLog.create({
+          data: {
+            category: 'COMMAND',
+            type: 'PENDING',
+            severity: 'INFO',
+            message: `Command ${command.type} received and persisted as PENDING`,
+            userId: user.id as string,
+            commandId: command.id,
+            source: command.source,
+            metadata: payloadStr
+          }
+        });
+
         // Update runtime state linkages
         const updateData: any = { lastCommandId: command.id };
         
@@ -80,13 +96,13 @@ export async function POST(request: Request) {
         if (command.type === 'TRIGGER_EMERGENCY_STOP') {
           updateData.emergencyActive = true;
           await prisma.eventLog.create({
-            data: { category: 'SAFETY', severity: 'CRITICAL', message: 'SAFETY_ESTOP_ASSERTED', userId: user.id as string }
+            data: { category: 'SAFETY', type: 'ESTOP_ASSERTED', severity: 'CRITICAL', message: 'SAFETY_ESTOP_ASSERTED', userId: user.id as string, commandId: command.id }
           });
         }
         if (command.type === 'CLEAR_EMERGENCY_STOP') {
           updateData.emergencyActive = false;
           await prisma.eventLog.create({
-            data: { category: 'SAFETY', severity: 'INFO', message: 'SAFETY_ESTOP_CLEARED', userId: user.id as string }
+            data: { category: 'SAFETY', type: 'ESTOP_CLEARED', severity: 'INFO', message: 'SAFETY_ESTOP_CLEARED', userId: user.id as string, commandId: command.id }
           });
         }
 

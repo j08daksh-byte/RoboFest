@@ -6,8 +6,25 @@ import { UserRole } from '@/lib/domain';
 
 const prisma = new PrismaClient();
 
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  return withAuth(request, [], async () => {
+    const resolvedParams = await params;
+    const mission = await prisma.mission.findUnique({ where: { id: resolvedParams.id } });
+    if (!mission) {
+      return NextResponse.json({ error: 'Mission not found' }, { status: 404 });
+    }
+
+    const cuts = await prisma.cutRecord.findMany({ 
+      where: { missionId: resolvedParams.id },
+      orderBy: { createdAt: 'asc' }
+    });
+    
+    return NextResponse.json({ data: cuts }, { status: 200 });
+  });
+}
+
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return withAuth(request, [UserRole.ENGINEER, UserRole.SUPERVISOR, UserRole.ADMIN], async (req) => {
+  return withAuth(request, [UserRole.OPERATOR, UserRole.ENGINEER, UserRole.SUPERVISOR, UserRole.ADMIN], async (req, user) => {
     try {
       const resolvedParams = await params;
       const body = await req.json();
@@ -26,14 +43,34 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return NextResponse.json({ error: 'Parent mission not found' }, { status: 404 });
       }
 
+      const cutName = validation.data.name as string || `Cut-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
       const cutRecord = await prisma.cutRecord.create({
         data: {
           missionId: validation.data.missionId as string,
-          geometryJson: validation.data.geometryJson as string,
-          status: 'PLANNED'
+          name: cutName,
+          type: validation.data.type as string,
+          status: 'PLANNED',
+          photoPlanJson: validation.data.photoPlanJson as string | null,
+          normalizedJson: validation.data.normalizedJson as string | null,
+          worldJson: validation.data.worldJson as string | null,
+          panelId: validation.data.panelId as string | null,
+          plannedAt: new Date()
         }
       });
       
+      await prisma.eventLog.create({
+        data: {
+          category: 'CUT',
+          type: 'CREATED',
+          severity: 'INFO',
+          message: `Cut ${cutRecord.name} created and PLANNED for mission ${mission.shipName}`,
+          missionId: mission.id,
+          cutId: cutRecord.id,
+          userId: user.id as string
+        }
+      });
+
       return NextResponse.json({
         message: 'Cut plan saved successfully',
         data: cutRecord

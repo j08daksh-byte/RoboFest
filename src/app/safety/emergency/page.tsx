@@ -20,8 +20,8 @@ export default function SafetyEmergencyPage() {
   };
 
   const handleStopRobot = () => {
-    if (mission.status === MissionStatus.IN_PROGRESS) {
-      setMission({ status: MissionStatus.INTERRUPTED });
+    if (mission.status === MissionStatus.RUNNING) {
+      setMission({ status: MissionStatus.PAUSED });
     }
   };
 

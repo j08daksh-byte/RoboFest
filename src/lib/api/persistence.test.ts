@@ -38,13 +38,17 @@ describe('Persistence Boundary Validation', () => {
     assert.ok(res.data?.timestamp);
   });
 
-  it('TEST 4: validates cut payload and requires geometryJson', () => {
+  it('TEST 4: validates cut payload and requires type and geometry', () => {
     const payload = { otherStuff: true };
     const res = validateCutPayload(payload, 'mission-1');
     assert.strictEqual(res.isValid, false);
-    assert.match(res.error || '', /Missing required field/);
+    assert.match(res.error || '', /Missing or invalid field: type/);
     
-    const valid = validateCutPayload({ geometryJson: '{}' }, 'mission-1');
+    const invalidGeom = validateCutPayload({ type: 'CLOSED_LOOP' }, 'mission-1');
+    assert.strictEqual(invalidGeom.isValid, false);
+    assert.match(invalidGeom.error || '', /Cut must have geometry definition/);
+
+    const valid = validateCutPayload({ type: 'CLOSED_LOOP', normalizedJson: '{}' }, 'mission-1');
     assert.strictEqual(valid.isValid, true);
     assert.strictEqual(valid.data?.missionId, 'mission-1');
   });

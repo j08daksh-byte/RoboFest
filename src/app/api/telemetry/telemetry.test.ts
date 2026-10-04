@@ -95,7 +95,7 @@ test('Telemetry API Tests', async (t) => {
     assert.strictEqual(res.status, 201);
     
     // Check EventLog
-    const event = await prisma.eventLog.findFirst({ where: { category: 'SENSOR_FAULT' } });
+    const event = await prisma.eventLog.findFirst({ where: { category: 'TELEMETRY' } });
     assert.ok(event);
     assert.strictEqual(event?.severity, 'CRITICAL');
   });

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, PerspectiveCamera, Grid, ContactShadows } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, Grid, ContactShadows } from '@react-three/drei';
 import { RobotModel } from './RobotModel';
 import { ShipAssembly } from './ShipAssembly';
 import { DryDock } from './DryDock';
@@ -67,8 +67,6 @@ export function DigitalTwin() {
         <ContactShadows resolution={2048} scale={1000} blur={2.5} opacity={0.6} far={2} position={[0, -29.9, 0]} />
 
         {uiMode === 'debug' && <Grid position={[0, -29.9, 0]} args={[1000, 1000]} cellColor="#666" sectionColor="#333" fadeDistance={400} />}
-        
-        <Environment preset="warehouse" background={false} environmentIntensity={0.5} />
       </Canvas>
     </div>
   );
