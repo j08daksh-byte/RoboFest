@@ -2,7 +2,7 @@ import React from 'react';
 import * as THREE from 'three';
 import { useRobotStore } from '@/lib/robotState';
 import { robotConfig } from '@/lib/robotConfig';
-import { CatenaryCable, getRobotWorldPosition, PulleySystem } from './SafetyCables';
+import { getRobotWorldPosition } from './SafetyCables';
 
 export function SupplySystem() {
   const { position } = useRobotStore();
@@ -15,54 +15,13 @@ export function SupplySystem() {
   const rackY = worldPos.y - 1.5;
   const rackZ = mastZBase;
 
-  // The 5th Pulley/Cable Mechanism at the top of the ship
-  const deckX = 50.0;
-  const deckZ = 75.0; // deck edge
-  const carriageY = worldPos.y;
+  // Removed 5th cable coordinates
 
-  // Winch anchor point for 5th cable
-  const winchAnchor = new THREE.Vector3(deckX - 0.2, carriageY, deckZ - 0.1); 
-
-  // Robot attachment point for 5th cable
-  const rCenterLocal = { 
-    x: position.x - robotConfig.bodyLengthY / 2 + 0.1, 
-    y: position.y, 
-    z: position.z + robotConfig.trackHeightZ / 2 + robotConfig.bodyHeightZ 
-  };
-  const rCenterWorld = getRobotWorldPosition(rCenterLocal);
+  // 5th cable mechanism removed
 
   return (
     <group>
-      {/* ============================================================ */}
-      {/* 5TH CABLE MECHANISM (TOP OF SHIP) */}
-      {/* ============================================================ */}
-      {/* STATIC TOP RAIL / GUIDE along the deck edge */}
-      <mesh position={[deckX, 0, deckZ]} castShadow receiveShadow>
-        <boxGeometry args={[0.2, 160, 0.15]} />
-        <meshStandardMaterial color="#333" metalness={0.8} roughness={0.4} />
-      </mesh>
-      {/* Guide rail teeth/slots */}
-      <mesh position={[deckX + 0.05, 0, deckZ + 0.1]} castShadow receiveShadow>
-        <boxGeometry args={[0.05, 160, 0.05]} />
-        <meshStandardMaterial color="#111" />
-      </mesh>
-
-      {/* MOVING CARRIAGE ASSEMBLY */}
-      <group position={[deckX, carriageY, deckZ]}>
-        {/* Trolley / Roller Assembly */}
-        <mesh position={[0, 0, 0.15]} castShadow receiveShadow>
-          <boxGeometry args={[0.4, 0.6, 0.25]} />
-          <meshStandardMaterial color="#ff6600" metalness={0.6} roughness={0.5} />
-        </mesh>
-        
-        {/* Pulley hanging off the deck edge */}
-        <group position={[-0.2, 0, -0.1]} rotation={[Math.PI/2, Math.PI/2, 0]}>
-           <PulleySystem position={new THREE.Vector3(0, 0, 0)} />
-        </group>
-      </group>
-
-      {/* 5th Cable (The heavy winch/umbilical dropping from the top carriage) */}
-      <CatenaryCable start={winchAnchor} end={rCenterWorld} sag={0.05} color="#111" thickness={0.015} />
+      {/* 5th Cable Mechanism Removed As Requested */}
 
       {/* ============================================================ */}
       {/* GROUND GAS CYLINDER SYSTEM */}

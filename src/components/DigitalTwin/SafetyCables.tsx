@@ -62,12 +62,11 @@ export function SafetyCables() {
   const boomEndX = mastX - 6.4; 
   const boomEndZ = mastZTop - 0.8;
   
-  const boomPoint1 = new THREE.Vector3(boomEndX, mastY - 0.2, boomEndZ);
-  const boomPoint2 = new THREE.Vector3(boomEndX, mastY + 0.2, boomEndZ);
-  const boomPoint3 = new THREE.Vector3(boomEndX + 0.3, mastY, boomEndZ);
-  
-  // Cable 4 (Lateral Support Cable) originates from a distinct lateral mounting arm
-  const lateralBoomPoint = new THREE.Vector3(boomEndX - 1.0, mastY, boomEndZ + 0.5);
+  // 4 Primary support cable anchors on the boom
+  const boomPoint1 = new THREE.Vector3(boomEndX, mastY - 0.3, boomEndZ);
+  const boomPoint2 = new THREE.Vector3(boomEndX, mastY + 0.3, boomEndZ);
+  const boomPoint3 = new THREE.Vector3(boomEndX + 0.3, mastY - 0.15, boomEndZ);
+  const boomPoint4 = new THREE.Vector3(boomEndX + 0.3, mastY + 0.15, boomEndZ);
 
   const rWidth = robotConfig.structureWidthX; 
   const rLen = robotConfig.structureLengthY;  
@@ -78,6 +77,11 @@ export function SafetyCables() {
   const corner3 = getRobotWorldPosition({ x: position.x - rLen/2, y: position.y + rWidth/2, z: position.z + rHeight });
   const corner4 = getRobotWorldPosition({ x: position.x + rLen/2, y: position.y + rWidth/2, z: position.z + rHeight });
 
+  // Pulley at the SINGLE top point of the ship (attached to the existing upper white ship bar/rail)
+  const shipTopWorld = getRobotWorldPosition({ x: -4.5, y: position.y, z: -0.1 });
+  // Lateral cable attaches to the center-top of the robot chassis (NOT passing through it)
+  const robotTopCenter = getRobotWorldPosition({ x: position.x, y: position.y, z: position.z + rHeight + 0.1 });
+
   return (
     <group>
       {/* Heavy Industrial Support Mast */}
@@ -85,45 +89,45 @@ export function SafetyCables() {
         {/* Main Column */}
         <mesh position={[0, 0, mastHeight / 2]} castShadow receiveShadow>
           <boxGeometry args={[0.8, 0.8, mastHeight]} />
-          <meshStandardMaterial color="#2c3e50" metalness={0.8} roughness={0.4} />
+          <meshStandardMaterial color="#fca311" metalness={0.7} roughness={0.4} /> {/* Safety Orange Mast */}
         </mesh>
         {/* Base */}
         <mesh position={[0, 0, 0.2]} castShadow receiveShadow>
           <boxGeometry args={[3, 3, 0.4]} />
-          <meshStandardMaterial color="#1a1c1e" metalness={0.9} roughness={0.6} />
+          <meshStandardMaterial color="#222" metalness={0.8} roughness={0.6} />
         </mesh>
         {/* Base Bracing */}
         {[0, Math.PI/2, Math.PI, Math.PI*1.5].map((rot, i) => (
           <mesh key={i} position={[Math.cos(rot)*0.7, Math.sin(rot)*0.7, 1.5]} rotation={[0, 0, rot]} castShadow>
             <mesh position={[0, 0, 0]} rotation={[0, -Math.PI/6, 0]}>
               <boxGeometry args={[0.2, 0.2, 3]} />
-              <meshStandardMaterial color="#e67e22" metalness={0.7} />
+              <meshStandardMaterial color="#fca311" metalness={0.7} roughness={0.4} />
             </mesh>
           </mesh>
         ))}
         {/* Boom */}
         <mesh position={[-3, 0, mastHeight - 0.4]} castShadow receiveShadow>
           <boxGeometry args={[6.8, 0.6, 0.8]} />
-          <meshStandardMaterial color="#f39c12" metalness={0.7} roughness={0.4} />
+          <meshStandardMaterial color="#2c3e50" metalness={0.8} roughness={0.4} /> {/* Dark gray boom */}
         </mesh>
         {/* Sheaves */}
         <group position={[-5.5, 0, mastHeight - 0.8]}>
           <mesh rotation={[Math.PI/2, 0, 0]} castShadow>
-            <cylinderGeometry args={[0.3, 0.3, 0.5, 16]} />
-            <meshStandardMaterial color="#111" roughness={0.8} />
-          </mesh>
-          {/* Lateral support arm for Cable 4 */}
-          <mesh position={[-0.5, 0, 1.0]} castShadow>
-            <boxGeometry args={[1.5, 0.2, 0.2]} />
-            <meshStandardMaterial color="#f39c12" metalness={0.7} />
+            <cylinderGeometry args={[0.3, 0.3, 0.5, 24]} />
+            <meshStandardMaterial color="#111" metalness={0.9} roughness={0.3} />
           </mesh>
         </group>
       </group>
-      {/* 4 Support Cables */}
+      {/* 4 Primary Support Cables */}
       <CatenaryCable start={boomPoint1} end={corner1} sag={0.2} color="#333" thickness={0.015} />
       <CatenaryCable start={boomPoint2} end={corner2} sag={0.2} color="#333" thickness={0.015} />
       <CatenaryCable start={boomPoint3} end={corner3} sag={0.2} color="#333" thickness={0.015} />
-      <CatenaryCable start={lateralBoomPoint} end={corner4} sag={0.2} color="#333" thickness={0.015} />
+      <CatenaryCable start={boomPoint4} end={corner4} sag={0.2} color="#333" thickness={0.015} />
+
+      {/* 1 Separate Lateral Positioning Cable & Pulley */}
+      <PulleySystem position={shipTopWorld} />
+      {/* Cable from Pulley to Robot (Yellow/Amber to communicate lateral positioning, NOT structural support) */}
+      <CatenaryCable start={shipTopWorld} end={robotTopCenter} sag={0.05} color="#ffaa00" thickness={0.012} />
     </group>
   );
 }

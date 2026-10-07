@@ -99,28 +99,12 @@ export function ControlPanel({ mode = 'full' }: { mode?: 'full' | 'compact' }) {
         <div className="dpad-group">
           <div className="dpad-row">
             <button 
-              onMouseDown={() => safety.movementPermission && !electromagnet.enabled && setLocomotionIntent(0, 1)}
-              onMouseUp={() => setLocomotionIntent(0, 0)}
-              onMouseLeave={() => setLocomotionIntent(0, 0)}
-              disabled={!safety.movementPermission || electromagnet.enabled}
-              style={!safety.movementPermission ? { opacity: 0.5, border: '1px solid var(--critical)' } : undefined}
-            >▲ UP</button>
-          </div>
-          <div className="dpad-row">
-            <button 
               onMouseDown={() => safety.movementPermission && !electromagnet.enabled && setLocomotionIntent(-1, 0)}
               onMouseUp={() => setLocomotionIntent(0, 0)}
               onMouseLeave={() => setLocomotionIntent(0, 0)}
               disabled={!safety.movementPermission || electromagnet.enabled}
               style={!safety.movementPermission ? { opacity: 0.5, border: '1px solid var(--critical)' } : undefined}
-            >◀ LEFT</button>
-            <button 
-              onMouseDown={() => safety.movementPermission && !electromagnet.enabled && setLocomotionIntent(1, 0)}
-              onMouseUp={() => setLocomotionIntent(0, 0)}
-              onMouseLeave={() => setLocomotionIntent(0, 0)}
-              disabled={!safety.movementPermission || electromagnet.enabled}
-              style={!safety.movementPermission ? { opacity: 0.5, border: '1px solid var(--critical)' } : undefined}
-            >RIGHT ▶</button>
+            >â–² UP</button>
           </div>
           <div className="dpad-row">
             <button 
@@ -129,7 +113,23 @@ export function ControlPanel({ mode = 'full' }: { mode?: 'full' | 'compact' }) {
               onMouseLeave={() => setLocomotionIntent(0, 0)}
               disabled={!safety.movementPermission || electromagnet.enabled}
               style={!safety.movementPermission ? { opacity: 0.5, border: '1px solid var(--critical)' } : undefined}
-            >▼ DOWN</button>
+            >â—€ LEFT</button>
+            <button 
+              onMouseDown={() => safety.movementPermission && !electromagnet.enabled && setLocomotionIntent(0, 1)}
+              onMouseUp={() => setLocomotionIntent(0, 0)}
+              onMouseLeave={() => setLocomotionIntent(0, 0)}
+              disabled={!safety.movementPermission || electromagnet.enabled}
+              style={!safety.movementPermission ? { opacity: 0.5, border: '1px solid var(--critical)' } : undefined}
+            >RIGHT â–¶</button>
+          </div>
+          <div className="dpad-row">
+            <button 
+              onMouseDown={() => safety.movementPermission && !electromagnet.enabled && setLocomotionIntent(1, 0)}
+              onMouseUp={() => setLocomotionIntent(0, 0)}
+              onMouseLeave={() => setLocomotionIntent(0, 0)}
+              disabled={!safety.movementPermission || electromagnet.enabled}
+              style={!safety.movementPermission ? { opacity: 0.5, border: '1px solid var(--critical)' } : undefined}
+            >â–¼ DOWN</button>
           </div>
         </div>
         {electromagnet.enabled && <p className="warning-text">Unlock magnet to move</p>}
