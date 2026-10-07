@@ -1,26 +1,47 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
 import { realtimeBroker } from '@/lib/realtime/broker';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
-  let token: string | undefined;
-  try {
-    const cookieStore = await cookies();
-    token = cookieStore.get('auth_token')?.value;
-  } catch (e) {
-    // tests or static generation context
+  // 1. Check Service Authentication
+  const authHeader = req.headers.get('authorization');
+  let isServiceAuthenticated = false;
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const bearerToken = authHeader.substring(7);
+    const configuredToken = process.env.ROBOFEST_SERVICE_TOKEN;
+    
+    // Constant-time comparison to prevent timing attacks
+    if (configuredToken && configuredToken.length > 0 && bearerToken.length === configuredToken.length) {
+      isServiceAuthenticated = crypto.timingSafeEqual(
+        Buffer.from(bearerToken),
+        Buffer.from(configuredToken)
+      );
+    }
   }
 
-  if (!token) {
-    return new NextResponse('Unauthorized', { status: 401 });
-  }
+  // 2. Fall back to Cookie Authentication if Service Auth failed
+  if (!isServiceAuthenticated) {
+    let token: string | undefined;
+    try {
+      const cookieStore = await cookies();
+      token = cookieStore.get('auth_token')?.value;
+    } catch (e) {
+      // tests or static generation context
+    }
 
-  const user = await verifyToken(token);
-  if (!user || !user.id || !user.role) {
-    return new NextResponse('Unauthorized', { status: 401 });
+    if (!token) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    const user = await verifyToken(token);
+    if (!user || !user.id || !user.role) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
   }
 
   const encoder = new TextEncoder();
