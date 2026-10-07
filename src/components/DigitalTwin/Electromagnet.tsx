@@ -1,10 +1,10 @@
 import React from 'react';
 import { robotConfig } from '@/lib/robotConfig';
-import { useRobotStore } from '@/lib/robotState';
+import { useTwinState } from '../../../packages/digital-twin/src/TwinProvider';
 
 export function Electromagnet() {
   const { electromagnetRadius, electromagnetHeightZ } = robotConfig;
-  const enabled = useRobotStore((state) => state.electromagnet.enabled);
+  const { electromagnet: { enabled } } = useTwinState();
 
   return (
     <group position={[0, 0, electromagnetHeightZ / 2]}>

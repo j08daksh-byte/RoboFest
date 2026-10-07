@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import * as THREE from 'three';
 import { robotConfig } from '@/lib/robotConfig';
-import { useRobotStore } from '@/lib/robotState';
+import { useTwinState } from '../../../packages/digital-twin/src/TwinProvider';
 import { IndustrialMaterial } from './IndustrialMaterial';
 
 function CrawlerTrack({ side, offsetX }: { side: 'left' | 'right'; offsetX: number }) {
   const { trackWidthX, trackLengthY, trackHeightZ } = robotConfig;
-  const trackOffset = useRobotStore(state => state.trackOffset);
+  const { trackOffset } = useTwinState();
   
   // Track proportions
   const wheelRadius = trackHeightZ / 2;

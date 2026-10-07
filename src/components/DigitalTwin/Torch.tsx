@@ -1,10 +1,10 @@
 import React from 'react';
 import { robotConfig } from '@/lib/robotConfig';
-import { useRobotStore } from '@/lib/robotState';
+import { useTwinState } from '../../../packages/digital-twin/src/TwinProvider';
 
 export function Torch({ position }: { position: [number, number, number] }) {
   const { torchRadius, torchLength } = robotConfig;
-  const enabled = useRobotStore((state) => state.torch.enabled);
+  const { torch: { enabled } } = useTwinState();
 
   return (
     <group position={position}>

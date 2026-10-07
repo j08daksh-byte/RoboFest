@@ -1,6 +1,6 @@
 import React from 'react';
 import { robotConfig } from '@/lib/robotConfig';
-import { useRobotStore } from '@/lib/robotState';
+import { useTwinState } from '../../../packages/digital-twin/src/TwinProvider';
 import { Torch } from './Torch';
 import { IndustrialMaterial } from './IndustrialMaterial';
 
@@ -14,7 +14,7 @@ export function CuttingArm() {
     trackHeightZ
   } = robotConfig;
   
-  const { yPosition, xExtension } = useRobotStore((state) => state.arm);
+  const { arm: { yPosition, xExtension } } = useTwinState();
   
   // The arm is mounted on top of the upper structure.
   const armZ = trackHeightZ + structureHeightZ + 0.04; // 0.04 is the deck thickness

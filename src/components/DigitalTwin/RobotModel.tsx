@@ -5,14 +5,13 @@ import { Tracks } from './Tracks';
 import { Electromagnet } from './Electromagnet';
 import { CuttingArm } from './CuttingArm';
 import { CoordinateAxes } from './CoordinateAxes';
-import { useRobotStore } from '@/lib/robotState';
+import { useTwinState } from '../../../packages/digital-twin/src/TwinProvider';
 import { Text } from '@react-three/drei';
 import { IndustrialMaterial } from './IndustrialMaterial';
 
 export function RobotModel({ showAxes = true }: { showAxes?: boolean }) {
   const { bodyWidthX, bodyLengthY, bodyHeightZ, trackHeightZ, structureHeightZ, structureWidthX, structureLengthY, hullRadius } = robotConfig;
-  const xExtension = useRobotStore((state) => state.arm.xExtension);
-  const position = useRobotStore((state) => state.position);
+  const { arm: { xExtension }, position } = useTwinState();
   const torchX = bodyWidthX / 2 + xExtension;
 
   // Calculate rotation to match hull curvature

@@ -13,14 +13,36 @@ import { ShipHull } from './ShipHull';
 import { CameraController } from './CameraController';
 import { SimulationController } from './SimulationController';
 import { useRobotStore } from '@/lib/robotState';
-
+import { TwinProvider, TwinState } from '../../../packages/digital-twin/src';
 export function DigitalTwin() {
-  const [cameraView, setCameraView] = React.useState<'overview' | 'isometric' | 'presentation' | 'hull' | 'side' | 'bottom' | 'closeupTrack' | 'closeupArm' | 'closeupTorch' | 'cutting' | 'robot' | 'cut' | 'ship'>('presentation');
-  const uiMode = useRobotStore((state) => state.uiMode);
+  const store = useRobotStore();
+  
+  const twinState: TwinState = {
+    position: store.position,
+    arm: {
+      yPosition: store.arm.yPosition,
+      xExtension: store.arm.xExtension
+    },
+    torch: {
+      enabled: store.torch.enabled
+    },
+    electromagnet: {
+      enabled: store.electromagnet.enabled
+    },
+    trackOffset: store.trackOffset,
+    fifthCableLength: store.fifthCableLength,
+    cameraTarget: store.cameraTarget,
+    cameraFocusTrigger: store.cameraFocusTrigger,
+    uiMode: store.uiMode,
+    xRayMode: store.xRayMode,
+    activeCutPath: store.activeCutPath,
+    completedCuts: store.completedCuts
+  };
 
   return (
     <div className="digital-twin-container">
-      <Canvas shadows dpr={[1, 2]}>
+      <TwinProvider state={twinState}>
+        <Canvas shadows dpr={[1, 2]}>
         <color attach="background" args={['#10151a']} />
         <fog attach="fog" args={['#10151a', 200, 800]} />
         
@@ -50,7 +72,7 @@ export function DigitalTwin() {
             <ShipHull />
           </group>
           <SimulationController />
-          <RobotModel showAxes={uiMode === 'debug'} />
+          <RobotModel showAxes={store.uiMode === 'debug'} />
         </group>
         
         {/* Procedural Ship and Industrial Environment */}
@@ -66,8 +88,9 @@ export function DigitalTwin() {
         
         <ContactShadows resolution={2048} scale={1000} blur={2.5} opacity={0.6} far={2} position={[0, -29.9, 0]} />
 
-        {uiMode === 'debug' && <Grid position={[0, -29.9, 0]} args={[1000, 1000]} cellColor="#666" sectionColor="#333" fadeDistance={400} />}
+        {store.uiMode === 'debug' && <Grid position={[0, -29.9, 0]} args={[1000, 1000]} cellColor="#666" sectionColor="#333" fadeDistance={400} />}
       </Canvas>
+      </TwinProvider>
     </div>
   );
 }
