@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert';
 import { POST, GET } from './route';
 import { POST as TransitionPOST } from './[id]/transition/route';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { UserRole, MissionStatus } from '@/lib/domain';
 import { signToken } from '@/lib/auth';
 
-const prisma = new PrismaClient();
+
 let validToken = '';
 
 test('Mission API Tests', async (t) => {

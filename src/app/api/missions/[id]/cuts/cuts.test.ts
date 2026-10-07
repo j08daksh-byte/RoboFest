@@ -3,11 +3,11 @@ import assert from 'node:assert';
 import { POST, GET } from './route';
 import { GET as CutGET } from './[cutId]/route';
 import { POST as TransitionPOST } from './[cutId]/transition/route';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { signToken } from '@/lib/auth';
 import { UserRole } from '@/lib/domain';
 
-const prisma = new PrismaClient();
+
 let validToken = '';
 
 test('Cut API Tests', async (t) => {

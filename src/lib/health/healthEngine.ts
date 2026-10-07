@@ -1,7 +1,8 @@
-import { PrismaClient, TelemetryRecord } from '@prisma/client';
+import { TelemetryRecord } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { DEMO_THRESHOLDS } from '@/lib/safety/safetyRules';
 
-const prisma = new PrismaClient();
+
 
 export const COMPONENTS = [
   { id: 'SYS-POWER', name: 'Power System' },

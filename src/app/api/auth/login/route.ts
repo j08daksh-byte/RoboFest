@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { signToken } from '@/lib/auth';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { UserRole } from '@/lib/domain';
 
-const prisma = new PrismaClient();
+
 
 export async function POST(request: Request) {
   try {

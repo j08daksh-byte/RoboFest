@@ -1,9 +1,9 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { evaluateSystemHealth, initializeComponentHealth } from './healthEngine';
 
-const prisma = new PrismaClient();
+
 
 const baseTelemetry = {
   powerVoltage: 240, powerCurrent: 10,

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { RobotCommand, validateCommand, CommandResult } from '@/lib/api/commands';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole } from '@/lib/domain';
 import { evaluateServerSafety } from '@/lib/safety/serverSafety';
 import { realtimeBroker } from '@/lib/realtime/broker';
 
-const prisma = new PrismaClient();
+
 
 // Allowed roles for commands. E-Stop is allowed for all authorized users.
 const ALLOWED_ROLES = [UserRole.OPERATOR, UserRole.ENGINEER, UserRole.SUPERVISOR, UserRole.ADMIN];

@@ -1,8 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { evaluateGasRules, evaluateRobotRules, evaluateSystemRules, getHighestPriorityLevel } from './safetyRules';
 import { SensorState, EnvironmentState, SafetyLevel } from '../domain';
 
-const prisma = new PrismaClient();
+
 
 export type OperationType = 'MISSION_START' | 'CUT_START' | 'DANGEROUS_COMMAND' | 'CLEAR_ESTOP' | 'ESTOP';
 

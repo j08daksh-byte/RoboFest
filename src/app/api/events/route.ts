@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { validateEventPayload } from '@/lib/api/persistence';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/authBoundary';
 import { realtimeBroker } from '@/lib/realtime/broker';
 
-const prisma = new PrismaClient();
+
 
 export async function POST(request: Request) {
   // Empty allowed roles array means any authenticated user can post an event

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { realtimeBroker } from '@/lib/realtime/broker';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole } from '@/lib/domain';
 import { evaluateSystemHealth } from '@/lib/health/healthEngine';
 import { SystemMode } from '@/lib/domain';
 
-const prisma = new PrismaClient();
+
 
 export async function POST(request: Request) {
   return withAuth(request, [UserRole.OPERATOR, UserRole.ENGINEER, UserRole.ADMIN, UserRole.SUPERVISOR], async (req, user) => {

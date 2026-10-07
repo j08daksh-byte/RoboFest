@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole } from '@/lib/domain';
 import { initializeComponentHealth } from '@/lib/health/healthEngine';
 
-const prisma = new PrismaClient();
+
 const ALLOWED_ROLES = [UserRole.OPERATOR, UserRole.ENGINEER, UserRole.SUPERVISOR, UserRole.ADMIN];
 
 export async function GET(request: Request) {

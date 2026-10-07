@@ -1,6 +1,6 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { evaluateServerSafety } from './serverSafety';
 import { POST as CommandPOST } from '@/app/api/robot/command/route';
 import { POST as MissionTransitionPOST } from '@/app/api/missions/[id]/transition/route';
@@ -8,7 +8,7 @@ import { POST as CutTransitionPOST } from '@/app/api/missions/[id]/cuts/[cutId]/
 import { signToken } from '@/lib/auth';
 import { UserRole } from '@/lib/domain';
 
-const prisma = new PrismaClient();
+
 
 describe('Deterministic Safety Backend', () => {
   let engToken = '';

@@ -1,8 +1,8 @@
 import { AIRecommendation, RoboAssistResponse, VisionCandidate } from './types';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { evaluateServerSafety } from '../safety/serverSafety';
 
-const prisma = new PrismaClient();
+
 
 export async function processRoboAssistQuery(query: string, userId: string): Promise<RoboAssistResponse> {
   // Real grounding based on backend state

@@ -1,10 +1,10 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert';
 import { GET, PATCH } from './route';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { signToken } from '@/lib/auth';
 
-const prisma = new PrismaClient();
+
 
 describe('Runtime State API Integration Tests', () => {
   let validToken = '';

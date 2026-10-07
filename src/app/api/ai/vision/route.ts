@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/authBoundary';
 import { simulateVisionCandidate } from '@/lib/ai/engine';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+
 
 export async function POST(request: Request) {
   return withAuth(request, [], async (req, user) => {

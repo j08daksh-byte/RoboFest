@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { validateCutPayload } from '@/lib/api/persistence';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole } from '@/lib/domain';
 import { realtimeBroker } from '@/lib/realtime/broker';
 
-const prisma = new PrismaClient();
+
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withAuth(request, [], async () => {

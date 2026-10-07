@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole, MissionStatus } from '@/lib/domain';
 import { evaluateServerSafety } from '@/lib/safety/serverSafety';
 import { realtimeBroker } from '@/lib/realtime/broker';
 
-const prisma = new PrismaClient();
+
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   [MissionStatus.DRAFT]: [MissionStatus.READY],

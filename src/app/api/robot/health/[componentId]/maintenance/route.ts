@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/authBoundary';
 import { UserRole } from '@/lib/domain';
 
-const prisma = new PrismaClient();
+
 
 // Only higher-tier users can post maintenance
 const POST_ROLES = [UserRole.ENGINEER, UserRole.SUPERVISOR, UserRole.ADMIN];

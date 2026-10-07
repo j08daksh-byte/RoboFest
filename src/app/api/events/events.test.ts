@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { POST, GET } from './route';
 import { NextRequest } from 'next/server';
 import { signToken } from '@/lib/auth';
 
-const prisma = new PrismaClient();
+
 
 test('Events API Tests', async (t) => {
   await prisma.eventLog.deleteMany({});

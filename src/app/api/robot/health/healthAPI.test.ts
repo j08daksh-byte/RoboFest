@@ -1,6 +1,6 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { POST } from './[componentId]/maintenance/route';
 import { GET as GET_HEALTH } from './route';
 import { GET as GET_ANALYTICS } from '../../analytics/route';
@@ -8,7 +8,7 @@ import { signToken } from '@/lib/auth';
 import { UserRole } from '@/lib/domain';
 import { initializeComponentHealth } from '@/lib/health/healthEngine';
 
-const prisma = new PrismaClient();
+
 
 describe('Robot Health & Maintenance APIs', () => {
   let operatorToken = '';

@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { signToken } from '@/lib/auth';
 import { UserRole, SystemMode } from '@/lib/domain';
 
-const prisma = new PrismaClient();
+
 
 const POST = async (req: Request) => {
   const { POST: postHandler } = await import('./route');
