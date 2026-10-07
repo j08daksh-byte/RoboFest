@@ -1,6 +1,6 @@
 import React from 'react';
 import * as THREE from 'three';
-import { useRobotStore } from '@/lib/robotState';
+import { useTwinState } from '../../../packages/digital-twin/src/TwinProvider';
 import { robotConfig } from '@/lib/robotConfig';
 
 export function getRobotWorldPosition(localPos: {x: number, y: number, z: number}) {
@@ -49,7 +49,7 @@ export function PulleySystem({ position }: { position: THREE.Vector3 }) {
 }
 
 export function SafetyCables() {
-  const { position } = useRobotStore();
+  const { position } = useTwinState();
   const worldPos = getRobotWorldPosition(position);
 
   const mastX = 95; // Moved far out to clear 5x scaled hull (beam=75)

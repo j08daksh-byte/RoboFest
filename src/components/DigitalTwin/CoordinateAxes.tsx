@@ -1,9 +1,9 @@
 import React from 'react';
 import { Text, Billboard } from '@react-three/drei';
-import { useRobotStore } from '@/lib/robotState';
+import { useTwinState } from '../../../packages/digital-twin/src/TwinProvider';
 
 export function CoordinateAxes() {
-  const uiMode = useRobotStore((state) => state.uiMode);
+  const { uiMode } = useTwinState();
 
   if (uiMode === 'presentation') return null;
 

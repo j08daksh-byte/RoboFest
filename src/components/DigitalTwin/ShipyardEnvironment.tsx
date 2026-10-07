@@ -1,9 +1,9 @@
 import React from 'react';
 import * as THREE from 'three';
-import { useRobotStore } from '@/lib/robotState';
+import { useTwinState } from '../../../packages/digital-twin/src/TwinProvider';
 
 function Crane() {
-  const xRayMode = useRobotStore(state => state.xRayMode);
+  const { xRayMode } = useTwinState();
   // A large portal crane spanning the dry dock
   return (
     <group position={[0, -30, 40]}>
@@ -81,7 +81,7 @@ function DryDockWalls() {
 }
 
 function Scaffolding() {
-  const xRayMode = useRobotStore(state => state.xRayMode);
+  const { xRayMode } = useTwinState();
   const floors = 6;
   const sections = 8;
   const w = 4;

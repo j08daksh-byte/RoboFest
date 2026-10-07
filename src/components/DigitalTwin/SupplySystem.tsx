@@ -1,11 +1,11 @@
 import React from 'react';
 import * as THREE from 'three';
-import { useRobotStore } from '@/lib/robotState';
+import { useTwinState } from '../../../packages/digital-twin/src/TwinProvider';
 import { robotConfig } from '@/lib/robotConfig';
 import { getRobotWorldPosition } from './SafetyCables';
 
 export function SupplySystem() {
-  const { position } = useRobotStore();
+  const { position } = useTwinState();
   const worldPos = getRobotWorldPosition(position);
 
   // Gas cylinders beside the mast
