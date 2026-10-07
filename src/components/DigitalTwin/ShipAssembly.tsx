@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { ProceduralShipSurface } from '@/lib/geometry/ProceduralShipSurface';
 import { computeRobotOrientation } from '@/lib/geometry/HullSurfaceQuery';
 import { shipConfig } from '@/lib/geometry/shipConfig';
-import { useTestShipStore } from '@/lib/state/testShipStore';
+import { useTwinState } from '../../../packages/digital-twin/src/TwinProvider';
 import { useShipMaterials } from '@/lib/materials/useShipMaterials';
 import { HullSurfaceDetails } from '@/components/DigitalTwin/HullSurfaceDetails';
 import { DeckDetails, BridgeDetails } from '@/components/DigitalTwin/DeckDetails';
@@ -12,7 +12,7 @@ import { DeckDetails, BridgeDetails } from '@/components/DigitalTwin/DeckDetails
 // ENGINEERING HULL
 // ----------------------------------------------------------------------
 function EngineeringHull({ surface, materials }: { surface: ProceduralShipSurface, materials: ReturnType<typeof useShipMaterials> }) {
-  const { showStructuralLines, showSurfaceDebug, showSurfaceNormals, showSurfaceTangents, showRobotProxies } = useTestShipStore();
+  const { testShipVisibility: { showStructuralLines, showSurfaceDebug, showSurfaceNormals, showSurfaceTangents, showRobotProxies } } = useTwinState();
 
   const { hullGeometry, frameLinesGeometry, sternGeometry, bowGeometry } = useMemo(() => {
     const uSegments = 120;
@@ -349,14 +349,14 @@ function ShipMarkings() {
 }
 
 
-import { useRobotStore } from '@/lib/robotState';
+
 
 // ----------------------------------------------------------------------
 // SHIP ASSEMBLY MAIN COMPONENT
 // ----------------------------------------------------------------------
 export function ShipAssembly() {
   const surface = useMemo(() => new ProceduralShipSurface(), []);
-  const xRayMode = useRobotStore((state) => state.xRayMode);
+  const { xRayMode } = useTwinState();
   const materials = useShipMaterials(xRayMode);
 
   return (

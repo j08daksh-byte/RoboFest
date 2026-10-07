@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { OrbitControls } from '@react-three/drei';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
-import { useRobotStore } from '@/lib/robotState';
+import { useTwinState } from '../../../packages/digital-twin/src/TwinProvider';
 
 function getRobotWorldPosition(localPos: {x: number, y: number, z: number}) {
   return new THREE.Vector3(
@@ -16,10 +16,7 @@ function getRobotWorldPosition(localPos: {x: number, y: number, z: number}) {
 export function CameraController() {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const { camera } = useThree();
-  const position = useRobotStore(state => state.position);
-  const cameraTarget = useRobotStore(state => state.cameraTarget);
-  const followMode = useRobotStore(state => state.followMode);
-  const cameraFocusTrigger = useRobotStore(state => state.cameraFocusTrigger);
+  const { position, cameraTarget, followMode, cameraFocusTrigger, completedCuts, activeCutPath } = useTwinState();
 
   const currentTarget = useRef(new THREE.Vector3(10, 0, 7.5));
   const desiredTarget = useRef(new THREE.Vector3(10, 0, 7.5));
@@ -54,8 +51,8 @@ export function CameraController() {
           }
           break;
         case 'cut':
-          const cuts = useRobotStore.getState().completedCuts;
-          const active = useRobotStore.getState().activeCutPath;
+          const cuts = completedCuts;
+          const active = activeCutPath;
           if (active.length > 0) {
             const cutWorld = getRobotWorldPosition({ x: active[0].x, y: active[0].y, z: -0.05 });
             desiredTarget.current.copy(cutWorld);

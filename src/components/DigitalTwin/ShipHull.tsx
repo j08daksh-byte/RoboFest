@@ -1,7 +1,7 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
-import { useRobotStore } from '@/lib/robotState';
+import { useTwinState } from '../../../packages/digital-twin/src/TwinProvider';
 
 const HULL_RADIUS = 25;
 const HULL_CENTER_Z = -HULL_RADIUS - 0.05; // so at x=0, z=-0.05
@@ -17,7 +17,7 @@ function InternalShipStructure() {
     return geom;
   }, []);
 
-  const xRayMode = useRobotStore(state => state.xRayMode);
+  const { xRayMode } = useTwinState();
 
   return (
     <group position={[0, 0, 0]}>
@@ -111,9 +111,8 @@ function curveGeometry(geom: THREE.BufferGeometry) {
 
 import { Line } from '@react-three/drei';
 
-import type { CutRecord } from '@/lib/robotState';
 
-const DetachedPanel = React.memo(function DetachedPanel({ cutRecord, allCuts, idx }: { cutRecord: CutRecord, allCuts: CutRecord[], idx: number }) {
+const DetachedPanel = React.memo(function DetachedPanel({ cutRecord, allCuts, idx }: { cutRecord: { id: string; timestamp: number; path: Array<{ x: number; y: number }>; isClosed: boolean; }, allCuts: Array<{ id: string; timestamp: number; path: Array<{ x: number; y: number }>; isClosed: boolean; }>, idx: number }) {
   const groupRef = useRef<THREE.Group>(null);
   
   const { fallingGeo, cutLinePoints, startPos } = useMemo(() => {
@@ -235,8 +234,7 @@ const DetachedPanel = React.memo(function DetachedPanel({ cutRecord, allCuts, id
 });
 
 function CutPanel() {
-  const rawActiveCutPath = useRobotStore(state => state.activeCutPath);
-  const rawCompletedCuts = useRobotStore(state => state.completedCuts);
+  const { activeCutPath: rawActiveCutPath, completedCuts: rawCompletedCuts } = useTwinState();
 
   // Scale down the paths by 5 because ShipHull is rendered inside a group with scale=[5, 5, 5]
   // but the torch coordinates are recorded in the robot's 1:1 world scale.
@@ -326,7 +324,7 @@ function CutPanel() {
     });
   }, [activeCutPath.length, activeCutPath]);
 
-  const xRayMode = useRobotStore(state => state.xRayMode);
+  const { xRayMode } = useTwinState();
   const materials = useShipMaterials(xRayMode);
   
   const paintMat = useMemo(() => materials.hullPaint.clone(), [materials]);
@@ -396,8 +394,7 @@ function CutPanel() {
 }
 
 export function ShipHull() {
-  const xRayMode = useRobotStore(state => state.xRayMode);
-  const completedCuts = useRobotStore(state => state.completedCuts);
+  const { xRayMode, completedCuts } = useTwinState();
   
   const hasClosedCuts = completedCuts.some(cut => cut.isClosed);
   const showInternal = xRayMode || hasClosedCuts;

@@ -13,9 +13,11 @@ import { ShipHull } from './ShipHull';
 import { CameraController } from './CameraController';
 import { SimulationController } from './SimulationController';
 import { useRobotStore } from '@/lib/robotState';
+import { useTestShipStore } from '@/lib/state/testShipStore';
 import { TwinProvider, TwinState } from '../../../packages/digital-twin/src';
 export function DigitalTwin() {
   const store = useRobotStore();
+  const testShipStore = useTestShipStore();
   
   const twinState: TwinState = {
     position: store.position,
@@ -33,10 +35,23 @@ export function DigitalTwin() {
     fifthCableLength: store.fifthCableLength,
     cameraTarget: store.cameraTarget,
     cameraFocusTrigger: store.cameraFocusTrigger,
+    followMode: store.followMode,
     uiMode: store.uiMode,
     xRayMode: store.xRayMode,
     activeCutPath: store.activeCutPath,
-    completedCuts: store.completedCuts
+    completedCuts: store.completedCuts.map(cut => ({
+      id: cut.id,
+      timestamp: typeof cut.timestamp === 'string' ? new Date(cut.timestamp).getTime() : cut.timestamp,
+      path: cut.path,
+      isClosed: cut.isClosed
+    })),
+    testShipVisibility: {
+      showStructuralLines: testShipStore.showStructuralLines,
+      showSurfaceDebug: testShipStore.showSurfaceDebug,
+      showSurfaceNormals: testShipStore.showSurfaceNormals,
+      showSurfaceTangents: testShipStore.showSurfaceTangents,
+      showRobotProxies: testShipStore.showRobotProxies
+    }
   };
 
   return (
