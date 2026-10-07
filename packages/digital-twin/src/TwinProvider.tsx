@@ -2,9 +2,11 @@ import React, { createContext, useContext } from 'react';
 import { TwinState } from './types';
 
 const TwinContext = createContext<TwinState | null>(null);
+const AssetContext = createContext<string>('');
 
 export interface TwinProviderProps {
   state: TwinState;
+  assetBaseUrl?: string;
   children: React.ReactNode;
 }
 
@@ -14,11 +16,13 @@ export interface TwinProviderProps {
  * allowing the Twin to be hosted by either the RoboFest operational engine or the
  * Senior real-time presentation shell.
  */
-export function TwinProvider({ state, children }: TwinProviderProps) {
+export function TwinProvider({ state, assetBaseUrl = '', children }: TwinProviderProps) {
   return (
-    <TwinContext.Provider value={state}>
-      {children}
-    </TwinContext.Provider>
+    <AssetContext.Provider value={assetBaseUrl}>
+      <TwinContext.Provider value={state}>
+        {children}
+      </TwinContext.Provider>
+    </AssetContext.Provider>
   );
 }
 
@@ -28,4 +32,8 @@ export function useTwinState(): TwinState {
     throw new Error('useTwinState must be used within a TwinProvider');
   }
   return context;
+}
+
+export function useAssetBaseUrl(): string {
+  return useContext(AssetContext);
 }
