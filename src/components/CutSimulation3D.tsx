@@ -9,9 +9,7 @@ import { MissionStatus } from '@/lib/domain';
 import { distanceForProgress, poseAtDistance } from '@/lib/cutting/cutPath';
 import type { CutJobPlan } from '@/lib/cutting/cutPath';
 import { useRobotStore } from '@/lib/robotState';
-import { ShipAssembly } from './DigitalTwin/ShipAssembly';
-import { ShipHull } from './DigitalTwin/ShipHull';
-import { RobotModel } from './DigitalTwin/RobotModel';
+import { ShipAssembly, ShipHull, RobotModel } from '@titan/digital-twin';
 import { ProceduralShipSurface } from '@/lib/geometry/ProceduralShipSurface';
 import { computeRobotOrientation } from '@/lib/geometry/HullSurfaceQuery';
 

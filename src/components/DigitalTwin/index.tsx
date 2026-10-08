@@ -1,20 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Grid, ContactShadows } from '@react-three/drei';
-import { RobotModel } from './RobotModel';
-import { ShipAssembly } from './ShipAssembly';
-import { DryDock } from './DryDock';
-import { SupplySystem } from './SupplySystem';
-import { SafetyCables } from './SafetyCables';
-import { HoseSystem } from './HoseSystem';
-import { ShipHull } from './ShipHull';
-import { CameraController } from './CameraController';
 import { SimulationController } from './SimulationController';
 import { useRobotStore } from '@/lib/robotState';
 import { useTestShipStore } from '@/lib/state/testShipStore';
-import { TwinProvider, TwinState } from '../../../packages/digital-twin/src';
+import { TwinProvider, TwinState, DigitalTwin as SharedDigitalTwin } from '@titan/digital-twin';
 export function DigitalTwin() {
   const store = useRobotStore();
   const testShipStore = useTestShipStore();
@@ -55,56 +45,11 @@ export function DigitalTwin() {
   };
 
   return (
-    <div className="digital-twin-container">
+    <div className="digital-twin-container w-full h-full min-h-[500px] bg-slate-900">
       <TwinProvider state={twinState}>
-        <Canvas shadows dpr={[1, 2]}>
-        <color attach="background" args={['#10151a']} />
-        <fog attach="fog" args={['#10151a', 200, 800]} />
-        
-        <CameraController />
-        
-        {/* Adjusted atmospheric lighting */}
-        <ambientLight intensity={0.4} color="#a0b0c0" />
-        <directionalLight 
-          position={[40, 50, 40]} 
-          intensity={1.5} 
-          castShadow 
-          color="#fff0dd"
-          shadow-mapSize={[2048, 2048]} 
-          shadow-bias={-0.0005}
-        />
-        {/* Soft fill light from opposite side */}
-        <directionalLight 
-          position={[-40, 30, -40]} 
-          intensity={0.4} 
-          color="#90b0d0" 
-        />
-        
-        
-        {/* Robot Integration Layer: Scene-level transform for the unmodified robot */}
-        <group position={[50.25, 0, 37.5]} rotation={[0, Math.PI / 2, 0]}>
-          <group scale={[5, 5, 5]}>
-            <ShipHull />
-          </group>
+        <SharedDigitalTwin>
           <SimulationController />
-          <RobotModel showAxes={store.uiMode === 'debug'} />
-        </group>
-        
-        {/* Procedural Ship and Industrial Environment */}
-        <group scale={[5, 5, 5]}>
-          <ShipAssembly />
-        </group>
-        <DryDock />
-        
-        {/* Support Infrastructure (using world coordinates) */}
-        <SupplySystem />
-        <SafetyCables />
-        <HoseSystem />
-        
-        <ContactShadows resolution={2048} scale={1000} blur={2.5} opacity={0.6} far={2} position={[0, -29.9, 0]} />
-
-        {store.uiMode === 'debug' && <Grid position={[0, -29.9, 0]} args={[1000, 1000]} cellColor="#666" sectionColor="#333" fadeDistance={400} />}
-      </Canvas>
+        </SharedDigitalTwin>
       </TwinProvider>
     </div>
   );

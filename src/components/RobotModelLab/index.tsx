@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RobotModel as OriginalRobotModel } from '../DigitalTwin/RobotModel';
+import { RobotModel as OriginalRobotModel } from '@titan/digital-twin';
 import { RobotAssembly as NewRobotAssembly } from './RobotAssembly';
 import { Text } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';

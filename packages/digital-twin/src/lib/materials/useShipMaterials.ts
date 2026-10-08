@@ -56,6 +56,7 @@ function createGradientTexture(colorStart: string, colorEnd: string): THREE.Canv
 }
 
 export function useShipMaterials(xRayMode: boolean = false) {
+  const assetBaseUrl = useAssetBaseUrl();
   const rustDiff = useTexture(`${assetBaseUrl}/textures/green_metal_rust/green_metal_rust_diff_2k.jpg`);
 
   const materials = useMemo(() => {

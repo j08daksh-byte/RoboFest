@@ -3,14 +3,8 @@
 import React, { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { GizmoHelper, GizmoViewport, Grid, Environment } from '@react-three/drei';
-import { ShipAssembly } from '@/components/DigitalTwin/ShipAssembly';
-import { DryDock } from '@/components/DigitalTwin/DryDock';
-import { RobotModel } from '@/components/DigitalTwin/RobotModel';
+import { ShipAssembly, DryDock, RobotModel, SafetyCables, HoseSystem, SupplySystem, TestShipCameraController, type CameraPreset, type InspectionTarget } from '@titan/digital-twin';
 import { SimulationController } from '@/components/DigitalTwin/SimulationController';
-import { SafetyCables } from '@/components/DigitalTwin/SafetyCables';
-import { HoseSystem } from '@/components/DigitalTwin/HoseSystem';
-import { SupplySystem } from '@/components/DigitalTwin/SupplySystem';
-import { TestShipCameraController, CameraPreset, InspectionTarget } from '@/components/DigitalTwin/TestShipCameraController';
 import { useTestShipStore } from '@/lib/state/testShipStore';
 import Link from 'next/link';
 

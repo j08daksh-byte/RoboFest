@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@titan/digital-twin": ["./packages/digital-twin/src/index.ts"]
     }
   },
   "include": [

@@ -3,12 +3,14 @@ import React, { useMemo, useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { useGLTF, useTexture } from '@react-three/drei';
 import { shipConfig } from '../lib/geometry/shipConfig';
+import { useAssetBaseUrl } from '../TwinProvider';
 
 // -------------------------------------------------------------------------------------------------
 // ASSETS & MATERIALS
 // -------------------------------------------------------------------------------------------------
 
 function GLTFModel({ path, position, rotation, scale }: { path: string; position: number[]; rotation: number[]; scale: number }) {
+  const assetBaseUrl = useAssetBaseUrl();
   const { scene } = useGLTF(`${assetBaseUrl}${path}`) as { scene: THREE.Group };
   const clone = useMemo(() => {
     const c = scene.clone(true);
@@ -26,6 +28,7 @@ function GLTFModel({ path, position, rotation, scale }: { path: string; position
 
 function GroundPlanes() {
   // Load only concrete for a clean, cohesive industrial environment
+  const assetBaseUrl = useAssetBaseUrl();
   const dirtDiff = useTexture(`${assetBaseUrl}/textures/dirty_concrete/dirty_concrete_diff_2k.jpg`);
   const dirtRough = useTexture(`${assetBaseUrl}/textures/dirty_concrete/dirty_concrete_rough_2k.jpg`);
   const dirtNor = useTexture(`${assetBaseUrl}/textures/dirty_concrete/dirty_concrete_nor_gl_2k.jpg`);

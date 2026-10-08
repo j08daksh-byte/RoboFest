@@ -3,7 +3,7 @@
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import { SurfaceNavigationTest } from '@/components/DigitalTwin/SurfaceNavigationTest';
+import { SurfaceNavigationTest } from '@titan/digital-twin';
 import Link from 'next/link';
 
 export default function TestSurfacePage() {

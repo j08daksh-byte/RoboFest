@@ -1,0 +1,8 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { robotConfig } from '../lib/robotConfig';
+import { useTwinState } from '../TwinProvider';
+export function Electromagnet() {
+    const { electromagnetRadius, electromagnetHeightZ } = robotConfig;
+    const { electromagnet: { enabled } } = useTwinState();
+    return (_jsxs("group", { position: [0, 0, electromagnetHeightZ / 2], children: [_jsxs("mesh", { rotation: [Math.PI / 2, 0, 0], receiveShadow: true, children: [_jsx("cylinderGeometry", { args: [electromagnetRadius, electromagnetRadius, electromagnetHeightZ, 32] }), _jsx("meshStandardMaterial", { color: "#cccccc", metalness: 0.9, roughness: 0.3 })] }), _jsxs("mesh", { position: [0, 0, -electromagnetHeightZ / 2 - 0.001], rotation: [Math.PI, 0, 0], receiveShadow: true, children: [_jsx("circleGeometry", { args: [electromagnetRadius * 0.9, 32] }), _jsx("meshStandardMaterial", { color: "#1a1a1a", roughness: 0.9 })] }), _jsxs("mesh", { position: [0, 0, -electromagnetHeightZ / 2 - 0.002], rotation: [Math.PI, 0, 0], receiveShadow: true, children: [_jsx("circleGeometry", { args: [electromagnetRadius * 0.45, 32] }), _jsx("meshStandardMaterial", { color: "#cccccc", metalness: 0.9, roughness: 0.3 })] }), enabled && (_jsxs("mesh", { position: [0, 0, -electromagnetHeightZ / 2 - 0.003], rotation: [Math.PI, 0, 0], children: [_jsx("ringGeometry", { args: [electromagnetRadius * 0.9, electromagnetRadius * 0.95, 32] }), _jsx("meshBasicMaterial", { color: "#ffaa00" })] })), enabled && (_jsx("pointLight", { position: [0, 0, -0.05], intensity: 0.5, distance: 0.5, color: "#ffaa00" }))] }));
+}
