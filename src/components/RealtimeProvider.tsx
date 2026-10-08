@@ -84,6 +84,9 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
             case 'EVENT_CREATED':
               usePlatformStore.getState().addSystemEvent(rtEvent.payload as SystemEvent);
               break;
+            case 'LIVE_TELEMETRY_TICK':
+              usePlatformStore.getState().applyTelemetry(rtEvent.payload as any);
+              break;
             case 'HEALTH_UPDATED':
               // Health updates
               break;

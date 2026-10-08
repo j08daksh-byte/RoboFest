@@ -6,7 +6,8 @@ export type RealtimeEventType =
   | 'TELEMETRY_UPDATED'
   | 'SAFETY_CHANGED'
   | 'HEALTH_UPDATED'
-  | 'EVENT_CREATED';
+  | 'EVENT_CREATED'
+  | 'LIVE_TELEMETRY_TICK';
 
 export interface RealtimeEvent<T = unknown> {
   type: RealtimeEventType;

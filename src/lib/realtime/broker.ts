@@ -3,6 +3,8 @@ import { RealtimeEvent } from './types';
 // Simple PubSub for single-instance Node.js Next.js server
 // Uses globalThis to survive Next.js HMR in development
 
+import { adafruitTelemetryProvider } from '../telemetry/adafruitProvider';
+
 type Subscriber = (event: RealtimeEvent) => void;
 
 class RealtimeBroker {
@@ -46,4 +48,9 @@ const globalForBroker = globalThis as unknown as {
 export const realtimeBroker = globalForBroker.__realtimeBroker ?? new RealtimeBroker();
 if (process.env.NODE_ENV !== 'production') {
   globalForBroker.__realtimeBroker = realtimeBroker;
+}
+
+// Start the server-side telemetry loop
+if (typeof window === 'undefined') {
+  adafruitTelemetryProvider.start();
 }
