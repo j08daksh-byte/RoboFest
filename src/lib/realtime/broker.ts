@@ -52,5 +52,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Start the server-side telemetry loop
 if (typeof window === 'undefined') {
-  adafruitTelemetryProvider.start();
+  setTimeout(() => {
+    adafruitTelemetryProvider.start();
+  }, 0);
 }

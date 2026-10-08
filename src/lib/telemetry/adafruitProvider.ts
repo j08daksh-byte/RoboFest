@@ -126,10 +126,18 @@ class AdafruitTelemetryProvider {
       motors: { ...baseDef.sensor!.motors! },
       imu: { ...baseDef.sensor!.imu! },
       hardware: {
-        ...baseDef.sensor!.hardware!,
+        electromagnetCurrent: baseDef.sensor?.hardware?.electromagnetCurrent || 0,
+        armExtensionX: baseDef.sensor?.hardware?.armExtensionX || 0,
+        vibrationLevel: baseDef.sensor?.hardware?.vibrationLevel || 0,
         armExtensionY: finalUltrasonic // Map ultrasonic standoff to armExtensionY
       },
-      gas: { ...baseDef.sensor!.gas! }
+      gas: {
+        torchStatus: baseDef.sensor?.gas?.torchStatus || 'OFF',
+        oxyPressurePsi: baseDef.sensor?.gas?.oxyPressurePsi || 0,
+        oxyFlowRate: baseDef.sensor?.gas?.oxyFlowRate || 0,
+        acePressurePsi: baseDef.sensor?.gas?.acePressurePsi || 0,
+        aceFlowRate: baseDef.sensor?.gas?.aceFlowRate || 0
+      }
     };
 
     const newEnv: EnvironmentState = {
@@ -239,17 +247,17 @@ class AdafruitTelemetryProvider {
           motorTempLeft: sample.motors.tempLeft,
           motorTempRight: sample.motors.tempRight,
 
-          electromagnetCurrent: sample.hardware.electromagnetCurrent,
+          electromagnetCurrent: 0,
           electromagnetEnabled: false,
           armExtensionY: sample.hardware.armExtensionY,
-          armExtensionX: sample.hardware.armExtensionX,
-          vibrationLevel: sample.hardware.vibrationLevel,
-          torchStatus: sample.gas.torchStatus,
+          armExtensionX: 0,
+          vibrationLevel: 0,
+          torchStatus: 'OFF',
 
-          oxyPressurePsi: sample.gas.oxyPressurePsi,
-          oxyFlowRate: sample.gas.oxyFlowRate,
-          acePressurePsi: sample.gas.acePressurePsi,
-          aceFlowRate: sample.gas.aceFlowRate,
+          oxyPressurePsi: 0,
+          oxyFlowRate: 0,
+          acePressurePsi: 0,
+          aceFlowRate: 0,
 
           envTemperatureC: sample.environment.temperatureC,
           envHumidity: sample.environment.humidityPercentage,
